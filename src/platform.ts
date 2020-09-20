@@ -2,17 +2,19 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExamplePlatformAccessory } from './platformAccessory';
+import { MQTTClient } from './mqttClient';
 
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
+export class ZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   // this is used to track restored cached accessories
+  public readonly mqttClient = new MQTTClient(this.log, this.config);
   public readonly accessories: PlatformAccessory[] = [];
 
   constructor(
@@ -64,6 +66,30 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
         exampleDisplayName: 'Kitchen',
       },
     ];
+
+    this.mqttClient.subscribe('stat/zbbridge/RESULT', msg => {
+      this.log.info('Result %s', JSON.stringify(msg, null, 2));
+    });
+
+    this.mqttClient.execute('ZbStatus2', '0x8E8E', 'stat/zbbridge/RESULT')
+      .then((msg) => {
+        this.log.info('ZbStatus2 0x8e8e: %s', JSON.stringify(msg, null, 2));
+      })
+      .catch(err => {
+        this.log.error(err);
+      });
+    // this.mqttClient.execute('ZbStatus2', '0x95B6', 'stat/zbbridge/RESULT')
+    //   .then((msg) => {
+    //     this.log.info('ZbStatus2 0x95B6: %s', JSON.stringify(msg, null, 2));
+    //   })
+    //   .catch(err => {
+    //     this.log.error(err);
+    //   });
+
+    // this.mqttClient.subscribe('stat/zbbridge/RESULT', (topic: string, message: Buffer) => {
+    //   const msg = JSON.parse(message.toString());
+    //   this.log.info('MQTT: %s', JSON.stringify(msg, null, 2));
+    // });
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of exampleDevices) {
