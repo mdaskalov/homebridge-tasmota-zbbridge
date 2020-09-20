@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback } from 'homebridge';
 
-import { ExampleHomebridgePlatform } from './platform';
+import { ZbBridgePlatform } from './platform';
 
 /**
  * Platform Accessory
@@ -20,7 +20,7 @@ export class ExamplePlatformAccessory {
   }
 
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
+    private readonly platform: ZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
 
@@ -84,11 +84,11 @@ export class ExamplePlatformAccessory {
       motionDetected = !motionDetected;
 
       // push the new value to HomeKit
-      motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
-      motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
+      // motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
+      // motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
 
-      this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
-      this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
+      // this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
+      // this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
     }, 10000);
   }
 
@@ -102,6 +102,16 @@ export class ExamplePlatformAccessory {
     this.exampleStates.On = value as boolean;
 
     this.platform.log.debug('Set Characteristic On ->', value);
+
+    const cmd = '{ "device":"0x8e8e", "send":{"Power":"' + (value ? 'On' : 'Off') + '"}}';
+
+    this.platform.mqttClient.execute('ZbSend', cmd)
+      .then((msg) => {
+        this.platform.log.info('ZbSend: %s', JSON.stringify(msg, null, 2));
+      })
+      .catch(err => {
+        this.platform.log.error(err);
+      });
 
     // you must call the callback function
     callback(null);
