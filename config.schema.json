@@ -10,7 +10,27 @@
         "type": "string",
         "required": true,
         "default": "Tasmota ZbBridge"
+      },
+      "mqttBroker": {
+        "title": "MQTT Broker Hostname (default: localhost)",
+        "type": "string",
+        "format": "hostname"
+      },
+      "mqttUsername": {
+        "title": "MQTT Broker Username",
+        "type": "string",
+        "format": "password"
+      },
+      "mqttPassword": {
+        "title": "MQTT Broker Password",
+        "type": "string",
+        "format": "password"
+      },
+      "mqttTopic": {
+        "title": "Tasmota MQTT Prefix (default: zbbridge)",
+        "type": "string"
       }
     }
   }
+}
 }
