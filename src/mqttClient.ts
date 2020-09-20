@@ -2,15 +2,19 @@ import { Logger, PlatformConfig } from 'homebridge';
 
 import { MqttClient, connect } from 'mqtt';
 
+
+type HandlerCallback =
+  (msg) => void;
+
 type Handler = {
   id: string;
-  callback: (msg) => void;
+  topic: string;
+  callback: HandlerCallback;
 };
 
 export class MQTTClient {
 
-  private singleHandlers: Array<Handler> = [];
-  private multipleHandlers: Array<Handler> = [];
+  private topicHandlers: Array<Handler> = [];
   private client: MqttClient;
   private last = 0;
 
@@ -36,30 +40,10 @@ export class MQTTClient {
     this.client.on('message', (topic, message) => {
       this.log.debug('MQTT Received: %s :- %s', topic, message);
       const obj = JSON.parse(message.toString());
-
-      let handlersCount = 0;
-      const multipleHandlers = this.multipleHandlers[topic];
-      if (multipleHandlers) {
-        handlersCount += multipleHandlers.length;
-        log.debug('got %d multipleHandlers handlers for %s', multipleHandlers.length, topic);
-        multipleHandlers.forEach((handler: Handler) => handler.callback(obj));
-      }
-
-      const singleHandlers = this.singleHandlers[topic];
-      if (singleHandlers) {
-        log.debug('got %d singleMessage handlers for %s', singleHandlers.length, topic);
-        const handler = singleHandlers.pop();
-        handlersCount += singleHandlers.length;
-        if (handler) {
-          handler.callback(obj);
-        }
-      }
-
-      if (handlersCount === 0) {
-        log.debug('MQTT Unsubscribe %s', topic);
-        this.client.unsubscribe(topic);
-      }
+      const hadnlers = this.topicHandlers.filter(h => h.topic === topic);
+      hadnlers.forEach(h => h.callback(obj));
     });
+
     this.log.info('MQTT Client initialized');
   }
 
@@ -70,98 +54,66 @@ export class MQTTClient {
     return pid + this.last.toString(36);
   }
 
-  addHandler(topic: string, singleMessage: boolean, handler: Handler) {
-    const list = singleMessage ? this.singleHandlers : this.multipleHandlers;
-    if (list[topic]) {
-      list[topic].push(handler);
-    } else {
-      list[topic] = [handler];
-    }
-  }
 
-  subscribe(topic: string, callback: (msg) => void, singleMessage = false): string {
+  subscribe(topic: string, callback: HandlerCallback): string {
     if (this.client) {
-      const handler = { id: this.uniqueID(), callback: callback };
-      this.log.debug('MQTT Subscribed: %s :- %s', handler.id, topic);
-      this.addHandler(topic, singleMessage, handler);
+      const id = this.uniqueID();
+      this.topicHandlers.push({ id, topic, callback });
       this.client.subscribe(topic);
-      return handler.id;
+      const handlersCount = this.topicHandlers.filter(h => h.topic === topic).length;
+      this.log.debug('MQTT Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
+      return id;
     }
     return '';
   }
 
-  unsubscribe(topic: string, id: string) {
-    if (this.client) {
-      this.log.debug('MQTT Unsubscribed: %s :- %s', id, topic);
+  unsubscribe(id: string) {
+    const handler = this.topicHandlers.find(h => h.id === id);
+    if (handler) {
+      const topic = handler.topic;
+      this.topicHandlers = this.topicHandlers.filter(h => h.id !== id);
+      const handlersCount = this.topicHandlers.filter(h => h.topic === topic).length;
+      this.log.debug('MQTT Unsubscribed %s :- %s %d handler(s)', id, topic, handlersCount);
+      if (handlersCount === 0) {
+        this.client.unsubscribe(topic);
+      }
     }
   }
 
-  execute(command: string, arg?: string, inTopic?: string) {
+  send(command) {
     return new Promise((resolve: (data) => void, reject) => {
-      let id = '';
-      const timeOutValue = 3000; //wait max 3 seconds
+      const device = command.device;
+      if (device) {
+        let id = '';
+        const timeOutValue = 5000; //wait max 3 seconds
 
-      const topic = this.config.mqttTopic || 'zbbridge';
-      const oTopic = 'cmnd/' + topic + '/' + command;
-      const iTopic = inTopic || 'tele/' + topic + '/SENSOR';
+        const topic = this.config.mqttTopic || 'zbbridge';
+        const oTopic = 'cmnd/' + topic + '/ZbSend';
+        const iTopic = 'tele/' + topic + '/SENSOR';
+        const payload = JSON.stringify(command);
 
-      this.log.info('Execute in: %s, oTopic: %s %s', iTopic, oTopic, arg);
+        this.log.info('Send device: %s :- %s', device.toString(16), payload);
 
-      const timer = setTimeout(() => {
-        this.unsubscribe(iTopic, id);
-        reject(`Timeout: id: ${id} command: ${command} :- topic: ${iTopic}`);
-      }, timeOutValue);
+        const timer = setTimeout(() => {
+          reject(`send: Timeout: id: ${id} command: ${payload} :- topic: ${iTopic}`);
+          this.unsubscribe(id);
+        }, timeOutValue);
 
-      id = this.subscribe(iTopic, (msg) => {
-        clearTimeout(timer);
-        resolve(msg);
-      }, true);
-      this.client.publish(oTopic, arg || '');
+        id = this.subscribe(iTopic, (msg) => {
+          const answerDevice = Object.keys(msg.ZbReceived)[0];
+          if (answerDevice === device) {
+            clearTimeout(timer);
+            this.unsubscribe(id);
+            resolve(msg.ZbReceived[answerDevice]);
+          } else {
+            this.log.warn('send: Ignored response for device: %s', answerDevice);
+          }
+        });
+        this.client.publish(oTopic, payload);
+      } else {
+        reject('send: Unknown device.');
+      }
     });
   }
-
 }
 
-
-/*
-
-var array = [];
-var resp;
-var n = 10; //number of messages to wait for
-var timeOutValue = 5000; //wait 5 seconds
-var timer;
-
-const client = mqtt.connect(MQTTServer)
-var count =0;
-client.on('message', (topic, message) => {
-  array.push(message);
-  count ++
-  if (count == n) {
-     resp.send(array);
-     client.unsubscribe('inTopic');
-     resp = undefined;
-     counter = 0;
-     array = [];
-     clearTimeout(timer)
-  }
-}
-
-app.post('/test', function (request, response) {
-
-resp = response;
-client.publish ('outTopic' , 'request ');
-client.subscribe('inTopic');
-
-  timer = setTimeout(function(){
-    if (resp) {
-        resp.send(array);
-        resp = undefined;
-        client.unsubscribe('inTopic');
-        counter = 0;
-        array = []
-    }
-  }, timeOutValue);
-
-}
-
-*/

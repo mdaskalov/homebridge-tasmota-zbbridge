@@ -61,34 +61,14 @@ export class ZbBridgePlatform implements DynamicPlatformPlugin {
         exampleUniqueId: 'ABCD',
         exampleDisplayName: 'Bedroom',
       },
-      {
-        exampleUniqueId: 'EFGH',
-        exampleDisplayName: 'Kitchen',
-      },
+      // {
+      //   exampleUniqueId: 'EFGH',
+      //   exampleDisplayName: 'Kitchen',
+      // },
     ];
 
-    this.mqttClient.subscribe('stat/zbbridge/RESULT', msg => {
-      this.log.info('Result %s', JSON.stringify(msg, null, 2));
-    });
-
-    this.mqttClient.execute('ZbStatus2', '0x8E8E', 'stat/zbbridge/RESULT')
-      .then((msg) => {
-        this.log.info('ZbStatus2 0x8e8e: %s', JSON.stringify(msg, null, 2));
-      })
-      .catch(err => {
-        this.log.error(err);
-      });
-    // this.mqttClient.execute('ZbStatus2', '0x95B6', 'stat/zbbridge/RESULT')
-    //   .then((msg) => {
-    //     this.log.info('ZbStatus2 0x95B6: %s', JSON.stringify(msg, null, 2));
-    //   })
-    //   .catch(err => {
-    //     this.log.error(err);
-    //   });
-
-    // this.mqttClient.subscribe('stat/zbbridge/RESULT', (topic: string, message: Buffer) => {
-    //   const msg = JSON.parse(message.toString());
-    //   this.log.info('MQTT: %s', JSON.stringify(msg, null, 2));
+    // this.mqttClient.subscribe('stat/zbbridge/RESULT', msg => {
+    //   this.log.info('Result %s', JSON.stringify(msg, null, 2));
     // });
 
     // loop over the discovered devices and register each one if it has not already been registered

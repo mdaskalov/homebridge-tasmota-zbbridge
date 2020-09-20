@@ -63,11 +63,11 @@ export class ExamplePlatformAccessory {
      */
 
     // Example: add two "motion sensor" services to the accessory
-    const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
+    // const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
+    //   this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
 
-    const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
+    // const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
+    //   this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
 
     /**
      * Updating characteristics values asynchronously.
@@ -78,18 +78,18 @@ export class ExamplePlatformAccessory {
      * the `updateCharacteristic` method.
      * 
      */
-    let motionDetected = false;
-    setInterval(() => {
-      // EXAMPLE - inverse the trigger
-      motionDetected = !motionDetected;
+    // let motionDetected = false;
+    // setInterval(() => {
+    //   // EXAMPLE - inverse the trigger
+    //   motionDetected = !motionDetected;
 
-      // push the new value to HomeKit
-      // motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
-      // motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
+    //   // push the new value to HomeKit
+    //   // motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
+    //   // motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
 
-      // this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
-      // this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
-    }, 10000);
+    //   // this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
+    //   // this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
+    // }, 10000);
   }
 
   /**
@@ -99,13 +99,11 @@ export class ExamplePlatformAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
 
     // implement your own code to turn your device on/off
-    this.exampleStates.On = value as boolean;
+    //this.exampleStates.On = value as boolean;
 
     this.platform.log.debug('Set Characteristic On ->', value);
 
-    const cmd = '{ "device":"0x8e8e", "send":{"Power":"' + (value ? 'On' : 'Off') + '"}}';
-
-    this.platform.mqttClient.execute('ZbSend', cmd)
+    this.platform.mqttClient.send({ device: '0x8e8e', send: { Power: (value ? 'On' : 'Off') } })
       .then((msg) => {
         this.platform.log.info('ZbSend: %s', JSON.stringify(msg, null, 2));
       })
@@ -133,14 +131,27 @@ export class ExamplePlatformAccessory {
   getOn(callback: CharacteristicGetCallback) {
 
     // implement your own code to check if the device is on
-    const isOn = this.exampleStates.On;
-
-    this.platform.log.debug('Get Characteristic On ->', isOn);
-
     // you must call the callback function
     // the first argument should be null if there were no errors
     // the second argument should be the value to return
-    callback(null, isOn);
+    this.platform.mqttClient.send({ device: '0x8E8E', endpoint: 11, cluster: 6, read: 0 })
+      .then((msg) => {
+        this.platform.log.info('ZbSend: %s', JSON.stringify(msg, null, 2));
+
+        const power: number = msg.Power;
+
+        this.platform.log.info('Power: %d', msg.Power);
+
+        const isOn = (power === 1);
+
+        this.platform.log.debug('Get Characteristic On ->', isOn);
+
+        callback(null, isOn);
+      })
+      .catch(err => {
+        this.platform.log.error(err);
+        callback(err);
+      });
   }
 
   /**
