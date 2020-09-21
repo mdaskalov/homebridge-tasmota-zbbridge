@@ -15,7 +15,7 @@ type Handler = {
 
 export class MQTTClient {
 
-  private topicHandlers: Array<Handler> = [];
+  private messageHandlers: Array<Handler> = [];
   private client: MqttClient;
   private last = 0;
 
@@ -42,7 +42,7 @@ export class MQTTClient {
       const obj = JSON.parse(message.toString());
       const device: string | undefined = obj.ZbReceived ? Object.keys(obj.ZbReceived)[0] : undefined;
       this.log.debug('MQTT Received: %s%s :- %s', topic, (device ? ' (' + device + ')' : ''), message);
-      const hadnlers = this.topicHandlers.filter(h => (h.topic === topic) && this.checkDevice(device, h.device));
+      const hadnlers = this.messageHandlers.filter(h => (h.topic === topic) && this.checkDevice(device, h.device));
       hadnlers.forEach(h => h.callback(obj));
     });
 
@@ -67,9 +67,9 @@ export class MQTTClient {
   subscribe(topic: string, callback: HandlerCallback, device = ''): string {
     if (this.client) {
       const id = this.uniqueID();
-      this.topicHandlers.push({ id, topic, device, callback });
+      this.messageHandlers.push({ id, topic, device, callback });
       this.client.subscribe(topic);
-      const handlersCount = this.topicHandlers.filter(h => h.topic === topic).length;
+      const handlersCount = this.messageHandlers.filter(h => h.topic === topic).length;
       this.log.debug('MQTT Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
       return id;
     }
@@ -77,11 +77,11 @@ export class MQTTClient {
   }
 
   unsubscribe(id: string) {
-    const handler = this.topicHandlers.find(h => h.id === id);
+    const handler = this.messageHandlers.find(h => h.id === id);
     if (handler) {
       const topic = handler.topic;
-      this.topicHandlers = this.topicHandlers.filter(h => h.id !== id);
-      const handlersCount = this.topicHandlers.filter(h => h.topic === topic).length;
+      this.messageHandlers = this.messageHandlers.filter(h => h.id !== id);
+      const handlersCount = this.messageHandlers.filter(h => h.topic === topic).length;
       this.log.debug('MQTT Unsubscribed %s :- %s %d handler(s)', id, topic, handlersCount);
       if (handlersCount === 0) {
         this.client.unsubscribe(topic);
