@@ -9,6 +9,7 @@ type HandlerCallback =
 type Handler = {
   id: string;
   topic: string;
+  device: string;
   callback: HandlerCallback;
 };
 
@@ -38,13 +39,21 @@ export class MQTTClient {
     });
 
     this.client.on('message', (topic, message) => {
-      this.log.debug('MQTT Received: %s :- %s', topic, message);
       const obj = JSON.parse(message.toString());
-      const hadnlers = this.topicHandlers.filter(h => h.topic === topic);
+      const device: string | undefined = obj.ZbReceived ? Object.keys(obj.ZbReceived)[0] : undefined;
+      this.log.debug('MQTT Received: %s%s :- %s', topic, (device ? ' (' + device + ')' : ''), message);
+      const hadnlers = this.topicHandlers.filter(h => (h.topic === topic) && this.checkDevice(device, h.device));
       hadnlers.forEach(h => h.callback(obj));
     });
 
     this.log.info('MQTT Client initialized');
+  }
+
+  checkDevice(d1: string | undefined, d2: string): boolean {
+    if (!d1 || !d2) {
+      return true;
+    }
+    return d1.toUpperCase() === d2.toUpperCase();
   }
 
   uniqueID() {
@@ -55,10 +64,10 @@ export class MQTTClient {
   }
 
 
-  subscribe(topic: string, callback: HandlerCallback): string {
+  subscribe(topic: string, callback: HandlerCallback, device = ''): string {
     if (this.client) {
       const id = this.uniqueID();
-      this.topicHandlers.push({ id, topic, callback });
+      this.topicHandlers.push({ id, topic, device, callback });
       this.client.subscribe(topic);
       const handlersCount = this.topicHandlers.filter(h => h.topic === topic).length;
       this.log.debug('MQTT Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
@@ -101,18 +110,19 @@ export class MQTTClient {
 
         id = this.subscribe(iTopic, (msg) => {
           const answerDevice: string = Object.keys(msg.ZbReceived)[0];
-          if (answerDevice.toUpperCase() === device.toUpperCase()) {
+          if (this.checkDevice(answerDevice, device)) {
             clearTimeout(timer);
             this.unsubscribe(id);
             this.log.debug('send: response: device: %s :- %s', answerDevice, JSON.stringify(msg.ZbReceived[answerDevice]));
             resolve(msg.ZbReceived[answerDevice]);
           } else {
-            this.log.warn('send: Ignored response for device: %s', answerDevice);
+            this.log.warn('send: %s Ignored response for device: %s', id, answerDevice);
           }
-        });
+        }, device);
         this.client.publish(oTopic, payload);
       } else {
-        reject('send: Unknown device.');
+        const cmd = JSON.stringify(command);
+        reject(`send: Device id not present in the command: ${cmd}`);
       }
     });
   }
