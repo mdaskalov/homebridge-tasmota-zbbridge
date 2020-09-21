@@ -82,7 +82,7 @@ export class MQTTClient {
 
   send(command) {
     return new Promise((resolve: (data) => void, reject) => {
-      const device = command.device;
+      const device: string = command.device;
       if (device) {
         let id = '';
         const timeOutValue = 5000; //wait max 3 seconds
@@ -92,7 +92,7 @@ export class MQTTClient {
         const iTopic = 'tele/' + topic + '/SENSOR';
         const payload = JSON.stringify(command);
 
-        this.log.info('Send device: %s :- %s', device.toString(16), payload);
+        this.log.debug('send: device: %s :- %s', device, payload);
 
         const timer = setTimeout(() => {
           reject(`send: Timeout: id: ${id} command: ${payload} :- topic: ${iTopic}`);
@@ -100,10 +100,11 @@ export class MQTTClient {
         }, timeOutValue);
 
         id = this.subscribe(iTopic, (msg) => {
-          const answerDevice = Object.keys(msg.ZbReceived)[0];
-          if (answerDevice === device) {
+          const answerDevice: string = Object.keys(msg.ZbReceived)[0];
+          if (answerDevice.toUpperCase() === device.toUpperCase()) {
             clearTimeout(timer);
             this.unsubscribe(id);
+            this.log.debug('send: response: device: %s :- %s', answerDevice, JSON.stringify(msg.ZbReceived[answerDevice]));
             resolve(msg.ZbReceived[answerDevice]);
           } else {
             this.log.warn('send: Ignored response for device: %s', answerDevice);
