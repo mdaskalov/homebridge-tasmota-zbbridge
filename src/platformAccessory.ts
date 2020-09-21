@@ -7,7 +7,7 @@ import { ZbBridgePlatform } from './platform';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class ExamplePlatformAccessory {
+export class ZbBridgeAccessory {
   private service: Service;
 
   /**
@@ -36,7 +36,7 @@ export class ExamplePlatformAccessory {
 
     // set the service name, this is what is displayed as the default name on the Home app
     // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.exampleDisplayName);
+    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
@@ -101,18 +101,17 @@ export class ExamplePlatformAccessory {
     // implement your own code to turn your device on/off
     //this.exampleStates.On = value as boolean;
 
-    this.platform.log.debug('Set Characteristic On ->', value);
-
-    this.platform.mqttClient.send({ device: '0x8e8e', send: { Power: (value ? 'On' : 'Off') } })
+    const device = this.accessory.context.device.id;
+    this.platform.log.info('setOn %s:', device, value);
+    this.platform.mqttClient.send({ device, send: { Power: (value ? 'On' : 'Off') } })
       .then((msg) => {
-        this.platform.log.info('ZbSend: %s', JSON.stringify(msg, null, 2));
+        this.platform.log.debug('ZbSend: %s', JSON.stringify(msg, null, 2));
+        callback(null);
       })
       .catch(err => {
         this.platform.log.error(err);
+        callback(err);
       });
-
-    // you must call the callback function
-    callback(null);
   }
 
   /**
@@ -130,22 +129,17 @@ export class ExamplePlatformAccessory {
    */
   getOn(callback: CharacteristicGetCallback) {
 
+    const device = this.accessory.context.device.id;
+
     // implement your own code to check if the device is on
     // you must call the callback function
     // the first argument should be null if there were no errors
     // the second argument should be the value to return
-    this.platform.mqttClient.send({ device: '0x8E8E', endpoint: 11, cluster: 6, read: 0 })
+    this.platform.mqttClient.send({ device, cluster: 6, read: 0 })
       .then((msg) => {
-        this.platform.log.info('ZbSend: %s', JSON.stringify(msg, null, 2));
-
         const power: number = msg.Power;
-
-        this.platform.log.info('Power: %d', msg.Power);
-
         const isOn = (power === 1);
-
-        this.platform.log.debug('Get Characteristic On ->', isOn);
-
+        this.platform.log.info('getOn %s:', device, isOn);
         callback(null, isOn);
       })
       .catch(err => {
