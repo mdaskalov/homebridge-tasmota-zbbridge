@@ -10,15 +10,6 @@ import { ZbBridgePlatform } from './platform';
 export class ZbBridgeAccessory {
   private service: Service;
 
-  /**
-   * These are just used to create a working example
-   * You should implement your own code to track the state of your accessory
-   */
-  private exampleStates = {
-    On: false,
-    Brightness: 100,
-  }
-
   constructor(
     private readonly platform: ZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
@@ -99,13 +90,12 @@ export class ZbBridgeAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
 
     // implement your own code to turn your device on/off
-    //this.exampleStates.On = value as boolean;
 
     const device = this.accessory.context.device.id;
-    this.platform.log.info('setOn %s:', device, value);
+    this.platform.log.info('setOn %s (%s):', this.accessory.context.device.name, device, value);
     this.platform.mqttClient.send({ device, send: { Power: (value ? 'On' : 'Off') } })
       .then((msg) => {
-        this.platform.log.debug('ZbSend: %s', JSON.stringify(msg, null, 2));
+        this.platform.log.debug('ZbSend: %s', msg);
         callback(null);
       })
       .catch(err => {
@@ -129,17 +119,18 @@ export class ZbBridgeAccessory {
    */
   getOn(callback: CharacteristicGetCallback) {
 
-    const device = this.accessory.context.device.id;
 
     // implement your own code to check if the device is on
     // you must call the callback function
     // the first argument should be null if there were no errors
     // the second argument should be the value to return
+
+    const device = this.accessory.context.device.id;
     this.platform.mqttClient.send({ device, cluster: 6, read: 0 })
       .then((msg) => {
         const power: number = msg.Power;
         const isOn = (power === 1);
-        this.platform.log.info('getOn %s:', device, isOn);
+        this.platform.log.info('getOn %s (%s):', this.accessory.context.device.name, device, isOn);
         callback(null, isOn);
       })
       .catch(err => {
@@ -154,13 +145,27 @@ export class ZbBridgeAccessory {
    */
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
 
-    // implement your own code to set the brightness
-    this.exampleStates.Brightness = value as number;
+    // "getBrightness": {
+    //   "topic": "tele/zbbridge/SENSOR",
+    //   "apply": "let r=JSON.parse(message).ZbReceived['0x8FD1']; let d = r ? r.Dimmer : null; return d ? 100 * d / 254 : null"
+    // },
+    // "setBrightness": {
+    //   "topic": "cmnd/zbbridge/zbsend",
+    //   "apply": "return JSON.stringify({ Device: '0x8FD1', Send: { Dimmer: 254 * message / 100 }});"
+    // }
 
-    this.platform.log.debug('Set Characteristic Brightness -> ', value);
-
-    // you must call the callback function
-    callback(null);
+    const device = this.accessory.context.device.id;
+    this.platform.log.info('setBrightness %s (%s):', this.accessory.context.device.name, device, value);
+    this.platform.mqttClient.send({ device, send: { Dimmer: Math.round(254 * (value as number) / 100) } })
+      .then((msg) => {
+        this.platform.log.debug('ZbSend: %s', msg);
+        // you must call the callback function
+        callback(null);
+      })
+      .catch(err => {
+        this.platform.log.error(err);
+        callback(err);
+      });
   }
 
 }
