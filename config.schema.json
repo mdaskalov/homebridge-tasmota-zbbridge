@@ -11,26 +11,119 @@
         "required": true,
         "default": "Tasmota ZbBridge"
       },
+      "devices": {
+        "title": "Connected Devices",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "title": "ID",
+              "type": "string",
+              "placeholder": "Device ID in hex (i.e. 0x1234)",
+              "pattern": "^0x[A-Fa-f0-9]{4}$",
+              "required": true
+            },
+            "type": {
+              "title": "Type",
+              "type": "string",
+              "default": "light1",
+              "oneOf": [{
+                "title": "Simple On/Off Light",
+                "enum": ["light0"]
+              }, {
+                "title": "White Light with Dimmer",
+                "enum": ["light1"]
+              }, {
+                "title": "White Light with Dimmer and Cold/Warm White",
+                "enum": ["light2"]
+              }, {
+                "title": "RGB Light",
+                "enum": ["light3"]
+              }, {
+                "title": "On/Off Switch",
+                "enum": ["switch"]
+              }]
+            },
+            "name": {
+              "title": "Name",
+              "placeholder": "Name shown in the Home app",
+              "type": "string"
+            }
+          }
+        }
+      },
       "mqttBroker": {
-        "title": "MQTT Broker Hostname (default: localhost)",
+        "title": "Broker Hostname (default: localhost)",
         "type": "string",
         "format": "hostname"
       },
       "mqttUsername": {
-        "title": "MQTT Broker Username",
+        "title": "Broker Username",
         "type": "string",
         "format": "password"
       },
       "mqttPassword": {
-        "title": "MQTT Broker Password",
+        "title": "Broker Password",
         "type": "string",
         "format": "password"
-      },
-      "mqttTopic": {
-        "title": "Tasmota MQTT Prefix (default: zbbridge)",
-        "type": "string"
       }
     }
-  }
-}
+  },
+  "layout": [{
+      "key": "name"
+    },
+    {
+      "key": "devices",
+      "items": [{
+        "type": "div",
+        "displayFlex": false,
+        "items": [{
+          "type": "flex",
+          "flex-flow": "row wrap",
+          "items": [{
+            "type": "flex",
+            "flex": "1 1 90px",
+            "flex-flow": "column",
+            "items": ["devices[].id"]
+          }, {
+            "type": "flex",
+            "flex": "1 1 150px",
+            "flex-flow": "column",
+            "items": ["devices[].type"]
+          }, {
+            "type": "flex",
+            "flex-flow": "column",
+            "items": ["devices[].name"]
+          }]
+        }]
+      }]
+    },
+    {
+      "type": "fieldset",
+      "title": "MQTT Settings",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "mqttBroker",
+        {
+          "type": "div",
+          "displayFlex": false,
+          "items": [{
+            "type": "flex",
+            "flex-flow": "row wrap",
+            "items": [{
+              "type": "flex",
+              "flex-flow": "column",
+              "items": ["mqttUsername"]
+            }, {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": ["mqttPassword"]
+            }]
+          }]
+        }
+      ]
+    }
+  ]
 }
