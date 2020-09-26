@@ -1,7 +1,7 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { ZbBridgeAccessory } from './platformAccessory';
+import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { MQTTClient } from './mqttClient';
 
 /**
@@ -9,7 +9,7 @@ import { MQTTClient } from './mqttClient';
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export class ZbBridgePlatform implements DynamicPlatformPlugin {
+export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
   public readonly mqttClient = new MQTTClient(this.log, this.config);
