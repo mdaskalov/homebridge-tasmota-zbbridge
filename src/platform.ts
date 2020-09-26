@@ -12,9 +12,9 @@ import { MQTTClient } from './mqttClient';
 export class ZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly mqttClient = new MQTTClient(this.log, this.config);
 
   // this is used to track restored cached accessories
-  public readonly mqttClient = new MQTTClient(this.log, this.config);
   public readonly accessories: PlatformAccessory[] = [];
 
   constructor(
@@ -41,6 +41,7 @@ export class ZbBridgePlatform implements DynamicPlatformPlugin {
    */
   configureAccessory(accessory: PlatformAccessory) {
     this.log.info('Loading accessory from cache:', accessory.displayName);
+
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
