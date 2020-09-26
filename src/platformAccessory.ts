@@ -71,15 +71,15 @@ export class ZbBridgeAccessory {
       this.platform.log.info('%s (%s) Manufacturer: %s, Model: %s', this.accessory.context.device.name,
         this.device, response.Manufacturer, response.ModelId);
     }
-    if (response.Power) {
+    if (response.Power !== undefined) {
       this.Power = (response.Power === 1);
       this.service.updateCharacteristic(this.platform.Characteristic.On, this.Power);
       this.platform.log.info('%s (%s) Power: %s', this.accessory.context.device.name, this.device, (this.Power ? 'On' : 'Off'));
     }
-    if (response.Dimmer) {
+    if (response.Dimmer !== undefined) {
       this.Dimmer = Math.round(100 * response.Dimmer / 254);
       this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.Dimmer);
-      this.platform.log.info('%s(%s) Dimmer: %d', this.accessory.context.device.name, this.device, this.Dimmer);
+      this.platform.log.info('%s (%s) Dimmer: %d', this.accessory.context.device.name, this.device, this.Dimmer);
     }
   }
 
