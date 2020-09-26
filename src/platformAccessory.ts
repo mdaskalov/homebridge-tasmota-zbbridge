@@ -84,7 +84,9 @@ export class ZbBridgeAccessory {
   }
 
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.mqttClient.send({ device: this.device, send: { Power: (value ? 'On' : 'Off') } });
+    if (this.Power !== value) {
+      this.platform.mqttClient.send({ device: this.device, send: { Power: (value ? 'On' : 'Off') } });
+    }
     callback(null);
   }
 
@@ -95,7 +97,9 @@ export class ZbBridgeAccessory {
   }
 
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.platform.mqttClient.send({ device: this.device, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
+    if (this.Dimmer !== value) {
+      this.platform.mqttClient.send({ device: this.device, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
+    }
     callback(null);
   }
 
