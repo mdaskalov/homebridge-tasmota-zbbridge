@@ -54,17 +54,17 @@ Requires a MQTT broker to communicate with the devices.
         {
             "topic": "sonoff",
             "type": "StatusSNS.AM2301.Temperature",
-            "name": "Living Temperature"
+            "name": "Sonoff TM Temperature"
         },
         {
             "topic": "sonoff",
             "type": "StatusSNS.AM2301.Humidity",
-            "name": "Living Humidity"
+            "name": "Sonoff TM Humidity"
         },
         {
             "topic": "sonoff-4ch",
             "type": "POWER2",
-            "name": "Power 2"
+            "name": "Sonoff 4CH Channel 2"
         }
     ],
     "mqttBroker": "raspi2",
