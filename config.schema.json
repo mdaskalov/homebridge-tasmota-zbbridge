@@ -58,7 +58,8 @@
             "name": {
               "title": "Name",
               "placeholder": "Name shown in the Home app",
-              "type": "string"
+              "type": "string",
+              "required": true
             }
           }
         }
@@ -74,7 +75,6 @@
             "topic": {
               "title": "MQTT Topic",
               "type": "string",
-              "placeholder": "Topic (i.e. sonoff)",
               "required": true
             },
             "type": {
@@ -82,31 +82,53 @@
               "type": "string",
               "default": "switch",
               "oneOf": [{
-                "title": "On/Off Switch",
+                "title": "Basic Switch",
                 "enum": ["switch"]
+              }, {
+                "title": "4CH Switch 1",
+                "enum": ["switch1"]
+              }, {
+                "title": "4CH Switch 2",
+                "enum": ["switch2"]
+              }, {
+                "title": "4CH Switch 3",
+                "enum": ["switch3"]
+              }, {
+                "title": "4CH Switch 4",
+                "enum": ["switch4"]
+              }, {
+                "title": "AM2301 Temperature",
+                "enum": ["AM2301-Temperature"]
+              }, {
+                "title": "AM2301 Humidity",
+                "enum": ["AM2301-Humidity"]
               }],
               "required": true
             },
             "name": {
               "title": "Name",
+              "type": "string",
               "placeholder": "Name shown in the Home app",
-              "type": "string"
+              "required": true
             }
           }
         }
       },
       "mqttBroker": {
-        "title": "Broker Hostname (default: localhost)",
+        "title": "Hostname",
         "type": "string",
+        "placeholder": "Broker hostname if not localhost",
         "format": "hostname"
       },
       "mqttUsername": {
-        "title": "Broker Username",
+        "title": "Username",
         "type": "string",
+        "placeholder": "Broker username if passwort protected",
         "format": "password"
       },
       "mqttPassword": {
-        "title": "Broker Password",
+        "title": "Password",
+        "placeholder": "Broker passwort if passwort protected",
         "type": "string",
         "format": "password"
       }
