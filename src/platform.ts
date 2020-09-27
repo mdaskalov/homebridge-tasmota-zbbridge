@@ -2,6 +2,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { TasmotaAccessory } from './tasmotaAccessory';
 import { MQTTClient } from './mqttClient';
 
 /**
@@ -71,7 +72,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
       if (existingAccessory) {
         // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+        this.log.info('Restoring existing zbBridge accessory from cache:', existingAccessory.displayName);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
         existingAccessory.context.device = device;
@@ -83,7 +84,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
       } else {
         // the accessory does not yet exist, so we need to create it
-        this.log.info('Adding new accessory:', device.name);
+        this.log.info('Adding new zbBridge accessory:', device.name);
 
         // create a new accessory
         const accessory = new this.api.platformAccessory(device.name, uuid);
@@ -104,5 +105,22 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     }
 
+    for (const device of this.config.tasmotaDevices) {
+      const uuid = this.api.hap.uuid.generate(device.topic);
+      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+      if (existingAccessory) {
+        this.log.info('Restoring existing tasmota accessory from cache:', existingAccessory.displayName);
+        existingAccessory.context.device = device;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        new TasmotaAccessory(this, existingAccessory);
+
+      } else {
+        this.log.info('Adding new tasmota accessory:', device.name);
+        const accessory = new this.api.platformAccessory(device.name, uuid);
+        accessory.context.device = device;
+        new TasmotaAccessory(this, accessory);
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      }
+    }
   }
 }
