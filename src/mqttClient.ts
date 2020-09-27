@@ -2,7 +2,7 @@ import { Logger, PlatformConfig } from 'homebridge';
 import { MqttClient, connect } from 'mqtt';
 
 type HandlerCallback =
-  (msg: string) => void;
+  (msg: string, topic: string) => void;
 
 type Handler = {
   id: string;
@@ -39,9 +39,16 @@ export class MQTTClient {
 
     this.client.on('message', (topic, message) => {
       this.log.debug('MQTT: Received: %s :- %s', topic, message);
-      const hadnlers = this.messageHandlers.filter(h => (h.topic === topic));
-      hadnlers.forEach(h => h.callback(message.toString()));
+      const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
+      hadnlers.forEach(h => h.callback(message.toString(), topic));
     });
+  }
+
+  matchTopic(handler: Handler, topic: string) {
+    if (handler.topic.includes('+')) {
+      return topic.includes(handler.topic.substr(0, handler.topic.indexOf('+')));
+    }
+    return handler.topic === topic;
   }
 
   uniqueID() {
@@ -56,7 +63,7 @@ export class MQTTClient {
       const id = this.uniqueID();
       this.messageHandlers.push({ id, topic, callback });
       this.client.subscribe(topic);
-      const handlersCount = this.messageHandlers.filter(h => h.topic === topic).length;
+      const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, topic)).length;
       this.log.debug('MQTT: Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
       return id;
     }
@@ -67,7 +74,7 @@ export class MQTTClient {
     const handler = this.messageHandlers.find(h => h.id === id);
     if (handler) {
       this.messageHandlers = this.messageHandlers.filter(h => h.id !== id);
-      const handlersCount = this.messageHandlers.filter(h => h.topic === handler.topic).length;
+      const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, handler.topic)).length;
       if (handlersCount === 0) {
         this.client.unsubscribe(handler.topic);
       }
