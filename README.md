@@ -13,12 +13,14 @@
 
 # Homebridge Tasmota ZbBridge
 
-Controll Zigbee devices using sonoff ZbBridge flashed with tasmota firmware. Uses MQTT broker to control the devices.
+Thsis plugin can controll zigbee devices connected to [Sonoff ZbBridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or any other device running [Tasmota](https://tasmota.github.io/docs) firmware using MQTT commands.
+Requires a MQTT broker to communicate with the devices.
 
 # Installation
 
+* Flash your device with Tasmota firmware
 * install homebridge `npm install -g homebridge`
-* install tasmota zbbridge plugin `npm install -g homebridge-tasmota-zbbridge`
+* install the plugin `npm install -g homebridge-tasmota-zbbridge`
 * alternatively use the great [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to install and configure
 
 # Configuration
