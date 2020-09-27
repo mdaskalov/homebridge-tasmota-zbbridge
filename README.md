@@ -13,7 +13,7 @@
 
 # Homebridge Tasmota ZbBridge
 
-Thsis plugin can controll zigbee devices connected to [Sonoff ZbBridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or any other device running [Tasmota](https://tasmota.github.io/docs) firmware using MQTT commands.
+Thsis plugin can controll zigbee devices connected to [Sonoff Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or any other device running [Tasmota](https://tasmota.github.io/docs) firmware using MQTT commands.
 Requires a MQTT broker to communicate with the devices.
 
 # Installation
