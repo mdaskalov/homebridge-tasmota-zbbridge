@@ -83,25 +83,25 @@
               "default": "switch",
               "oneOf": [{
                 "title": "Basic Switch",
-                "enum": ["switch"]
+                "enum": ["POWER"]
               }, {
                 "title": "4CH Switch 1",
-                "enum": ["switch1"]
+                "enum": ["POWER1"]
               }, {
                 "title": "4CH Switch 2",
-                "enum": ["switch2"]
+                "enum": ["POWER2"]
               }, {
                 "title": "4CH Switch 3",
-                "enum": ["switch3"]
+                "enum": ["POWER3"]
               }, {
                 "title": "4CH Switch 4",
-                "enum": ["switch4"]
+                "enum": ["POWER4"]
               }, {
                 "title": "AM2301 Temperature",
-                "enum": ["AM2301-Temperature"]
+                "enum": ["StatusSNS.AM2301.Temperature"]
               }, {
                 "title": "AM2301 Humidity",
-                "enum": ["AM2301-Humidity"]
+                "enum": ["StatusSNS.AM2301.Humidity"]
               }],
               "required": true
             },
