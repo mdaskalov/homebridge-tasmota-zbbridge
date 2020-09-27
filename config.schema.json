@@ -102,6 +102,24 @@
               }, {
                 "title": "AM2301 Humidity",
                 "enum": ["StatusSNS.AM2301.Humidity"]
+              }, {
+                "title": "BMP280 Temperature",
+                "enum": ["StatusSNS.BMP280.Temperature"]
+              }, {
+                "title": "DHT11 Temperature",
+                "enum": ["StatusSNS.DHT11.Temperature"]
+              }, {
+                "title": "DHT11 Humidity",
+                "enum": ["StatusSNS.DHT11.Humidity"]
+              }, {
+                "title": "DS18B20 Temperature",
+                "enum": ["StatusSNS.DS18B20.Temperature"]
+              }, {
+                "title": "HTU21 Temperature",
+                "enum": ["StatusSNS.HTU21.Temperature"]
+              }, {
+                "title": "HTU21 Humidity",
+                "enum": ["StatusSNS.HTU21.Humidity"]
               }],
               "required": true
             },
