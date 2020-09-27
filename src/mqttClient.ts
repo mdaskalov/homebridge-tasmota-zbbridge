@@ -88,7 +88,7 @@ export class MQTTClient {
   }
 
   send(command) {
-    const topic = 'cmnd/' + this.topic + '/ZbSend';
+    const topic = 'cmnd/' + this.topic + '/zbsend';
     const message = JSON.stringify(command);
     this.publish(topic, message);
   }

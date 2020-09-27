@@ -51,6 +51,12 @@ export class ZbBridgeAccessory {
     // set the service name, this is what is displayed as the default name on the Home app
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
+    // update device name
+    this.platform.mqttClient.publish(
+      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+      accessory.context.device.id + ',' + accessory.context.device.name,
+    );
+
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
 
