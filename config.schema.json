@@ -9,10 +9,19 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Tasmota ZbBridge"
+        "default": "ZbBridge"
       },
-      "devices": {
-        "title": "Connected Devices",
+      "topic": {
+        "title": "MQTT Topic",
+        "type": "string",
+        "required": true,
+        "default": "zbbridge"
+      },
+
+      "zbBridgeDevices": {
+        "title": "ZbBridge Devices",
+        "expandable": true,
+        "expanded": false,
         "type": "array",
         "items": {
           "type": "object",
@@ -43,7 +52,40 @@
               }, {
                 "title": "On/Off Switch",
                 "enum": ["switch"]
-              }]
+              }],
+              "required": true
+            },
+            "name": {
+              "title": "Name",
+              "placeholder": "Name shown in the Home app",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "tasmotaDevices": {
+        "title": "Tasmota Devices",
+        "expandable": true,
+        "expanded": false,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "title": "MQTT Topic",
+              "type": "string",
+              "placeholder": "Topic (i.e. sonoff)",
+              "required": true
+            },
+            "type": {
+              "title": "Type",
+              "type": "string",
+              "default": "switch",
+              "oneOf": [{
+                "title": "On/Off Switch",
+                "enum": ["switch"]
+              }],
+              "required": true
             },
             "name": {
               "title": "Name",
@@ -74,7 +116,11 @@
       "key": "name"
     },
     {
-      "key": "devices",
+      "key": "topic"
+    },
+    {
+      "key": "zbBridgeDevices",
+      "buttonText": "Add Device",
       "items": [{
         "type": "div",
         "displayFlex": false,
@@ -82,20 +128,53 @@
           "type": "flex",
           "flex-flow": "row wrap",
           "items": [{
-            "type": "flex",
-            "flex": "1 1 90px",
-            "flex-flow": "column",
-            "items": ["devices[].id"]
-          }, {
-            "type": "flex",
-            "flex": "1 1 150px",
-            "flex-flow": "column",
-            "items": ["devices[].type"]
-          }, {
-            "type": "flex",
-            "flex-flow": "column",
-            "items": ["devices[].name"]
-          }]
+              "type": "flex",
+              "flex": "1 1 90px",
+              "flex-flow": "column",
+              "items": ["zbBridgeDevices[].id"]
+            },
+            {
+              "type": "flex",
+              "flex": "1 1 150px",
+              "flex-flow": "column",
+              "items": ["zbBridgeDevices[].type"]
+            },
+            {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": ["zbBridgeDevices[].name"]
+            }
+          ]
+        }]
+      }]
+    },
+    {
+      "key": "tasmotaDevices",
+      "buttonText": "Add Device",
+      "items": [{
+        "type": "div",
+        "displayFlex": false,
+        "items": [{
+          "type": "flex",
+          "flex-flow": "row wrap",
+          "items": [{
+              "type": "flex",
+              "flex": "1 1 90px",
+              "flex-flow": "column",
+              "items": ["tasmotaDevices[].topic"]
+            },
+            {
+              "type": "flex",
+              "flex": "1 1 150px",
+              "flex-flow": "column",
+              "items": ["tasmotaDevices[].type"]
+            },
+            {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": ["tasmotaDevices[].name"]
+            }
+          ]
         }]
       }]
     },
