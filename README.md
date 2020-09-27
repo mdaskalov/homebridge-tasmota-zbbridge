@@ -30,17 +30,17 @@ Requires MQTT broker to communicate.
     "name": "ZbBridge",
     "zbBridgeDevices": [
         {
-            "id": "0x8e8e",
+            "addr": "0x8e8e",
             "type": "light1",
             "name": "Hue Lamp"
         },
         {
-            "id": "0x6769",
+            "addr": "0x6769",
             "type": "light3",
             "name": "Go"
         },
         {
-            "id": "0xAC3C",
+            "addr": "0xAC3C",
             "type": "switch",
             "name": "Switch"
         }
@@ -70,3 +70,24 @@ Requires MQTT broker to communicate.
     "mqttBroker": "raspi2",
     "platform": "TasmotaZbBridge"
 }
+```
+
+`mqttTopic`- Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)
+
+`zbBridgeDevices` - Zigbee devices connected to the Sonoff Zigbee Bridge
+
+* `addr` - Device short address
+* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`
+* `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name
+
+`tasmotaDevices` - Tasmota flashed devices
+
+* `topic` - Device topic as configured in the MQTT menu
+* `type` - Device type (`POWER`, `StatusSNS.AM2301.Temperature`, `StatusSNS.AM2301.Humidity`, etc.) see descriptions in `config.schema.json`
+* `name` - Accessory name to be used in the Home applicaiton. Should be unique.
+
+`mqttBroker` - MQTT Broker hostname if not localhost
+
+`mqttUsername` - MQTT Broker username if passwort protected
+
+`mqttPassword` - MQTT Broker passwort if passwort protected
