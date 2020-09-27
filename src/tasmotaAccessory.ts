@@ -124,13 +124,13 @@ export class TasmotaAccessory {
 
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.value !== value) {
-      this.platform.mqttClient.publish(this.cmndTopic + '/POWER', value ? 'ON' : 'OFF');
+      this.platform.mqttClient.publish(this.cmndTopic + '/' + this.accessory.context.device.type, value ? 'ON' : 'OFF');
     }
     callback(null);
   }
 
   getOn(callback: CharacteristicGetCallback) {
-    this.platform.mqttClient.publish(this.cmndTopic + '/POWER', '');
+    this.platform.mqttClient.publish(this.cmndTopic + '/' + this.accessory.context.device.type, '');
     callback(null, this.value);
   }
 
