@@ -34,16 +34,14 @@ export class MQTTClient {
     this.topic = this.config.mqttTopic || 'zbbridge';
 
     this.client.on('error', err => {
-      this.log.error('MQTT Error: %s', err.message);
+      this.log.error('MQTT: Error: %s', err.message);
     });
 
     this.client.on('message', (topic, message) => {
-      this.log.debug('MQTT Received: %s :- %s', topic, message);
+      this.log.debug('MQTT: Received: %s :- %s', topic, message);
       const hadnlers = this.messageHandlers.filter(h => (h.topic === topic));
       hadnlers.forEach(h => h.callback(message.toString()));
     });
-
-    this.log.info('MQTT Client initialized');
   }
 
   uniqueID() {
@@ -59,7 +57,7 @@ export class MQTTClient {
       this.messageHandlers.push({ id, topic, callback });
       this.client.subscribe(topic);
       const handlersCount = this.messageHandlers.filter(h => h.topic === topic).length;
-      this.log.debug('MQTT Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
+      this.log.debug('MQTT: Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
       return id;
     }
     return '';
@@ -70,22 +68,22 @@ export class MQTTClient {
     if (handler) {
       this.messageHandlers = this.messageHandlers.filter(h => h.id !== id);
       const handlersCount = this.messageHandlers.filter(h => h.topic === handler.topic).length;
-      this.log.debug('MQTT Unsubscribed %s :- %s %d handler(s)', id, handler.topic, handlersCount);
       if (handlersCount === 0) {
         this.client.unsubscribe(handler.topic);
       }
+      this.log.debug('MQTT: Unsubscribed %s :- %s %d handler(s)', id, handler.topic, handlersCount);
     }
   }
 
   publish(topic: string, message: string) {
-    this.log.debug('publish: %s :- %s', topic, message);
     this.client.publish(topic, message);
+    this.log.debug('MQTT: Published: %s :- %s', topic, message);
   }
 
   send(command) {
     const topic = 'cmnd/' + this.topic + '/ZbSend';
     const message = JSON.stringify(command);
-    this.client.publish(topic, message);
+    this.publish(topic, message);
   }
 
   receive(device: string) {
