@@ -5,7 +5,66 @@
 
 </p>
 
+[![npm](https://img.shields.io/npm/dt/homebridge-tasmota-zbbridge.svg)](https://www.npmjs.com/package/homebridge-tasmota-zbbridge)
+[![npm](https://img.shields.io/npm/v/homebridge-tasmota-zbbridge.svg)](https://www.npmjs.com/package/homebridge-tasmota-zbbridge)
+[![Build Status](https://travis-ci.org/mdaskalov/homebridge-tasmota-zbbridge.svg?branch=master)](https://travis-ci.org/mdaskalov/homebridge-tasmota-zbbridge)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/mdaskalov/homebridge-tasmota-zbbridge.svg)](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/pulls)
+[![GitHub issues](https://img.shields.io/github/issues/mdaskalov/homebridge-tasmota-zbbridge.svg)](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/issues)
 
 # Homebridge Tasmota ZbBridge
 
 Controll Zigbee devices using sonoff ZbBridge flashed with tasmota firmware. Uses MQTT broker to control the devices.
+
+# Installation
+
+* install homebridge `npm install -g homebridge`
+* install tasmota zbbridge plugin `npm install -g homebridge-tasmota-zbbridge`
+* alternatively use the great [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to install and configure
+
+# Configuration
+
+```
+{
+    "name": "ZbBridge",
+    "zbBridgeDevices": [
+        {
+            "id": "0x8e8e",
+            "type": "light1",
+            "name": "Hue Lamp"
+        },
+        {
+            "id": "0x6769",
+            "type": "light3",
+            "name": "Go"
+        },
+        {
+            "id": "0xAC3C",
+            "type": "switch",
+            "name": "Switch"
+        }
+    ],
+    "tasmotaDevices": [
+        {
+            "topic": "sonoff",
+            "type": "POWER",
+            "name": "Sonoff TM"
+        },
+        {
+            "topic": "sonoff",
+            "type": "StatusSNS.AM2301.Temperature",
+            "name": "Living Temperature"
+        },
+        {
+            "topic": "sonoff",
+            "type": "StatusSNS.AM2301.Humidity",
+            "name": "Living Humidity"
+        },
+        {
+            "topic": "sonoff-4ch",
+            "type": "POWER2",
+            "name": "Power 2"
+        }
+    ],
+    "mqttBroker": "raspi2",
+    "platform": "TasmotaZbBridge"
+}
