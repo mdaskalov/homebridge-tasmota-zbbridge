@@ -26,10 +26,9 @@
         "items": {
           "type": "object",
           "properties": {
-            "id": {
-              "title": "ID",
+            "addr": {
+              "title": "Short Address",
               "type": "string",
-              "placeholder": "Device ID in hex (i.e. 0x1234)",
               "pattern": "^0x[A-Fa-f0-9]{4}$",
               "required": true
             },
@@ -57,7 +56,6 @@
             },
             "name": {
               "title": "Name",
-              "placeholder": "Name shown in the Home app",
               "type": "string",
               "required": true
             }
@@ -126,7 +124,6 @@
             "name": {
               "title": "Name",
               "type": "string",
-              "placeholder": "Name shown in the Home app",
               "required": true
             }
           }
@@ -171,7 +168,7 @@
               "type": "flex",
               "flex": "1 1 90px",
               "flex-flow": "column",
-              "items": ["zbBridgeDevices[].id"]
+              "items": ["zbBridgeDevices[].addr"]
             },
             {
               "type": "flex",

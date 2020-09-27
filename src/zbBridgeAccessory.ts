@@ -24,7 +24,7 @@ export class ZbBridgeAccessory {
     this.Hue = undefined;
     this.Saturation = undefined;
 
-    this.device = this.accessory.context.device.id;
+    this.device = this.accessory.context.device.addr;
     const type = this.accessory.context.device.type;
 
     //Info:   ZbSend {device: '0xC016', cluster: 0, read: [4,5]} // get Manufacturer, Model
@@ -54,7 +54,7 @@ export class ZbBridgeAccessory {
     // update device name
     this.platform.mqttClient.publish(
       'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-      accessory.context.device.id + ',' + accessory.context.device.name,
+      this.device + ',' + accessory.context.device.name,
     );
 
     // each service must implement at-minimum the "required characteristics" for the given service type
