@@ -79,7 +79,7 @@ export class TasmotaAccessory {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Tasmota')
         .setCharacteristic(this.platform.Characteristic.Model, deviceName);
-      this.platform.log.info('%s (%s) Manufacturer: Tasmota, Model: %s',
+      this.platform.log.debug('%s (%s) Manufacturer: Tasmota, Model: %s',
         this.accessory.context.device.name,
         this.accessory.context.device.topic,
         deviceName,
@@ -88,7 +88,7 @@ export class TasmotaAccessory {
 
     const serialNumber = this.getObjectByPath(response, 'StatusNET.Mac');
     if (response.StatusNET && response.StatusNET.Mac) {
-      this.platform.log.info('%s (%s) Mac: %s',
+      this.platform.log.debug('%s (%s) Mac: %s',
         this.accessory.context.device.name,
         this.accessory.context.device.topic,
         response.StatusNET.Mac,
@@ -113,7 +113,7 @@ export class TasmotaAccessory {
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
           break;
       }
-      this.platform.log.info('%s (%s) %s: %s',
+      this.platform.log.debug('%s (%s) %s: %s',
         this.accessory.context.device.name,
         this.accessory.context.device.topic,
         this.accessory.context.device.type,

@@ -101,7 +101,7 @@ export class ZbBridgeAccessory {
         .setCharacteristic(this.platform.Characteristic.Manufacturer, response.Manufacturer)
         .setCharacteristic(this.platform.Characteristic.Model, response.ModelId)
         .setCharacteristic(this.platform.Characteristic.SerialNumber, this.device);
-      this.platform.log.info('%s (%s) Manufacturer: %s, Model: %s',
+      this.platform.log.debug('%s (%s) Manufacturer: %s, Model: %s',
         this.accessory.context.device.name, this.device,
         response.Manufacturer,
         response.ModelId,
@@ -123,7 +123,7 @@ export class ZbBridgeAccessory {
         this.Saturation = Math.round(100 * response.Sat / 254);
         this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.Saturation);
       }
-      this.platform.log.info('%s (%s) %s%s%s%s',
+      this.platform.log.debug('%s (%s) %s%s%s%s',
         this.accessory.context.device.name, this.device,
         this.Power !== undefined ? 'Power: ' + (this.Power ? 'On' : 'Off') : '',
         this.Dimmer !== undefined ? ', Dimmer: ' + this.Dimmer + '%' : '',
