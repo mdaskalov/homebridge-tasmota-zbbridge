@@ -8,16 +8,16 @@
       "name": {
         "title": "Name",
         "type": "string",
+        "placeholder": "Homebridge name for the TasmotaZbBridge platform",
         "required": true,
         "default": "ZbBridge"
       },
-      "topic": {
+      "mqttTopic": {
         "title": "MQTT Topic",
         "type": "string",
-        "required": true,
-        "default": "zbbridge"
+        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)",
+        "required": true
       },
-
       "zbBridgeDevices": {
         "title": "ZbBridge Devices",
         "expandable": true,
@@ -116,7 +116,7 @@
       "key": "name"
     },
     {
-      "key": "topic"
+      "key": "mqttTopic"
     },
     {
       "key": "zbBridgeDevices",
