@@ -19,9 +19,9 @@ Requires MQTT broker to communicate.
 # Installation
 
 * Flash your device with Tasmota firmware
-* install homebridge `npm install -g homebridge`
-* install the plugin `npm install -g homebridge-tasmota-zbbridge`
-* alternatively use the great [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to install and configure
+* Install homebridge `npm install -g homebridge`
+* Install the plugin `npm install -g homebridge-tasmota-zbbridge`
+* Alternatively use the great [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to install and configure
 
 # Configuration
 
