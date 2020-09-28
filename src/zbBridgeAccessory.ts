@@ -10,19 +10,19 @@ import { TasmotaZbBridgePlatform } from './platform';
 export class ZbBridgeAccessory {
   private service: Service;
   private device: string;
-  private Power: boolean | undefined;
-  private Dimmer: number | undefined;
-  private Hue: number | undefined;
-  private Saturation: number | undefined;
+  private power: boolean | undefined;
+  private dimmer: number | undefined;
+  private hue: number | undefined;
+  private saturation: number | undefined;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    this.Power = undefined;
-    this.Dimmer = undefined;
-    this.Hue = undefined;
-    this.Saturation = undefined;
+    this.power = undefined;
+    this.dimmer = undefined;
+    this.hue = undefined;
+    this.saturation = undefined;
 
     this.device = this.accessory.context.device.addr;
     const type = this.accessory.context.device.type;
@@ -108,76 +108,80 @@ export class ZbBridgeAccessory {
       );
     } else {
       if (response.Power !== undefined) {
-        this.Power = (response.Power === 1);
-        this.service.updateCharacteristic(this.platform.Characteristic.On, this.Power);
+        this.power = (response.Power === 1);
+        this.service.updateCharacteristic(this.platform.Characteristic.On, this.power);
       }
       if (response.Dimmer !== undefined) {
-        this.Dimmer = Math.round(100 * response.Dimmer / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.Dimmer);
+        this.dimmer = Math.round(100 * response.Dimmer / 254);
+        this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.dimmer);
       }
       if (response.Hue !== undefined) {
-        this.Hue = Math.round(360 * response.Hue / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.Hue);
+        this.hue = Math.round(360 * response.Hue / 254);
+        this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
       }
       if (response.Sat !== undefined) {
-        this.Saturation = Math.round(100 * response.Sat / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.Saturation);
+        this.saturation = Math.round(100 * response.Sat / 254);
+        this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
       }
       this.platform.log.debug('%s (%s) %s%s%s%s',
         this.accessory.context.device.name, this.device,
-        this.Power !== undefined ? 'Power: ' + (this.Power ? 'On' : 'Off') : '',
-        this.Dimmer !== undefined ? ', Dimmer: ' + this.Dimmer + '%' : '',
-        this.Hue !== undefined ? ', Hue: ' + this.Hue : '',
-        this.Saturation !== undefined ? ', Saturation: ' + this.Saturation : '',
+        this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
+        this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
+        this.hue !== undefined ? ', Hue: ' + this.hue : '',
+        this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
       );
     }
   }
 
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.Power !== value) {
+    if (this.power !== value) {
+      this.power = value as boolean;
       this.platform.mqttClient.send({ device: this.device, send: { Power: (value ? 'On' : 'Off') } });
     }
     callback(null);
   }
 
   getOn(callback: CharacteristicGetCallback) {
+    callback(null, this.power);
     this.platform.mqttClient.send({ device: this.device, cluster: 6, read: 0 });
-    callback(null, this.Power);
   }
 
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.Dimmer !== value) {
+    if (this.dimmer !== value) {
+      this.dimmer = value as number;
       this.platform.mqttClient.send({ device: this.device, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
   }
 
   getBrightness(callback: CharacteristicGetCallback) {
-    callback(null, this.Dimmer);
+    callback(null, this.dimmer);
     this.platform.mqttClient.send({ device: this.device, cluster: 8, read: 0 });
   }
 
   setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.Hue !== value) {
+    if (this.hue !== value) {
+      this.hue = value as number;
       this.platform.mqttClient.send({ device: this.device, send: { Hue: Math.round(254 * (value as number) / 360) } });
     }
     callback(null);
   }
 
   getHue(callback: CharacteristicGetCallback) {
-    callback(null, this.Hue);
+    callback(null, this.hue);
     this.platform.mqttClient.send({ device: this.device, cluster: 768, read: 0 });
   }
 
   setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.Saturation !== value) {
+    if (this.saturation !== value) {
+      this.saturation = value as number;
       this.platform.mqttClient.send({ device: this.device, send: { Sat: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
   }
 
   getSaturation(callback: CharacteristicGetCallback) {
-    callback(null, this.Saturation);
+    callback(null, this.saturation);
     this.platform.mqttClient.send({ device: this.device, cluster: 768, read: 1 });
   }
 
