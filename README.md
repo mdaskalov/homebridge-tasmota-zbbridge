@@ -94,7 +94,7 @@ Requires MQTT broker to communicate.
 
 # Binding
 
-You can add switches to HomeKit to control automations or bind them with other devices or groups to control them directly. To bind a switch type following commands in the tasmota console. (IKEA remotes only support 1 group and can be linked to a light only via group numbers (no direct binding)). Also 
+You can add switches to HomeKit to control automations or bind them with other devices or groups to control them directly. To bind a switch type following commands in the tasmota console. (IKEA remotes only support 1 group and can be linked to a light only via group numbers (no direct binding)).
 
 1. Add the light to group 100 
 ```
