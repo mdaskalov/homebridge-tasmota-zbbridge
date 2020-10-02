@@ -91,3 +91,20 @@ Requires MQTT broker to communicate.
 `mqttUsername` - MQTT Broker username if passwort protected
 
 `mqttPassword` - MQTT Broker passwort if passwort protected
+
+# Binding
+
+You can add switches to HomeKit to control automations or bind them with other devices or groups to control them directly. To bind a switch type following commands in the tasmota console. (IKEA remotes only support 1 group and can be linked to a light only via group numbers (no direct binding)). Also 
+
+1. Add the light to group 100 
+```
+ZbSend {"device":"IKEA_Light","Send":{"AddGroup":100}}
+```
+2. Bind the remote to group 100. Note: you need to press a button on the remote right before sending this command to make sure it's not in sleep mode 
+```
+ZbBind {"Device":"IKEA_Remote","ToGroup":100,"Cluster":6}
+```
+3. Activate EZSP to listen to the group messages so the HomeKit device is updated each time a group command is received (Not necessary for CC2530 devices)
+```
+ZbListen1 100
+```
