@@ -78,7 +78,7 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "default": "switch",
+              "default": "POWER",
               "oneOf": [{
                 "title": "Basic Switch",
                 "enum": ["POWER"]
