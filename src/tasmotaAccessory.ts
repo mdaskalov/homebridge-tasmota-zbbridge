@@ -8,6 +8,12 @@ enum DeviceType {
   HumiditySensor
 }
 
+export type TasmotaDevice = {
+  topic: string,
+  type: string,
+  name: string
+}
+
 export class TasmotaAccessory {
   private type: DeviceType;
   private service: Service;
