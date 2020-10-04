@@ -5,6 +5,26 @@ import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { TasmotaAccessory } from './tasmotaAccessory';
 import { MQTTClient } from './mqttClient';
 
+enum ZbBridgeDeviceType {
+  light0,
+  light1,
+  light2,
+  light3,
+  switch
+}
+
+type ZbBridgeDevice = {
+  addr: string,
+  type: ZbBridgeDeviceType,
+  name: string
+}
+
+type TasmotaDevice = {
+  topic: string,
+  type: string,
+  name: string
+}
+
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
@@ -22,27 +42,35 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
+      this.cleanupCachedDevices();
       this.discoverDevices();
     });
   }
 
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
     this.accessories.push(accessory);
+  }
+
+  zbBridgeDeviceUUID(device: ZbBridgeDevice) {
+    return this.api.hap.uuid.generate(device.addr);
+  }
+
+  tasmotaDeviceUUID(device: TasmotaDevice) {
+    return this.api.hap.uuid.generate(device.topic + '-' + device.type);
   }
 
   discoverDevices() {
     if (Array.isArray(this.config.zbBridgeDevices)) {
       for (const device of this.config.zbBridgeDevices) {
-        const uuid = this.api.hap.uuid.generate(device.addr);
+        const uuid = this.zbBridgeDeviceUUID(device);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
         if (existingAccessory) {
-          this.log.info('Restoring existing zbBridge accessory from cache:', existingAccessory.displayName);
+          this.log.info('Restoring existing zbBridge accessory from cache: %s', device.name);
           existingAccessory.context.device = device;
           this.api.updatePlatformAccessories([existingAccessory]);
           new ZbBridgeAccessory(this, existingAccessory);
         } else {
-          this.log.info('Adding new zbBridge accessory:', device.name);
+          this.log.info('Adding new zbBridge accessory: %s', device.name);
           const accessory = new this.api.platformAccessory(device.name, uuid);
           accessory.context.device = device;
           new ZbBridgeAccessory(this, accessory);
@@ -52,19 +80,40 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
     if (Array.isArray(this.config.tasmotaDevices)) {
       for (const device of this.config.tasmotaDevices) {
-        const uuid = this.api.hap.uuid.generate(device.topic + '-' + device.type);
+        const uuid = this.tasmotaDeviceUUID(device);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
         if (existingAccessory) {
-          this.log.info('Restoring existing tasmota accessory from cache:', existingAccessory.displayName);
+          this.log.info('Restoring existing tasmota accessory from cache: %s', device.name);
           existingAccessory.context.device = device;
           this.api.updatePlatformAccessories([existingAccessory]);
           new TasmotaAccessory(this, existingAccessory);
         } else {
-          this.log.info('Adding new tasmota accessory:', device.name);
+          this.log.info('Adding new tasmota accessory: %s', device.name);
           const accessory = new this.api.platformAccessory(device.name, uuid);
           accessory.context.device = device;
           new TasmotaAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        }
+      }
+    }
+  }
+
+  cleanupCachedDevices() {
+    if (Array.isArray(this.accessories)) {
+      for (const accessory of this.accessories) {
+        let foundZbBridgeDevice = false;
+        let foundTasmotaDevice = false;
+        if (Array.isArray(this.config.zbBridgeDevices)) {
+          const found = this.config.zbBridgeDevices.find(d => this.zbBridgeDeviceUUID(d) === accessory.UUID);
+          foundZbBridgeDevice = (found !== undefined);
+        }
+        if (Array.isArray(this.config.tasmotaDevices)) {
+          const found = this.config.tasmotaDevices.find(d => this.tasmotaDeviceUUID(d) === accessory.UUID);
+          foundTasmotaDevice = (found !== undefined);
+        }
+        if (!foundZbBridgeDevice && !foundTasmotaDevice) {
+          this.log.info('Removing unused accessory from cache: %s', accessory.displayName);
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }
     }
