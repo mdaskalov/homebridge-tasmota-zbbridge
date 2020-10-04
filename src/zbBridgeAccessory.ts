@@ -2,17 +2,9 @@ import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallb
 
 import { TasmotaZbBridgePlatform } from './platform';
 
-export enum ZbBridgeDeviceType {
-  light0,
-  light1,
-  light2,
-  light3,
-  switch
-}
-
 export type ZbBridgeDevice = {
   addr: string,
-  type: ZbBridgeDeviceType,
+  type: string,
   name: string
 }
 
@@ -51,9 +43,9 @@ export class ZbBridgeAccessory {
     // query accessory information
     this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
     this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
-    if (type === ZbBridgeDeviceType.light1 || type === ZbBridgeDeviceType.light2 || type === ZbBridgeDeviceType.light3) {
+    if (type === 'light1' || type === 'light2' || type === 'light3') {
       this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
-      if (type === ZbBridgeDeviceType.light3) {
+      if (type === 'light3') {
         this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1] });
       }
     }
@@ -75,12 +67,12 @@ export class ZbBridgeAccessory {
       .on('set', this.setOn.bind(this))
       .on('get', this.getOn.bind(this));
 
-    if (type === ZbBridgeDeviceType.light1 || type === ZbBridgeDeviceType.light2 || type === ZbBridgeDeviceType.light3) {
+    if (type === 'light1' || type === 'light2' || type === 'light3') {
       // register handlers for the Brightness Characteristic
       this.service.getCharacteristic(this.platform.Characteristic.Brightness)
         .on('set', this.setBrightness.bind(this))
         .on('get', this.getBrightness.bind(this));
-      if (type === ZbBridgeDeviceType.light3) {
+      if (type === 'light3') {
         // register handlers for the Hue Characteristic
         this.service.getCharacteristic(this.platform.Characteristic.Hue)
           .on('set', this.setHue.bind(this))
