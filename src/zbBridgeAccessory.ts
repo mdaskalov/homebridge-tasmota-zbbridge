@@ -9,7 +9,7 @@ import { TasmotaZbBridgePlatform } from './platform';
  */
 export class ZbBridgeAccessory {
   private service: Service;
-  private device: string;
+  private addr: string;
   private power: boolean | undefined;
   private dimmer: number | undefined;
   private hue: number | undefined;
@@ -24,7 +24,7 @@ export class ZbBridgeAccessory {
     this.hue = undefined;
     this.saturation = undefined;
 
-    this.device = this.accessory.context.device.addr;
+    this.addr = this.accessory.context.device.addr;
     const type = this.accessory.context.device.type;
 
     //Info:   ZbSend {device: '0xC016', cluster: 0, read: [4,5]} // get Manufacturer, Model
@@ -35,12 +35,12 @@ export class ZbBridgeAccessory {
     //both:   ZbSend {device: "0x6769", cluster: 768, read: [0,1]}
 
     // query accessory information
-    this.platform.mqttClient.send({ device: this.device, cluster: 0, read: [0, 4, 5] });
-    this.platform.mqttClient.send({ device: this.device, cluster: 6, read: 0 });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
     if (type === 'light1' || type === 'light2' || type === 'light3') {
-      this.platform.mqttClient.send({ device: this.device, cluster: 8, read: 0 });
+      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
       if (type === 'light3') {
-        this.platform.mqttClient.send({ device: this.device, cluster: 768, read: [0, 1] });
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1] });
       }
     }
 
@@ -52,10 +52,6 @@ export class ZbBridgeAccessory {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     // update device name
-    this.platform.mqttClient.publish(
-      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-      this.device + ',' + accessory.context.device.name,
-    );
 
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
@@ -87,7 +83,7 @@ export class ZbBridgeAccessory {
       const obj = JSON.parse(message);
       if (obj && obj.ZbReceived) {
         const responseDevice: string = Object.keys(obj.ZbReceived)[0];
-        if ((responseDevice.toUpperCase() === this.device.toUpperCase()) && obj.ZbReceived[responseDevice]) {
+        if ((responseDevice.toUpperCase() === this.addr.toUpperCase()) && obj.ZbReceived[responseDevice]) {
           const response = obj.ZbReceived[responseDevice];
           this.updateStatus(response);
         }
@@ -100,9 +96,9 @@ export class ZbBridgeAccessory {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, response.Manufacturer)
         .setCharacteristic(this.platform.Characteristic.Model, response.ModelId)
-        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.device);
+        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
       this.platform.log.debug('%s (%s) Manufacturer: %s, Model: %s',
-        this.accessory.context.device.name, this.device,
+        this.accessory.context.device.name, this.addr,
         response.Manufacturer,
         response.ModelId,
       );
@@ -124,7 +120,7 @@ export class ZbBridgeAccessory {
         this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
       }
       this.platform.log.debug('%s (%s) %s%s%s%s',
-        this.accessory.context.device.name, this.device,
+        this.accessory.context.device.name, this.addr,
         this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
         this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
         this.hue !== undefined ? ', Hue: ' + this.hue : '',
@@ -136,53 +132,53 @@ export class ZbBridgeAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.power !== value) {
       this.power = value as boolean;
-      this.platform.mqttClient.send({ device: this.device, send: { Power: (value ? 'On' : 'Off') } });
+      this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
     }
     callback(null);
   }
 
   getOn(callback: CharacteristicGetCallback) {
     callback(null, this.power);
-    this.platform.mqttClient.send({ device: this.device, cluster: 6, read: 0 });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
   }
 
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.dimmer !== value) {
       this.dimmer = value as number;
-      this.platform.mqttClient.send({ device: this.device, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
+      this.platform.mqttClient.send({ device: this.addr, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
   }
 
   getBrightness(callback: CharacteristicGetCallback) {
     callback(null, this.dimmer);
-    this.platform.mqttClient.send({ device: this.device, cluster: 8, read: 0 });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
   }
 
   setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.hue !== value) {
       this.hue = value as number;
-      this.platform.mqttClient.send({ device: this.device, send: { Hue: Math.round(254 * (value as number) / 360) } });
+      this.platform.mqttClient.send({ device: this.addr, send: { Hue: Math.round(254 * (value as number) / 360) } });
     }
     callback(null);
   }
 
   getHue(callback: CharacteristicGetCallback) {
     callback(null, this.hue);
-    this.platform.mqttClient.send({ device: this.device, cluster: 768, read: 0 });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
   }
 
   setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.saturation !== value) {
       this.saturation = value as number;
-      this.platform.mqttClient.send({ device: this.device, send: { Sat: Math.round(254 * (value as number) / 100) } });
+      this.platform.mqttClient.send({ device: this.addr, send: { Sat: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
   }
 
   getSaturation(callback: CharacteristicGetCallback) {
     callback(null, this.saturation);
-    this.platform.mqttClient.send({ device: this.device, cluster: 768, read: 1 });
+    this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
   }
 
 }
