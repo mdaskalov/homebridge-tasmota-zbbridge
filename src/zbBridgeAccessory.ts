@@ -35,10 +35,14 @@ export class ZbBridgeAccessory {
 
     //Info:   ZbSend {device: '0xC016', cluster: 0, read: [4,5]} // get Manufacturer, Model
     //Power:  ZbSend {device: "0x6769", cluster: 6, read: 0}
-    //Dimmer: ZbSend {device: "0x6769", cluster: 6, read: 0}
+    //Dimmer: ZbSend {device: "0x6769", cluster: 8, read: 0}
     //Hue:    ZbSend {device: "0x6769", cluster: 768, read: 0}
     //Sat:    ZbSend {device: "0x6769", cluster: 768, read: 1}
     //both:   ZbSend {device: "0x6769", cluster: 768, read: [0,1]}
+    //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] }; 
+    //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 }; 
+    //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 }; 
+    //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1] }
 
     // query accessory information
     this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
