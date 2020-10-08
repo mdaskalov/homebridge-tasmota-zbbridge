@@ -80,20 +80,23 @@
               "type": "string",
               "default": "POWER",
               "oneOf": [{
-                "title": "Basic Switch",
+                "title": "Switch",
                 "enum": ["POWER"]
               }, {
-                "title": "4CH Switch 1",
+                "title": "Switch 1",
                 "enum": ["POWER1"]
               }, {
-                "title": "4CH Switch 2",
+                "title": "Switch 2",
                 "enum": ["POWER2"]
               }, {
-                "title": "4CH Switch 3",
+                "title": "Switch 3",
                 "enum": ["POWER3"]
               }, {
-                "title": "4CH Switch 4",
+                "title": "Switch 4",
                 "enum": ["POWER4"]
+              }, {
+                "title": "Analog Temperature",
+                "enum": ["StatusSNS.ANALOG.Temperature"]
               }, {
                 "title": "AM2301 Temperature",
                 "enum": ["StatusSNS.AM2301.Temperature"]
