@@ -92,6 +92,14 @@ export class ZbBridgeAccessory {
       }
     }
 
+    // Use separated topic for power
+    if (this.accessory.context.device.powerTopic !== '') {
+      const powerTopic = 'stat/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
+      this.platform.mqttClient.subscribe(powerTopic, (message) => {
+        this.updateStatus({ Power: (message === 'ON') ? 1 : 0 });
+      });
+    }
+
     // Update 
     this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', (message) => {
       const obj = JSON.parse(message);
@@ -146,14 +154,25 @@ export class ZbBridgeAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.power !== value) {
       this.power = value as boolean;
-      this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
+      if (this.accessory.context.device.powerTopic !== '') {
+        const powerTopic = 'cmnd/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
+        this.platform.mqttClient.publish(powerTopic, value ? 'ON' : 'OFF');
+        this.platform.mqttClient.send({ device: this.addr, send: { Power: 'On' } });
+      } else {
+        this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
+      }
     }
     callback(null);
   }
 
   getOn(callback: CharacteristicGetCallback) {
     callback(null, this.power);
-    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+    if (this.accessory.context.device.powerTopic !== '') {
+      const powerTopic = 'cmnd/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
+      this.platform.mqttClient.publish(powerTopic, '');
+    } else {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+    }
   }
 
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {

@@ -29,6 +29,7 @@
             "addr": {
               "title": "Short Address",
               "type": "string",
+              "placeholder": "Short addr",
               "pattern": "^0x[A-Fa-f0-9]{4}$",
               "required": true
             },
@@ -57,7 +58,34 @@
             "name": {
               "title": "Name",
               "type": "string",
+              "placeholder": "HomeKit name",
               "required": true
+            },
+            "powerTopic": {
+              "title": "Power Topic",
+              "placeholder": "Topic",
+              "type": "string"
+            },
+            "powerType": {
+              "title": "Type",
+              "type": "string",
+              "default": "POWER",
+              "oneOf": [{
+                "title": "Switch",
+                "enum": ["POWER"]
+              }, {
+                "title": "Switch 1",
+                "enum": ["POWER1"]
+              }, {
+                "title": "Switch 2",
+                "enum": ["POWER2"]
+              }, {
+                "title": "Switch 3",
+                "enum": ["POWER3"]
+              }, {
+                "title": "Switch 4",
+                "enum": ["POWER4"]
+              }]
             }
           }
         }
@@ -73,6 +101,7 @@
             "topic": {
               "title": "MQTT Topic",
               "type": "string",
+              "placeholder": "Topic",
               "required": true
             },
             "type": {
@@ -127,6 +156,7 @@
             "name": {
               "title": "Name",
               "type": "string",
+              "placeholder": "HomeKit name",
               "required": true
             }
           }
@@ -171,20 +201,65 @@
               "type": "flex",
               "flex": "1 1 90px",
               "flex-flow": "column",
-              "items": ["zbBridgeDevices[].addr"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].addr"
+              }]
             },
             {
               "type": "flex",
               "flex": "1 1 150px",
               "flex-flow": "column",
-              "items": ["zbBridgeDevices[].type"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].type"
+              }]
             },
             {
               "type": "flex",
               "flex-flow": "column",
-              "items": ["zbBridgeDevices[].name"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].name"
+              }]
             }
           ]
+        }, {
+          "type": "fieldset",
+          "title": "Power Control",
+          "expandable": true,
+          "expanded": false,
+          "items": [{
+            "type": "help",
+            "helpvalue": "Use separate tasmota device to control the power on/off function of the device"
+          }, {
+            "type": "div",
+            "displayFlex": true,
+            "items": [{
+              "type": "flex",
+              "flex-flow": "row",
+              "items": [{
+                "type": "flex",
+                "flex-flow": "column",
+                "items": [{
+                  "nodescription": true,
+                  "notitle": true,
+                  "key": "zbBridgeDevices[].powerTopic"
+                }]
+              }, {
+                "type": "flex",
+                "flex-flow": "column",
+                "items": [{
+                  "nodescription": true,
+                  "notitle": true,
+                  "key": "zbBridgeDevices[].powerType"
+                }]
+              }]
+            }]
+          }]
         }]
       }]
     },
@@ -201,18 +276,30 @@
               "type": "flex",
               "flex": "1 1 90px",
               "flex-flow": "column",
-              "items": ["tasmotaDevices[].topic"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "tasmotaDevices[].topic"
+              }]
             },
             {
               "type": "flex",
               "flex": "1 1 150px",
               "flex-flow": "column",
-              "items": ["tasmotaDevices[].type"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "tasmotaDevices[].type"
+              }]
             },
             {
               "type": "flex",
               "flex-flow": "column",
-              "items": ["tasmotaDevices[].name"]
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "tasmotaDevices[].name"
+              }]
             }
           ]
         }]
