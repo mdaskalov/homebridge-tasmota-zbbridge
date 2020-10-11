@@ -16,6 +16,8 @@
 Thsis plugin can controll zigbee devices connected to [Sonoff Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or any other device running [Tasmota](https://tasmota.github.io/docs) firmware using MQTT commands.
 Requires MQTT broker to communicate.
 
+It is also possible to combine devices - tasmota device can be used to switch a zigbee device on/off.
+
 # Installation
 
 * Flash your device with Tasmota firmware
@@ -32,7 +34,9 @@ Requires MQTT broker to communicate.
         {
             "addr": "0x8e8e",
             "type": "light1",
-            "name": "Hue Lamp"
+            "name": "Hue Lamp",
+            "powerTopic": "shelly-kitchen",
+            "powerType": "POWER2"
         },
         {
             "addr": "0x6769",
@@ -79,6 +83,8 @@ Requires MQTT broker to communicate.
 * `addr` - Device short address
 * `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name
+* `powerTopic` - (optional) Use another tasmota device to controll the power
+* `powerType` - (optional) Which tasmota switch to use, default: `POWER`
 
 `tasmotaDevices` - Tasmota flashed devices
 
