@@ -15,6 +15,7 @@ export type ZbBridgeDevice = {
  */
 export class ZbBridgeAccessory {
   private service: Service;
+  private powerTopic: string | undefined;
   private addr: string;
   private power: boolean | undefined;
   private dimmer: number | undefined;
@@ -25,6 +26,7 @@ export class ZbBridgeAccessory {
     private readonly platform: TasmotaZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
+    this.powerTopic = undefined;
     this.power = undefined;
     this.dimmer = undefined;
     this.hue = undefined;
@@ -94,8 +96,8 @@ export class ZbBridgeAccessory {
 
     // Use separated topic for power
     if (this.accessory.context.device.powerTopic !== '') {
-      const powerTopic = 'stat/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
-      this.platform.mqttClient.subscribe(powerTopic, (message) => {
+      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
+      this.platform.mqttClient.subscribe('stat/' + this.powerTopic, (message) => {
         this.updateStatus({ Power: (message === 'ON') ? 1 : 0 });
       });
     }
@@ -154,9 +156,8 @@ export class ZbBridgeAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.power !== value) {
       this.power = value as boolean;
-      if (this.accessory.context.device.powerTopic !== '') {
-        const powerTopic = 'cmnd/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
-        this.platform.mqttClient.publish(powerTopic, value ? 'ON' : 'OFF');
+      if (this.powerTopic !== '') {
+        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, value ? 'ON' : 'OFF');
         this.platform.mqttClient.send({ device: this.addr, send: { Power: 'On' } });
       } else {
         this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
@@ -167,9 +168,8 @@ export class ZbBridgeAccessory {
 
   getOn(callback: CharacteristicGetCallback) {
     callback(null, this.power);
-    if (this.accessory.context.device.powerTopic !== '') {
-      const powerTopic = 'cmnd/' + this.accessory.context.device.powerTopic + '/' + this.accessory.context.device.powerType;
-      this.platform.mqttClient.publish(powerTopic, '');
+    if (this.powerTopic !== '') {
+      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
     } else {
       this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
     }
