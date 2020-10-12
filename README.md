@@ -128,3 +128,15 @@ tele/zbbridge/SENSOR = {"ZbReceived":{"0x303F":{"Device":"0x303F","Name":"IKEA_L
 ```
 ZbListen1 57519
 ```
+The listen commands should be executed after each reboot. Alternatively a rule to execute them when the zigbee is initialized on boot could be created:
+
+1. Create the rule:
+```
+RULE1 ON ZbState#status=0 DO Backlog ZbListen1 100; ZbListen2 57519 ENDON
+```
+2. Activate it:
+```
+RULE1 1
+
+
+
