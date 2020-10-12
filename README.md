@@ -137,6 +137,4 @@ RULE1 ON ZbState#status=0 DO Backlog ZbListen1 100; ZbListen2 57519 ENDON
 2. Activate it:
 ```
 RULE1 1
-
-
-
+```
