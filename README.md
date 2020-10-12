@@ -118,7 +118,7 @@ ZbBind {"Device":"IKEA_Remote","ToGroup":10,"Cluster":6}
 ```
 3. Activate EZSP to listen to the group messages so the HomeKit device is updated each time a group command is received (Not necessary for CC2530 devices)
 ```
-ZbListen1 100
+ZbListen1 10
 ```
 You can also bind devices as usual using the link button. Then you have to find out the automatically generated group and activate EZSP to listen to this group:
 1. Get all device groups:
