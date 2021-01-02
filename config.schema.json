@@ -36,7 +36,6 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "default": "light1",
               "oneOf": [{
                 "title": "Simple On/Off Light",
                 "enum": ["light0"]
@@ -69,7 +68,6 @@
             "powerType": {
               "title": "Type",
               "type": "string",
-              "default": "POWER",
               "oneOf": [{
                 "title": "Switch",
                 "enum": ["POWER"]
@@ -107,7 +105,6 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "default": "POWER",
               "oneOf": [{
                 "title": "Switch",
                 "enum": ["POWER"]
@@ -191,6 +188,7 @@
     {
       "key": "zbBridgeDevices",
       "buttonText": "Add Device",
+      "default": [],
       "items": [{
         "type": "div",
         "displayFlex": false,
@@ -266,6 +264,7 @@
     {
       "key": "tasmotaDevices",
       "buttonText": "Add Device",
+      "default": [],
       "items": [{
         "type": "div",
         "displayFlex": false,
