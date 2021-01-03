@@ -8,6 +8,8 @@ export type ZbBridgeDevice = {
   name: string
 }
 
+const UPDATE_DELAY = 2000;
+
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -21,6 +23,7 @@ export class ZbBridgeAccessory {
   private dimmer: number | undefined;
   private hue: number | undefined;
   private saturation: number | undefined;
+  private updated: number | undefined;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
@@ -31,6 +34,7 @@ export class ZbBridgeAccessory {
     this.dimmer = undefined;
     this.hue = undefined;
     this.saturation = undefined;
+    this.updated = undefined;
 
     this.addr = this.accessory.context.device.addr;
     const type = this.accessory.context.device.type;
@@ -116,6 +120,10 @@ export class ZbBridgeAccessory {
   }
 
   updateStatus(response) {
+    if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
+      this.platform.log.debug('%s (%s) updateStatus ignored...', this.accessory.context.device.name, this.addr);
+      return;
+    }
     if (response.Manufacturer && response.ModelId) {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, response.Manufacturer)
@@ -156,6 +164,7 @@ export class ZbBridgeAccessory {
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.power !== value) {
       this.power = value as boolean;
+      this.updated = Date.now();
       if (this.powerTopic !== undefined) {
         if (value) {
           this.platform.mqttClient.publish('cmnd/' + this.powerTopic, 'ON');
@@ -177,6 +186,7 @@ export class ZbBridgeAccessory {
 
   getOn(callback: CharacteristicGetCallback) {
     callback(null, this.power);
+    this.updated = undefined;
     if (this.powerTopic !== undefined) {
       this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
     } else {
@@ -187,6 +197,7 @@ export class ZbBridgeAccessory {
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.dimmer !== value) {
       this.dimmer = value as number;
+      this.updated = Date.now();
       this.platform.mqttClient.send({ device: this.addr, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
@@ -194,12 +205,14 @@ export class ZbBridgeAccessory {
 
   getBrightness(callback: CharacteristicGetCallback) {
     callback(null, this.dimmer);
+    this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
   }
 
   setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.hue !== value) {
       this.hue = value as number;
+      this.updated = Date.now();
       this.platform.mqttClient.send({ device: this.addr, send: { Hue: Math.round(254 * (value as number) / 360) } });
     }
     callback(null);
@@ -207,12 +220,14 @@ export class ZbBridgeAccessory {
 
   getHue(callback: CharacteristicGetCallback) {
     callback(null, this.hue);
+    this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
   }
 
   setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.saturation !== value) {
       this.saturation = value as number;
+      this.updated = Date.now();
       this.platform.mqttClient.send({ device: this.addr, send: { Sat: Math.round(254 * (value as number) / 100) } });
     }
     callback(null);
@@ -220,6 +235,7 @@ export class ZbBridgeAccessory {
 
   getSaturation(callback: CharacteristicGetCallback) {
     callback(null, this.saturation);
+    this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
   }
 
