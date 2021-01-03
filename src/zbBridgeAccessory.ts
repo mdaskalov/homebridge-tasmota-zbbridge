@@ -157,8 +157,17 @@ export class ZbBridgeAccessory {
     if (this.power !== value) {
       this.power = value as boolean;
       if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, value ? 'ON' : 'OFF');
-        this.platform.mqttClient.send({ device: this.addr, send: { Power: 'On' } });
+        if (value) {
+          this.platform.mqttClient.publish('cmnd/' + this.powerTopic, 'ON');
+          setTimeout(() => {
+            this.platform.mqttClient.send({ device: this.addr, send: { Power: 'On' } });
+          }, 1000);
+        } else {
+          this.platform.mqttClient.send({ device: this.addr, send: { Power: 'Off' } });
+          setTimeout(() => {
+            this.platform.mqttClient.publish('cmnd/' + this.powerTopic, 'OFF');
+          }, 1000);
+        }
       } else {
         this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
       }
