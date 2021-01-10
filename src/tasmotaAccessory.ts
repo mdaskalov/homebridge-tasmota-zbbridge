@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback, Characteristic } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
 
@@ -109,6 +109,7 @@ export class TasmotaAccessory {
         case DeviceType.TemperatureSensor:
           this.value = sensorValue as number;
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.value);
+          this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature).props.minValue = -50;
           break;
         case DeviceType.HumiditySensor:
           this.value = sensorValue as number;
