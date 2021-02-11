@@ -1,9 +1,16 @@
-import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback, Characteristic } from 'homebridge';
+import {
+  Service,
+  PlatformAccessory,
+  CharacteristicValue,
+  CharacteristicSetCallback,
+  CharacteristicGetCallback,
+} from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
 
 enum DeviceType {
   Switch,
+  HSBLight,
   TemperatureSensor,
   HumiditySensor
 }
@@ -19,6 +26,10 @@ export class TasmotaAccessory {
   private service: Service;
   private cmndTopic: string;
   private value: CharacteristicValue | undefined;
+  private hue: number | undefined;
+  private saturation: number | undefined;
+  private brightness: number | undefined;
+  private updated: number | undefined;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
@@ -26,6 +37,10 @@ export class TasmotaAccessory {
   ) {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic;
     this.value = undefined;
+    this.hue = undefined;
+    this.saturation = undefined;
+    this.brightness = undefined;
+    this.updated = undefined;
 
     let service;
     const type = this.accessory.context.device.type;
@@ -35,6 +50,9 @@ export class TasmotaAccessory {
     } else if (type.includes('Humidity')) {
       service = this.platform.Service.HumiditySensor;
       this.type = DeviceType.HumiditySensor;
+    } else if (type.includes('HSBColor')) {
+      service = this.platform.Service.Lightbulb;
+      this.type = DeviceType.HSBLight;
     } else {
       service = this.platform.Service.Switch;
       this.type = DeviceType.Switch;
@@ -50,6 +68,20 @@ export class TasmotaAccessory {
       case DeviceType.HumiditySensor:
         this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
           .on('get', this.getSensor.bind(this));
+        break;
+      case DeviceType.HSBLight:
+        this.service.getCharacteristic(this.platform.Characteristic.On)
+          .on('set', this.setLightbulbOn.bind(this))
+          .on('get', this.getLightbulbOn.bind(this));
+        this.service.getCharacteristic(this.platform.Characteristic.Hue)
+          .on('set', this.setHue.bind(this))
+          .on('get', this.getHue.bind(this));
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation)
+          .on('set', this.setSaturation.bind(this))
+          .on('get', this.getSaturation.bind(this));
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness)
+          .on('set', this.setBrightness.bind(this))
+          .on('get', this.getBrightness.bind(this));
         break;
       default:
         this.service.getCharacteristic(this.platform.Characteristic.On)
@@ -103,9 +135,17 @@ export class TasmotaAccessory {
         .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
     }
 
+    if (this.type === DeviceType.HSBLight && response.POWER) {
+      this.value = (response.POWER === 'ON');
+      this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
+    }
+
     const sensorValue = this.getObjectByPath(response, this.accessory.context.device.type);
     if (sensorValue !== undefined) {
       switch (this.type) {
+        case DeviceType.HSBLight:
+          this.updateHSBColor(sensorValue);
+          break;
         case DeviceType.TemperatureSensor:
           this.value = sensorValue as number;
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.value);
@@ -129,6 +169,18 @@ export class TasmotaAccessory {
     }
   }
 
+  updateHSBColor(value: string) {
+    const data = value.split(',');
+    if (data.length === 3) {
+      this.hue = Number(data[0]);
+      this.saturation = Number(data[1]);
+      this.brightness = Number(data[2]);
+      this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
+      this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
+      this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
+    }
+  }
+
   setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.value !== value) {
       this.value = value as boolean;
@@ -140,6 +192,64 @@ export class TasmotaAccessory {
   getOn(callback: CharacteristicGetCallback) {
     callback(null, this.value);
     this.platform.mqttClient.publish(this.cmndTopic + '/' + this.accessory.context.device.type, '');
+  }
+
+  setLightbulbOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.value !== value) {
+      this.value = value as boolean;
+      this.platform.mqttClient.publish(this.cmndTopic + '/POWER', value ? 'ON' : 'OFF');
+    }
+    callback(null);
+  }
+
+  getLightbulbOn(callback: CharacteristicGetCallback) {
+    callback(null, this.value);
+    this.platform.mqttClient.publish(this.cmndTopic + '/POWER', '');
+  }
+
+  setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.hue !== value) {
+      this.hue = value as number;
+      this.updated = Date.now();
+      this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor1', String(value as number));
+    }
+    callback(null);
+  }
+
+  getHue(callback: CharacteristicGetCallback) {
+    callback(null, this.hue);
+    this.updated = undefined;
+    this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
+  }
+
+  setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.saturation !== value) {
+      this.saturation = value as number;
+      this.updated = Date.now();
+      this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor2', String(value as number));
+    }
+    callback(null);
+  }
+
+  getSaturation(callback: CharacteristicGetCallback) {
+    callback(null, this.saturation);
+    this.updated = undefined;
+    this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
+  }
+
+  setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.brightness !== value) {
+      this.brightness = value as number;
+      this.updated = Date.now();
+      this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor3', String(value as number));
+    }
+    callback(null);
+  }
+
+  getBrightness(callback: CharacteristicGetCallback) {
+    callback(null, this.brightness);
+    this.updated = undefined;
+    this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
   }
 
   getSensor(callback: CharacteristicGetCallback) {

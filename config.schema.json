@@ -121,6 +121,9 @@
                 "title": "Switch 4",
                 "enum": ["POWER4"]
               }, {
+                "title": "RGB Lightbulb",
+                "enum": ["HSBColor"]
+              }, {
                 "title": "Analog Temperature",
                 "enum": ["StatusSNS.ANALOG.Temperature"]
               }, {
