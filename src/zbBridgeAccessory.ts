@@ -25,8 +25,10 @@ export class ZbBridgeAccessory {
   private service: Service;
   private powerTopic: string | undefined;
   private addr: string;
+  private type: string;
   private power: boolean | undefined;
   private dimmer: number | undefined;
+  private ct: number | undefined;
   private hue: number | undefined;
   private saturation: number | undefined;
   private updated: number | undefined;
@@ -38,36 +40,41 @@ export class ZbBridgeAccessory {
     this.powerTopic = undefined;
     this.power = undefined;
     this.dimmer = undefined;
+    this.ct = undefined;
     this.hue = undefined;
     this.saturation = undefined;
     this.updated = undefined;
 
     this.addr = this.accessory.context.device.addr;
-    const type = this.accessory.context.device.type;
+    this.type = this.accessory.context.device.type;
 
     //Info:   ZbSend {device: '0xC016', cluster: 0, read: [4,5]} // get Manufacturer, Model
     //Power:  ZbSend {device: "0x6769", cluster: 6, read: 0}
     //Dimmer: ZbSend {device: "0x6769", cluster: 8, read: 0}
+    //CT:     ZbSend {device: "0x6769", cluster: 768, read: 7}
     //Hue:    ZbSend {device: "0x6769", cluster: 768, read: 0}
     //Sat:    ZbSend {device: "0x6769", cluster: 768, read: 1}
     //both:   ZbSend {device: "0x6769", cluster: 768, read: [0,1]}
     //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] }; 
     //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 }; 
     //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 }; 
-    //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1] }
+    //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
 
     // query accessory information
     this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
     this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
-    if (type === 'light1' || type === 'light2' || type === 'light3') {
+    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3') {
       this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
-      if (type === 'light3') {
+      if (this.type === 'light2') {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 7 });
+      }
+      if (this.type === 'light3') {
         this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1] });
       }
     }
 
     // get the service if it exists, otherwise create a new service
-    const service = type === 'switch' ? this.platform.Service.Switch : this.platform.Service.Lightbulb;
+    const service = this.type === 'switch' ? this.platform.Service.Switch : this.platform.Service.Lightbulb;
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
 
     // set the service name, this is what is displayed as the default name on the Home app
@@ -87,12 +94,17 @@ export class ZbBridgeAccessory {
       .on('set', this.setOn.bind(this))
       .on('get', this.getOn.bind(this));
 
-    if (type === 'light1' || type === 'light2' || type === 'light3') {
+    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3') {
       // register handlers for the Brightness Characteristic
       this.service.getCharacteristic(this.platform.Characteristic.Brightness)
         .on('set', this.setBrightness.bind(this))
         .on('get', this.getBrightness.bind(this));
-      if (type === 'light3') {
+      if (this.type === 'light2') {
+        this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
+          .on('set', this.setColorTemperature.bind(this))
+          .on('get', this.getColorTemperature.bind(this));
+      }
+      if (this.type === 'light3') {
         // register handlers for the Hue Characteristic
         this.service.getCharacteristic(this.platform.Characteristic.Hue)
           .on('set', this.setHue.bind(this))
@@ -149,11 +161,15 @@ export class ZbBridgeAccessory {
         this.dimmer = Math.round(100 * response.Dimmer / 254);
         this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.dimmer);
       }
-      if (response.Hue !== undefined) {
+      if (this.type === 'light2' && response.CT !== undefined) {
+        this.ct = Math.round(140 + ((500 - 140) * response.CT / 65534));
+        this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, this.ct);
+      }
+      if (this.type === 'light3' && response.Hue !== undefined) {
         this.hue = Math.round(360 * response.Hue / 254);
         this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
       }
-      if (response.Sat !== undefined) {
+      if (this.type === 'light3' && response.Sat !== undefined) {
         this.saturation = Math.round(100 * response.Sat / 254);
         this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
       }
@@ -213,6 +229,20 @@ export class ZbBridgeAccessory {
     callback(null, this.dimmer);
     this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
+  }
+
+  setColorTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (this.ct !== value) {
+      this.ct = value as number;
+      this.platform.mqttClient.send({ device: this.addr, send: { CT: Math.round(65534 * (this.ct - 140) / (500 - 140)) } });
+    }
+    callback(null);
+  }
+
+  getColorTemperature(callback: CharacteristicGetCallback) {
+    callback(null, this.hue);
+    this.updated = undefined;
+    this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
   }
 
   setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
