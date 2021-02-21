@@ -162,8 +162,8 @@ export class ZbBridgeAccessory {
         this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.dimmer);
       }
       if (this.type === 'light2' && response.CT !== undefined) {
-        this.ct = Math.round(140 + ((500 - 140) * response.CT / 65534));
-        this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, this.ct);
+        this.ct = response.CT;
+        this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, this.ct as number);
       }
       if (this.type === 'light3' && response.Hue !== undefined) {
         this.hue = Math.round(360 * response.Hue / 254);
@@ -234,7 +234,7 @@ export class ZbBridgeAccessory {
   setColorTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.ct !== value) {
       this.ct = value as number;
-      this.platform.mqttClient.send({ device: this.addr, send: { CT: Math.round(65534 * (this.ct - 140) / (500 - 140)) } });
+      this.platform.mqttClient.send({ device: this.addr, send: { CT: this.ct } });
     }
     callback(null);
   }
