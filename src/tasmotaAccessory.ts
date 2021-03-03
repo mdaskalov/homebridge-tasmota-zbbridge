@@ -25,10 +25,10 @@ export class TasmotaAccessory {
   private type: DeviceType;
   private service: Service;
   private cmndTopic: string;
-  private value: CharacteristicValue | undefined;
-  private hue: number | undefined;
-  private saturation: number | undefined;
-  private brightness: number | undefined;
+  private value: CharacteristicValue;
+  private hue: number;
+  private saturation: number;
+  private brightness: number;
   private updated: number | undefined;
 
   constructor(
@@ -36,10 +36,10 @@ export class TasmotaAccessory {
     private readonly accessory: PlatformAccessory,
   ) {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic;
-    this.value = undefined;
-    this.hue = undefined;
-    this.saturation = undefined;
-    this.brightness = undefined;
+    this.value = 0;
+    this.hue = 0;
+    this.saturation = 0;
+    this.brightness = 0;
     this.updated = undefined;
 
     let service;
