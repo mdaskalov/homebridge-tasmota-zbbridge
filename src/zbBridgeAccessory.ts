@@ -40,7 +40,7 @@ export class ZbBridgeAccessory {
     this.powerTopic = undefined;
     this.power = false;
     this.dimmer = 0;
-    this.ct = 0;
+    this.ct = 140;
     this.hue = 0;
     this.saturation = 0;
     this.updated = undefined;
