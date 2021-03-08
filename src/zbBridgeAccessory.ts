@@ -275,4 +275,44 @@ export class ZbBridgeAccessory {
     this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
   }
 
+  setXYColor() {
+    const h = this.hue / 360;
+    const s = this.saturation / 100;
+
+    let r = 1;
+    let g = 1;
+    let b = 1;
+
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = 1 - s;
+    const q = 1 - f * s;
+    const t = 1 - (1 - f) * s;
+    switch (i % 6) {
+      case 0: g = t, b = p; break;
+      case 1: r = q, b = p; break;
+      case 2: r = p, b = t; break;
+      case 3: r = p, g = q; break;
+      case 4: r = t, g = p; break;
+      case 5: g = p, b = q; break;
+    }
+
+    if (r + g + b > 0) {
+      // apply gamma correction
+      r = (r > 0.04045) ? Math.pow((r + 0.055) / (1.0 + 0.055), 2.4) : (r / 12.92);
+      g = (g > 0.04045) ? Math.pow((g + 0.055) / (1.0 + 0.055), 2.4) : (g / 12.92);
+      b = (b > 0.04045) ? Math.pow((b + 0.055) / (1.0 + 0.055), 2.4) : (b / 12.92);
+
+      // Convert the RGB values to XYZ using the Wide RGB D65
+      const X = r * 0.649926 + g * 0.103455 + b * 0.197109;
+      const Y = r * 0.234327 + g * 0.743075 + b * 0.022598;
+      const Z = r * 0.000000 + g * 0.053077 + b * 1.035763;
+
+      const x = Math.round(65534 * X / (X + Y + Z));
+      const y = Math.round(65534 * Y / (X + Y + Z));
+
+      this.platform.mqttClient.send({ device: this.addr, send: { color: `${x},${y}` } });
+    }
+  }
+
 }
