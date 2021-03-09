@@ -125,11 +125,14 @@ export class ZbBridgeAccessory {
     }
 
     // Update
-    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', (message) => {
+    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', (message, topic) => {
       const obj = JSON.parse(message);
       if (obj && obj.ZbReceived) {
         const responseDevice: string = Object.keys(obj.ZbReceived)[0];
         if ((responseDevice.toUpperCase() === this.addr.toUpperCase()) && obj.ZbReceived[responseDevice]) {
+          this.platform.log.debug('%s (%s) MQTT: Received %s :- %s',
+            this.accessory.context.device.name, this.addr,
+            topic, message);
           const response = obj.ZbReceived[responseDevice];
           this.updateStatus(response);
         }
