@@ -155,23 +155,23 @@ export class ZbBridgeAccessory {
     } else {
       if (response.Power !== undefined) {
         this.power = (response.Power === 1);
-        this.service.updateCharacteristic(this.platform.Characteristic.On, this.power);
+        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
       }
       if (response.Dimmer !== undefined) {
         this.dimmer = Math.round(100 * response.Dimmer / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.dimmer);
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
       }
       if (this.type === 'light2' && response.CT !== undefined) {
         this.ct = response.CT;
-        this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, this.ct as number);
+        this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(this.ct as number);
       }
       if (this.type === 'light3' && response.Hue !== undefined) {
         this.hue = Math.round(360 * response.Hue / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
+        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
       }
       if (this.type === 'light3' && response.Sat !== undefined) {
         this.saturation = Math.round(100 * response.Sat / 254);
-        this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
       }
       this.platform.log.debug('%s (%s) %s%s%s%s',
         this.accessory.context.device.name, this.addr,
