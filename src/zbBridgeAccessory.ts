@@ -2,8 +2,6 @@ import {
   Service,
   PlatformAccessory,
   CharacteristicValue,
-  CharacteristicSetCallback,
-  CharacteristicGetCallback,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -106,28 +104,28 @@ export class ZbBridgeAccessory {
 
     // register handlers for the On/Off Characteristic
     this.service.getCharacteristic(this.platform.Characteristic.On)
-      .on('set', this.setOn.bind(this))
-      .on('get', this.getOn.bind(this));
+      .onSet(this.setOn.bind(this))
+      .onGet(this.getOn.bind(this));
 
     if (this.supportDimmer) {
       this.service.getCharacteristic(this.platform.Characteristic.Brightness)
-        .on('set', this.setBrightness.bind(this))
-        .on('get', this.getBrightness.bind(this));
+        .onSet(this.setBrightness.bind(this))
+        .onGet(this.getBrightness.bind(this));
     }
     if (this.supportCT) {
       this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
-        .on('set', this.setColorTemperature.bind(this))
-        .on('get', this.getColorTemperature.bind(this));
+        .onSet(this.setColorTemperature.bind(this))
+        .onGet(this.getColorTemperature.bind(this));
     }
     if (this.supportHS || this.supportXY) {
       this.platform.log.debug('hueSat');
       this.service.getCharacteristic(this.platform.Characteristic.Hue)
-        .on('set', this.setHue.bind(this))
-        .on('get', this.getHue.bind(this));
+        .onSet(this.setHue.bind(this))
+        .onGet(this.getHue.bind(this));
       // register handlers for the Saturation Characteristic
       this.service.getCharacteristic(this.platform.Characteristic.Saturation)
-        .on('set', this.setSaturation.bind(this))
-        .on('get', this.getSaturation.bind(this));
+        .onSet(this.setSaturation.bind(this))
+        .onGet(this.getSaturation.bind(this));
     }
 
     // Use separated topic for power
@@ -231,12 +229,7 @@ export class ZbBridgeAccessory {
     }
   }
 
-  valueCallback(callback: CharacteristicSetCallback, value?: CharacteristicValue) {
-    this.platform.log.debug('value:' + value);
-    callback(value === undefined ? new Error('undefined') : null, value);
-  }
-
-  setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  async setOn(value: CharacteristicValue) {
     if (this.power !== value) {
       this.power = value as boolean;
       this.updated = Date.now();
@@ -253,52 +246,58 @@ export class ZbBridgeAccessory {
           }, 1000);
         }
       } else {
-        this.platform.mqttClient.send({ device: this.addr, send: { Power: (value ? 'On' : 'Off') } });
+        this.platform.mqttClient.send({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
       }
     }
-    callback(null);
   }
 
-  getOn(callback: CharacteristicGetCallback) {
-    this.valueCallback(callback, this.power);
+  async getOn(): Promise<CharacteristicValue> {
     this.updated = undefined;
     if (this.powerTopic !== undefined) {
       this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
     } else {
       this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
     }
+    if (this.power === undefined) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+    return this.power;
   }
 
-  setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  async setBrightness(value: CharacteristicValue) {
     if (this.dimmer !== value) {
       this.dimmer = value as number;
       this.updated = Date.now();
-      this.platform.mqttClient.send({ device: this.addr, send: { Dimmer: Math.round(254 * (value as number) / 100) } });
+      this.platform.mqttClient.send({ device: this.addr, send: { Dimmer: Math.round(254 * this.dimmer / 100) } });
     }
-    callback(null);
   }
 
-  getBrightness(callback: CharacteristicGetCallback) {
-    this.valueCallback(callback, this.dimmer);
+  async getBrightness(): Promise<CharacteristicValue> {
     this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
+    if (this.dimmer === undefined) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+    return this.dimmer;
   }
 
-  setColorTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  async setColorTemperature(value: CharacteristicValue) {
     if (this.ct !== value) {
       this.ct = value as number;
       this.platform.mqttClient.send({ device: this.addr, send: { CT: this.ct } });
     }
-    callback(null);
   }
 
-  getColorTemperature(callback: CharacteristicGetCallback) {
-    this.valueCallback(callback, this.ct);
+  async getColorTemperature(): Promise<CharacteristicValue> {
     this.updated = undefined;
     this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
+    if (this.ct === undefined) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+    return this.ct;
   }
 
-  setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  async setHue(value: CharacteristicValue) {
     if (this.hue !== value) {
       this.hue = value as number;
       this.updated = Date.now();
@@ -307,14 +306,12 @@ export class ZbBridgeAccessory {
         this.platform.mqttClient.send({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
       }
       if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, send: { Hue: Math.round(254 * (value as number) / 360) } });
+        this.platform.mqttClient.send({ device: this.addr, send: { Hue: Math.round(254 * this.hue / 360) } });
       }
     }
-    callback(null);
   }
 
-  getHue(callback: CharacteristicGetCallback) {
-    this.valueCallback(callback, this.hue);
+  async getHue(): Promise<CharacteristicValue> {
     this.updated = undefined;
     if (this.supportXY) {
       this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
@@ -322,9 +319,13 @@ export class ZbBridgeAccessory {
     if (this.supportHS) {
       this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
     }
+    if (this.hue === undefined) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+    return this.hue;
   }
 
-  setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  async setSaturation(value: CharacteristicValue) {
     if (this.saturation !== value) {
       this.saturation = value as number;
       this.updated = Date.now();
@@ -333,14 +334,12 @@ export class ZbBridgeAccessory {
         this.platform.mqttClient.send({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
       }
       if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, send: { Sat: Math.round(254 * (value as number) / 100) } });
+        this.platform.mqttClient.send({ device: this.addr, send: { Sat: Math.round(254 * this.saturation / 100) } });
       }
     }
-    callback(null);
   }
 
-  getSaturation(callback: CharacteristicGetCallback) {
-    this.valueCallback(callback, this.saturation);
+  async getSaturation(): Promise<CharacteristicValue> {
     this.updated = undefined;
     if (this.supportXY) {
       this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
@@ -348,6 +347,10 @@ export class ZbBridgeAccessory {
     if (this.supportHS) {
       this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
     }
+    if (this.saturation === undefined) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+    return this.saturation;
   }
 
   convertHStoXY() {
