@@ -43,13 +43,15 @@ export class ZbBridgeAccessory {
     private readonly platform: TasmotaZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    this.supportDimmer = true;
-    this.supportCT = true;
+    this.supportDimmer = false;
+    this.supportCT = false;
     this.supportHS = false;
-    this.supportXY = true;
+    this.supportXY = false;
 
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
+
+    this.configureLightFeatures();
 
     //uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
 
@@ -150,6 +152,23 @@ export class ZbBridgeAccessory {
         }
       }
     });
+  }
+
+  configureLightFeatures() {
+    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3' || this.type.includes('_B')) {
+      this.supportDimmer = true;
+    }
+    if (this.type === 'light2' || this.type === 'light5' || this.type.includes('_CT')) {
+      this.supportDimmer = true;
+      this.supportCT = true;
+    }
+    if (this.type === 'light3' || this.type === 'light4' || this.type === 'light5' || this.type.includes('_HS')) {
+      this.supportDimmer = true;
+      this.supportHS = true;
+    }
+    if (this.type.includes('_XY')) {
+      this.supportXY = true;
+    }
   }
 
   updateColor(colormode: number | undefined) {
@@ -264,7 +283,7 @@ export class ZbBridgeAccessory {
     return this.power;
   }
 
-  async setBrightness(value: CharacteristicValue) {
+  setBrightness(value: CharacteristicValue) {
     if (this.dimmer !== value) {
       this.dimmer = value as number;
       this.updated = Date.now();
