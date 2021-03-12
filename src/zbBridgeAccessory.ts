@@ -390,8 +390,8 @@ export class ZbBridgeAccessory {
       const Y = r * 0.234327 + g * 0.743075 + b * 0.022598;
       const Z = r * 0.000000 + g * 0.053077 + b * 1.035763;
 
-      this.colorX = Math.round(65536.0 * X / (X + Y + Z));
-      this.colorY = Math.round(65536.0 * Y / (X + Y + Z));
+      this.colorX = Math.round(65535.0 * X / (X + Y + Z));
+      this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
       this.platform.log.debug(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
     }
   }
@@ -401,8 +401,8 @@ export class ZbBridgeAccessory {
       return;
     }
 
-    const x = (this.colorX as number) / 65536.0;
-    const y = (this.colorY as number) / 65536.0;
+    const x = (this.colorX as number) / 65535.0;
+    const y = (this.colorY as number) / 65535.0;
     const z = 1.0 - x - y;
 
     const Y = this.dimmer === undefined ? 1 : (this.dimmer as number) / 100;
@@ -412,6 +412,7 @@ export class ZbBridgeAccessory {
     let r = X * 1.4628067 - Y * 0.1840623 - Z * 0.2743606;
     let g = -X * 0.5217933 + Y * 1.4472381 + Z * 0.0677227;
     let b = X * 0.0349342 - Y * 0.0968930 + Z * 1.2884099;
+    // apply gamma correction
     r = r <= 0.0031308 ? 12.92 * r : (1.0 + 0.055) * Math.pow(r, (1.0 / 2.4)) - 0.055;
     g = g <= 0.0031308 ? 12.92 * g : (1.0 + 0.055) * Math.pow(g, (1.0 / 2.4)) - 0.055;
     b = b <= 0.0031308 ? 12.92 * b : (1.0 + 0.055) * Math.pow(b, (1.0 / 2.4)) - 0.055;
@@ -473,8 +474,8 @@ export class ZbBridgeAccessory {
     x /= 0xFFFF;
     y /= 0xFFFF;
 
-    this.colorX = Math.round(x * 65536.0);
-    this.colorY = Math.round(y * 65536.0);
+    this.colorX = Math.round(x * 65535.0);
+    this.colorY = Math.round(y * 65535.0);
     this.platform.log.debug(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
     this.convertXYtoHS();
   }
