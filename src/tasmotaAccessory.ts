@@ -91,7 +91,8 @@ export class TasmotaAccessory {
     }
 
     // Update status on all stat topics
-    this.platform.mqttClient.subscribe('stat/' + this.accessory.context.device.topic + '/+', (message) => {
+    this.platform.mqttClient.subscribe('stat/' + this.accessory.context.device.topic + '/+', (message, topic) => {
+      this.platform.log.debug('MQTT: Received: %s :- %s', topic, message);
       let obj = undefined;
       try {
         obj = JSON.parse(message);

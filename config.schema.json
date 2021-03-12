@@ -49,6 +49,9 @@
                 "title": "RGB Light",
                 "enum": ["light3"]
               }, {
+                "title": "RGB (With XY color and CT)",
+                "enum": ["light_XY_B_CT"]
+              }, {
                 "title": "On/Off Switch",
                 "enum": ["switch"]
               }],

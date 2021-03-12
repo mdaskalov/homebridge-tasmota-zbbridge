@@ -38,7 +38,6 @@ export class MQTTClient {
     });
 
     this.client.on('message', (topic, message) => {
-      this.log.debug('MQTT: Received: %s :- %s', topic, message);
       const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
       hadnlers.forEach(h => h.callback(message.toString(), topic));
     });
