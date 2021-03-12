@@ -81,7 +81,7 @@ It is also possible to combine devices - tasmota device can be used to switch a 
 `zbBridgeDevices` - Zigbee devices connected to the Sonoff Zigbee Bridge
 
 * `addr` - Device short address
-* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`
+* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`. Alternatively use generic `light` and add features as needed: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support.
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name
 * `powerTopic` - (optional) Use another tasmota device to controll the power
 * `powerType` - (optional) Which tasmota switch to use, default: `POWER`
