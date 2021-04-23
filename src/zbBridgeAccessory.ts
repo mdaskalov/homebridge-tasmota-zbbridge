@@ -253,17 +253,7 @@ export class ZbBridgeAccessory {
       this.power = value as boolean;
       this.updated = Date.now();
       if (this.powerTopic !== undefined) {
-        if (value) {
-          this.platform.mqttClient.publish('cmnd/' + this.powerTopic, 'ON');
-          setTimeout(() => {
-            this.platform.mqttClient.send({ device: this.addr, send: { Power: 'On' } });
-          }, 1000);
-        } else {
-          this.platform.mqttClient.send({ device: this.addr, send: { Power: 'Off' } });
-          setTimeout(() => {
-            this.platform.mqttClient.publish('cmnd/' + this.powerTopic, 'OFF');
-          }, 1000);
-        }
+        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, value ? 'ON' : 'OFF');
       } else {
         this.platform.mqttClient.send({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
       }
@@ -272,12 +262,12 @@ export class ZbBridgeAccessory {
 
   async getOn(): Promise<CharacteristicValue> {
     this.updated = undefined;
-    if (this.powerTopic !== undefined) {
-      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-    } else {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
-    }
     if (this.power === undefined) {
+      if (this.powerTopic !== undefined) {
+        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
+      } else {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+      }
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.power;
@@ -293,8 +283,8 @@ export class ZbBridgeAccessory {
 
   async getBrightness(): Promise<CharacteristicValue> {
     this.updated = undefined;
-    this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
     if (this.dimmer === undefined) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.dimmer;
@@ -309,8 +299,8 @@ export class ZbBridgeAccessory {
 
   async getColorTemperature(): Promise<CharacteristicValue> {
     this.updated = undefined;
-    this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
     if (this.ct === undefined) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.ct;
@@ -332,13 +322,13 @@ export class ZbBridgeAccessory {
 
   async getHue(): Promise<CharacteristicValue> {
     this.updated = undefined;
-    if (this.supportXY) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
-    }
-    if (this.supportHS) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
-    }
     if (this.hue === undefined) {
+      if (this.supportXY) {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
+      }
+      if (this.supportHS) {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
+      }
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.hue;
@@ -360,13 +350,13 @@ export class ZbBridgeAccessory {
 
   async getSaturation(): Promise<CharacteristicValue> {
     this.updated = undefined;
-    if (this.supportXY) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
-    }
-    if (this.supportHS) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
-    }
     if (this.saturation === undefined) {
+      if (this.supportXY) {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
+      }
+      if (this.supportHS) {
+        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
+      }
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.saturation;
