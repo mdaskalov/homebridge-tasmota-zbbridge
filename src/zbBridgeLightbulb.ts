@@ -48,6 +48,15 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     if (this.type.includes('_XY')) {
       this.supportXY = true;
     }
+
+    this.log('configureLightFeatures: type: %s :- %s%s%s%s',
+      this.type,
+      this.supportDimmer ? ' Dimmer ' : '',
+      this.supportCT ? ' CT ' : '',
+      this.supportHS ? ' HS ' : '',
+      this.supportXY ? ' XY ' : '',
+    );
+
   }
 
   registerHandlers() {
@@ -99,19 +108,23 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
 
   onQueryInnitialState() {
-    // query accessory information
-    this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
-    if (this.supportDimmer) {
-      this.mqttSend({ device: this.addr, cluster: 8, read: 0 });
-    }
-    if (this.supportCT) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [7, 8] });
-    }
-    if (this.supportHS) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [0, 1, 8] });
-    }
-    if (this.supportXY) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [3, 4, 8] });
+    if (this.powerTopic !== undefined) {
+      this.updated = undefined;
+      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
+    } else {
+      this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
+      if (this.supportDimmer) {
+        this.mqttSend({ device: this.addr, cluster: 8, read: 0 });
+      }
+      if (this.supportCT) {
+        this.mqttSend({ device: this.addr, cluster: 768, read: [7, 8] });
+      }
+      if (this.supportHS) {
+        this.mqttSend({ device: this.addr, cluster: 768, read: [0, 1, 8] });
+      }
+      if (this.supportXY) {
+        this.mqttSend({ device: this.addr, cluster: 768, read: [3, 4, 8] });
+      }
     }
   }
 
@@ -174,8 +187,14 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
         break;
       case 2:
         this.updateCT(msg);
-        this.convertCTtoXY();
-        this.convertXYtoHS();
+        if (this.supportHS) {
+          this.convertCTtoXY();
+          this.convertXYtoHS();
+          if (!this.supportXY) {
+            this.colorX = undefined;
+            this.colorY = undefined;
+          }
+        }
         break;
     }
     this.log('updateColor: %s%s%s%s%s%s%s%s',
@@ -193,6 +212,11 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   onStatusUpdate(msg) {
+    if (msg.Reachable === false) {
+      this.log('Not reachable.');
+      this.power = false;
+      this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
+    }
     if (msg.Power !== undefined) {
       this.updatePower(msg);
       if (this.power) {
@@ -269,6 +293,12 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
+    if (this.powerTopic !== undefined && this.power === false) {
+      if (this.dimmer === undefined) {
+        this.dimmer = 0;
+      }
+      return this.dimmer;
+    }
     try {
       const msg = await this.mqttSubmit({ device: this.addr, cluster: 8, read: 0 });
       this.updateDimmer(msg);
@@ -294,6 +324,12 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
+    if (this.powerTopic !== undefined && this.power === false) {
+      if (this.ct === undefined) {
+        this.ct = 140;
+      }
+      return this.ct;
+    }
     try {
       const msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
       this.updateColor(msg);
@@ -326,6 +362,12 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   async getHue(): Promise<CharacteristicValue> {
+    if (this.powerTopic !== undefined && this.power === false) {
+      if (this.hue === undefined) {
+        this.hue = 0;
+      }
+      return this.hue;
+    }
     try {
       let msg;
       if (this.supportHS) {
@@ -363,6 +405,12 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
+    if (this.powerTopic !== undefined && this.power === false) {
+      if (this.saturation === undefined) {
+        this.saturation = 0;
+      }
+      return this.saturation;
+    }
     try {
       let msg;
       if (this.supportHS) {
