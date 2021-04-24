@@ -313,9 +313,9 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
         let msg;
         if (this.supportHS) {
           msg = await this.mqttSubmit({ device: this.addr, send: { Hue: this.mapValue(hue, 360, 254) } });
-        } else if (this.supportXY && !this.supportHS) {
+        } else if (this.supportXY) {
           this.hue = hue;
-          this.convertHStoXY(hue, this.saturation);
+          this.convertHStoXY();
           msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
         }
         this.updateColor(msg);
@@ -330,7 +330,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
       let msg;
       if (this.supportHS) {
         msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
-      } else if (this.supportXY && !this.supportHS) {
+      } else if (this.supportXY) {
         msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: [3, 4] });
       }
       this.updateColor(msg);
@@ -350,8 +350,9 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
         let msg;
         if (this.supportHS) {
           msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 100, 254) } });
-        } else if (this.supportXY && !this.supportHS) {
-          this.convertHStoXY(this.hue, saturation);
+        } else if (this.supportXY) {
+          this.saturation = saturation;
+          this.convertHStoXY();
           msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
         }
         this.updateColor(msg);
@@ -379,13 +380,13 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
-  convertHStoXY(hue: CharacteristicValue | undefined, saturation: CharacteristicValue | undefined) {
-    if (hue === undefined || saturation === undefined) {
+  convertHStoXY() {
+    if (this.hue === undefined || this.saturation === undefined) {
       return;
     }
 
-    const h = (hue as number) / 360;
-    const s = (saturation as number) / 100;
+    const h = (this.hue as number) / 360;
+    const s = (this.saturation as number) / 100;
 
     let r = 1;
     let g = 1;
