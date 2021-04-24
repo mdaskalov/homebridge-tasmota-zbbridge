@@ -4,26 +4,10 @@ import {
   CharacteristicValue,
 } from 'homebridge';
 
+import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
 
-export type ZbBridgeDevice = {
-  addr: string,
-  type: string,
-  name: string
-}
-
-const UPDATE_DELAY = 2000;
-
-/**
- * Platform Accessory
- * An instance of this class is created for each accessory your platform registers
- * Each accessory may expose multiple services of different service types.
- */
-export class ZbBridgeLightbulb {
-  private service: Service;
-  private powerTopic?: string;
-  private addr: string;
-  private type: string;
+export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   private power?: CharacteristicValue;
   private dimmer?: CharacteristicValue;
   private ct?: CharacteristicValue;
@@ -32,77 +16,42 @@ export class ZbBridgeLightbulb {
   private colorX?: CharacteristicValue;
   private colorY?: CharacteristicValue;
 
-  private supportDimmer: boolean;
-  private supportCT: boolean;
-  private supportHS: boolean;
-  private supportXY: boolean;
-
-  private updated?: number;
+  private supportDimmer?: boolean;
+  private supportCT?: boolean;
+  private supportHS?: boolean;
+  private supportXY?: boolean;
 
   constructor(
-    private readonly platform: TasmotaZbBridgePlatform,
-    private readonly accessory: PlatformAccessory,
+    readonly platform: TasmotaZbBridgePlatform,
+    readonly accessory: PlatformAccessory,
   ) {
-    this.supportDimmer = false;
-    this.supportCT = false;
-    this.supportHS = false;
-    this.supportXY = false;
+    super(platform, accessory);
+  }
 
-    this.addr = this.accessory.context.device.addr;
-    this.type = this.accessory.context.device.type;
+  getService(): Service {
+    const service = this.platform.Service.Lightbulb;
+    return this.accessory.getService(service) || this.accessory.addService(service);
+  }
 
+  configureLightFeatures() {
+    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3' || this.type.includes('_B')) {
+      this.supportDimmer = true;
+    }
+    if (this.type === 'light2' || this.type === 'light5' || this.type.includes('_CT')) {
+      this.supportDimmer = true;
+      this.supportCT = true;
+    }
+    if (this.type === 'light3' || this.type === 'light4' || this.type === 'light5' || this.type.includes('_HS')) {
+      this.supportDimmer = true;
+      this.supportHS = true;
+    }
+    if (this.type.includes('_XY')) {
+      this.supportXY = true;
+    }
+  }
+
+  registerHandlers() {
     this.configureLightFeatures();
-
-    //uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
-
-    //768/7 -> CT
-    //768/8 -> colorMode
-
-    //Info:   ZbSend {"Device": '0xC016', "Cluster": 0, "Read": [4,5]} // get Manufacturer, Model
-    //Power:  ZbSend {"Device": "0x6769", "Cluster": 6, "Read": 0}
-    //Dimmer: ZbSend {"Device": "0x6769", "Cluster": 8, "Read": 0}
-    //Hue:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 0}
-    //Sat:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 1}
-    //HueSat: ZbSend {"Device": "0x6769", "Cluster": 768, "Read": [0,1]}
-    //CT:     ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 7}
-    //ColorMode: ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": 8}
-    //Color:  ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": [3,4  ]}
-    //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] };
-    //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 };
-    //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 };
-    //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
-
-    // query accessory information
-    this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
-    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
-    if (this.supportDimmer) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
-    }
-    if (this.supportCT) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [7, 8] });
-    }
-    if (this.supportHS) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1, 8] });
-    }
-    if (this.supportXY) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4, 8] });
-    }
-
-    // get the service if it exists, otherwise create a new service
-    const service = this.type === 'switch' ? this.platform.Service.Switch : this.platform.Service.Lightbulb;
-    this.service = this.accessory.getService(service) || this.accessory.addService(service);
-
-    // set the service name, this is what is displayed as the default name on the Home app
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-
-    // update device name
-    this.platform.mqttClient.publish(
-      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-      this.addr + ',' + accessory.context.device.name,
-    );
-
-    // each service must implement at-minimum the "required characteristics" for the given service type
-    // see https://developers.homebridge.io/#/service/Lightbulb
 
     // register handlers for the On/Off Characteristic
     this.service.getCharacteristic(this.platform.Characteristic.On)
@@ -120,7 +69,6 @@ export class ZbBridgeLightbulb {
         .onGet(this.getColorTemperature.bind(this));
     }
     if (this.supportHS || this.supportXY) {
-      this.platform.log.debug('hueSat');
       this.service.getCharacteristic(this.platform.Characteristic.Hue)
         .onSet(this.setHue.bind(this))
         .onGet(this.getHue.bind(this));
@@ -129,45 +77,41 @@ export class ZbBridgeLightbulb {
         .onSet(this.setSaturation.bind(this))
         .onGet(this.getSaturation.bind(this));
     }
-
-    // Use separated topic for power
-    if (this.accessory.context.device.powerTopic !== undefined) {
-      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
-      this.platform.mqttClient.subscribe('stat/' + this.powerTopic, (message) => {
-        this.updateStatus({ Power: (message === 'ON') ? 1 : 0 });
-      });
-    }
-
-    // Update
-    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', (message, topic) => {
-      const obj = JSON.parse(message);
-      if (obj && obj.ZbReceived) {
-        const responseDevice: string = Object.keys(obj.ZbReceived)[0];
-        if ((responseDevice.toUpperCase() === this.addr.toUpperCase()) && obj.ZbReceived[responseDevice]) {
-          this.platform.log.debug('%s (%s) MQTT: Received %s :- %s',
-            this.accessory.context.device.name, this.addr,
-            topic, message);
-          const response = obj.ZbReceived[responseDevice];
-          this.updateStatus(response);
-        }
-      }
-    });
   }
 
-  configureLightFeatures() {
-    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3' || this.type.includes('_B')) {
-      this.supportDimmer = true;
+  //uint8_t               colormode;      // 0x00: Hue/Sat, 0x01: XY, 0x02: CT | 0xFF not set, default 0x01
+
+  //768/7 -> CT
+  //768/8 -> colorMode
+
+  //Info:   ZbSend {"Device": '0xC016', "Cluster": 0, "Read": [4,5]} // get Manufacturer, Model
+  //Power:  ZbSend {"Device": "0x6769", "Cluster": 6, "Read": 0}
+  //Dimmer: ZbSend {"Device": "0x6769", "Cluster": 8, "Read": 0}
+  //Hue:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 0}
+  //Sat:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 1}
+  //HueSat: ZbSend {"Device": "0x6769", "Cluster": 768, "Read": [0,1]}
+  //CT:     ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 7}
+  //ColorMode: ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": 8}
+  //Color:  ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": [3,4  ]}
+  //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] };
+  //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 };
+  //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 };
+  //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
+
+  onQueryInnitialState() {
+    // query accessory information
+    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+    if (this.supportDimmer) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
     }
-    if (this.type === 'light2' || this.type === 'light5' || this.type.includes('_CT')) {
-      this.supportDimmer = true;
-      this.supportCT = true;
+    if (this.supportCT) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [7, 8] });
     }
-    if (this.type === 'light3' || this.type === 'light4' || this.type === 'light5' || this.type.includes('_HS')) {
-      this.supportDimmer = true;
-      this.supportHS = true;
+    if (this.supportHS) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1, 8] });
     }
-    if (this.type.includes('_XY')) {
-      this.supportXY = true;
+    if (this.supportXY) {
+      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4, 8] });
     }
   }
 
@@ -188,66 +132,47 @@ export class ZbBridgeLightbulb {
     }
   }
 
-  updateStatus(response) {
-    if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
-      this.platform.log.debug('%s (%s) updateStatus ignored updated %sms ago...',
-        this.accessory.context.device.name, this.addr,
-        Date.now() - this.updated);
-      return;
+  onStatusUpdate(response) {
+    const colormode = response.ColorMode !== undefined ? response.ColorMode : this.supportXY ? 1 : 0;
+    if (response.Power !== undefined) {
+      this.power = (response.Power === 1);
+      this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
     }
-    if (response.Manufacturer && response.ModelId) {
-      this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .setCharacteristic(this.platform.Characteristic.Manufacturer, response.Manufacturer)
-        .setCharacteristic(this.platform.Characteristic.Model, response.ModelId)
-        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
-      this.platform.log.debug('%s (%s) Manufacturer: %s, Model: %s',
-        this.accessory.context.device.name, this.addr,
-        response.Manufacturer,
-        response.ModelId,
-      );
-    } else {
-      const colormode = response.ColorMode !== undefined ? response.ColorMode : this.supportXY ? 1 : 0;
-      if (response.Power !== undefined) {
-        this.power = (response.Power === 1);
-        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
-      }
-      if (this.supportDimmer && response.Dimmer !== undefined) {
-        this.dimmer = Math.round(100 * response.Dimmer / 254);
-        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
-      }
-      if (this.supportHS && response.Hue !== undefined) {
-        this.hue = Math.round(360 * response.Hue / 254);
-        this.updateColor(colormode);
-      }
-      if (this.supportHS && response.Sat !== undefined) {
-        this.saturation = Math.round(100 * response.Sat / 254);
-        this.updateColor(colormode);
-      }
-      if (this.supportXY && response.X !== undefined) {
-        this.colorX = response.X;
-        this.updateColor(colormode);
-      }
-      if (this.supportXY && response.Y !== undefined) {
-        this.colorY = response.Y;
-        this.updateColor(colormode);
-      }
-      if (this.supportCT && response.CT !== undefined) {
-        this.ct = response.CT;
-        this.updateColor(colormode);
-      }
+    if (this.supportDimmer && response.Dimmer !== undefined) {
+      this.dimmer = Math.round(100 * response.Dimmer / 254);
+      this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
+    }
+    if (this.supportHS && response.Hue !== undefined) {
+      this.hue = Math.round(360 * response.Hue / 254);
+      this.updateColor(colormode);
+    }
+    if (this.supportHS && response.Sat !== undefined) {
+      this.saturation = Math.round(100 * response.Sat / 254);
+      this.updateColor(colormode);
+    }
+    if (this.supportXY && response.X !== undefined) {
+      this.colorX = response.X;
+      this.updateColor(colormode);
+    }
+    if (this.supportXY && response.Y !== undefined) {
+      this.colorY = response.Y;
+      this.updateColor(colormode);
+    }
+    if (this.supportCT && response.CT !== undefined) {
+      this.ct = response.CT;
+      this.updateColor(colormode);
+    }
 
-      this.platform.log.debug('%s (%s) %s%s%s%s%s%s%s%s',
-        this.accessory.context.device.name, this.addr,
-        this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
-        this.supportDimmer && this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
-        colormode !== undefined ? ', colorMode: ' + colormode : '',
-        this.supportHS && this.hue !== undefined ? ', Hue: ' + this.hue : '',
-        this.supportHS && this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
-        this.supportXY && this.colorX !== undefined ? ', X: ' + this.colorX : '',
-        this.supportXY && this.colorY !== undefined ? ', Y: ' + this.colorY : '',
-        this.supportCT && this.ct !== undefined ? ', CT: ' + this.ct : '',
-      );
-    }
+    this.log('%s%s%s%s%s%s%s%s',
+      this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
+      this.supportDimmer && this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
+      colormode !== undefined ? ', colorMode: ' + colormode : '',
+      this.supportHS && this.hue !== undefined ? ', Hue: ' + this.hue : '',
+      this.supportHS && this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
+      this.supportXY && this.colorX !== undefined ? ', X: ' + this.colorX : '',
+      this.supportXY && this.colorY !== undefined ? ', Y: ' + this.colorY : '',
+      this.supportCT && this.ct !== undefined ? ', CT: ' + this.ct : '',
+    );
   }
 
   async setOn(value: CharacteristicValue) {
@@ -403,7 +328,7 @@ export class ZbBridgeLightbulb {
 
       this.colorX = Math.round(65535.0 * X / (X + Y + Z));
       this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
-      this.platform.log.debug(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
+      this.log(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
     }
   }
 
@@ -444,7 +369,7 @@ export class ZbBridgeLightbulb {
     this.hue = Math.round(h * 360);
     this.saturation = Math.round(s * 100);
 
-    this.platform.log.debug(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
+    this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
   }
 
   convertCTtoHS() {
@@ -487,7 +412,7 @@ export class ZbBridgeLightbulb {
 
     this.colorX = Math.round(x * 65535.0);
     this.colorY = Math.round(y * 65535.0);
-    this.platform.log.debug(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
+    this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
     this.convertXYtoHS();
   }
 

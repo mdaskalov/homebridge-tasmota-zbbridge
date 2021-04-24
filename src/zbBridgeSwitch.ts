@@ -27,13 +27,16 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       .onGet(this.getOn.bind(this));
   }
 
+  onQueryInnitialState() {
+    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+  }
+
   onStatusUpdate(response) {
     if (response.Power !== undefined) {
       this.power = (response.Power === 1);
       this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
     }
-    this.platform.log.debug('%s (%s) %s',
-      this.accessory.context.device.name, this.addr,
+    this.log('%s',
       this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
     );
   }
