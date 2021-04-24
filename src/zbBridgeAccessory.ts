@@ -129,14 +129,19 @@ export abstract class ZbBridgeAccessory {
     );
   }
 
-  mapValue(value: number, in_min: number, in_max: number, out_min: number, out_max: number): number | undefined {
-    const dividend = out_max - out_min;
-    const divisor = in_max - in_min;
-    const delta = value - in_min;
-    if (divisor !== 0) {
-      return Math.round((delta * dividend + (divisor / 2)) / divisor + out_min);
-    }
+  mapValue(value: number, in_max: number, out_max: number): number {
+    return Math.round(out_max * value / in_max);
   }
+
+  // mapValue(value: number, in_min: number, in_max: number, out_min: number, out_max: number): number | undefined {
+  //   const dividend = out_max - out_min;
+  //   const divisor = in_max - in_min;
+  //   const delta = value - in_min;
+  //   if (divisor !== 0) {
+  //     return Math.round((delta * dividend + (divisor / 2)) / divisor + out_min);
+  //   }
+  //   return undefined;
+  // }
 
   abstract getService(): Service;
 
