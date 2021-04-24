@@ -190,7 +190,9 @@ export class ZbBridgeAccessory {
 
   updateStatus(response) {
     if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
-      this.platform.log.debug('%s (%s) updateStatus ignored...', this.accessory.context.device.name, this.addr);
+      this.platform.log.debug('%s (%s) updateStatus ignored updated %sms ago...',
+        this.accessory.context.device.name, this.addr,
+        Date.now() - this.updated);
       return;
     }
     if (response.Manufacturer && response.ModelId) {
