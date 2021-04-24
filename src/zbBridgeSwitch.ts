@@ -28,7 +28,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   onQueryInnitialState() {
-    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+    this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
   }
 
   onStatusUpdate(response) {
@@ -42,17 +42,29 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   async setOn(value: CharacteristicValue) {
-    if (this.power !== value) {
-      this.power = value as boolean;
-      this.platform.mqttClient.send({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
+    const power = value as boolean;
+    if (this.power !== power) {
+      try {
+        const msg = await this.mqttSubmit({ device: this.addr, send: { Power: (power ? 'On' : 'Off') } });
+        if (msg.Power !== undefined) {
+          this.power = (msg.Power === 1);
+        }
+      } catch (err) {
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
     }
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    if (this.power === undefined) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    try {
+      const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
+      if (msg.Power !== undefined) {
+        this.power = (msg.Power === 1);
+        return this.power;
+      }
+    } catch (err) {
+      this.log(err);
     }
-    return this.power;
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 }
