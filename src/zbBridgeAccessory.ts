@@ -69,28 +69,7 @@ export abstract class ZbBridgeAccessory {
     this.onQueryInnitialState();
   }
 
-  log(message: string, ...parameters: any[]): void {
-    this.platform.log.debug('%s (%s) ' + message,
-      this.accessory.context.device.name, this.addr,
-      ...parameters,
-    );
-  }
-
-  abstract getService(): Service;
-
-  abstract registerHandlers(): void;
-
-  abstract onQueryInnitialState(): void;
-
-  abstract onStatusUpdate(response): void;
-
   statusUpdate(message) {
-    if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
-      this.log('updateStatus ignored updated %sms ago...',
-        this.accessory.context.device.name, this.addr,
-        Date.now() - this.updated);
-      return;
-    }
     if (message.Manufacturer && message.ModelId) {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
@@ -103,6 +82,10 @@ export abstract class ZbBridgeAccessory {
     } else if (this.statusUpdateHandlers.length !== 0) {
       this.statusUpdateHandlers.forEach(h => h.callback(message));
     } else {
+      if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
+        this.log('updateStatus ignored, updated %sms ago...', Date.now() - this.updated);
+        return;
+      }
       this.onStatusUpdate(message);
     }
   }
@@ -124,7 +107,7 @@ export abstract class ZbBridgeAccessory {
 
       const timer = setTimeout(() => {
         removeHandler();
-        reject(`Timeout (${timeOutValue}ms): id: ${id}, command: ${JSON.stringify(command)}`);
+        reject(`mqttSubmit timeout (${timeOutValue}ms): id: ${id}, command: ${JSON.stringify(command)}`);
       }, timeOutValue);
 
       const updateCallback: (message) => void = message => {
@@ -134,7 +117,32 @@ export abstract class ZbBridgeAccessory {
       };
 
       this.statusUpdateHandlers.push({ id, callback: updateCallback });
+      this.updated = Date.now();
       this.mqttSend(command);
     });
   }
+
+  log(message: string, ...parameters: any[]): void {
+    this.platform.log.debug('%s (%s) ' + message,
+      this.accessory.context.device.name, this.addr,
+      ...parameters,
+    );
+  }
+
+  mapValue(value: number, in_min: number, in_max: number, out_min: number, out_max: number): number | undefined {
+    const dividend = out_max - out_min;
+    const divisor = in_max - in_min;
+    const delta = value - in_min;
+    if (divisor !== 0) {
+      return Math.round((delta * dividend + (divisor / 2)) / divisor + out_min);
+    }
+  }
+
+  abstract getService(): Service;
+
+  abstract registerHandlers(): void;
+
+  abstract onQueryInnitialState(): void;
+
+  abstract onStatusUpdate(response): void;
 }
