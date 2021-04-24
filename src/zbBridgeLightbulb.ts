@@ -100,73 +100,113 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
   onQueryInnitialState() {
     // query accessory information
-    this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+    this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
     if (this.supportDimmer) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
+      this.mqttSend({ device: this.addr, cluster: 8, read: 0 });
     }
     if (this.supportCT) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [7, 8] });
+      this.mqttSend({ device: this.addr, cluster: 768, read: [7, 8] });
     }
     if (this.supportHS) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [0, 1, 8] });
+      this.mqttSend({ device: this.addr, cluster: 768, read: [0, 1, 8] });
     }
     if (this.supportXY) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4, 8] });
+      this.mqttSend({ device: this.addr, cluster: 768, read: [3, 4, 8] });
     }
   }
 
-  updateColor(colormode: number | undefined) {
-    if (colormode === 2) {
-      this.convertCTtoHS();
-      if (this.ct !== undefined) {
-        this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(this.ct);
-      }
-    } else if (colormode === 1) {
-      this.convertXYtoHS();
+  updatePower(msg): void {
+    if (msg.Power !== undefined) {
+      this.power = (msg.Power === 1);
     }
+  }
+
+  updateDimmer(msg): void {
+    if (msg.Dimmer !== undefined) {
+      this.dimmer = this.mapValue(msg.Dimmer, 0, 254, 0, 100);
+    }
+  }
+
+  updateHS(msg): void {
+    if (msg.Hue !== undefined) {
+      this.hue = this.mapValue(msg.Dimmer, 0, 254, 0, 360);
+    }
+    if (msg.Sat !== undefined) {
+      this.saturation = this.mapValue(msg.Dimmer, 0, 254, 0, 100);
+    }
+  }
+
+  updateXY(msg): void {
+    if (msg.X !== undefined) {
+      this.colorX = msg.X;
+    }
+    if (msg.Y !== undefined) {
+      this.colorY = msg.Y;
+    }
+  }
+
+  updateCT(msg): void {
+    if (msg.CT !== undefined) {
+      this.ct = msg.CT;
+    }
+  }
+
+  updateColor(msg): number | undefined {
+    let colormode = msg.ColorMode;
+    if (colormode === undefined) {
+      if (this.supportHS) {
+        colormode = 0;
+      } else if (this.supportXY) {
+        colormode = 1;
+      } else if (this.supportCT) {
+        colormode = 2;
+      } else {
+        return undefined;
+      }
+    }
+    switch (colormode) {
+      case 0:
+        this.updateHS(msg);
+        break;
+      case 1:
+        this.updateXY(msg);
+        this.convertXYtoHS();
+        break;
+      case 2:
+        this.updateCT(msg);
+        this.convertCTtoHS();
+        break;
+    }
+    return colormode;
+  }
+
+  onStatusUpdate(msg) {
+    if (msg.Power !== undefined) {
+      this.updatePower(msg);
+      if (this.power) {
+        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
+      }
+    }
+    if (this.supportDimmer) {
+      this.updateDimmer(msg);
+      if (this.dimmer) {
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
+      }
+    }
+    const colormode = this.updateColor(msg);
     if (this.hue !== undefined) {
       this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
     }
     if (this.saturation !== undefined) {
       this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
     }
-  }
-
-  onStatusUpdate(response) {
-    const colormode = response.ColorMode !== undefined ? response.ColorMode : this.supportXY ? 1 : 0;
-    if (response.Power !== undefined) {
-      this.power = (response.Power === 1);
-      this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
+    if (colormode === 2 && this.ct !== undefined) {
+      this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(this.ct);
     }
-    if (this.supportDimmer && response.Dimmer !== undefined) {
-      this.dimmer = Math.round(100 * response.Dimmer / 254);
-      this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
-    }
-    if (this.supportHS && response.Hue !== undefined) {
-      this.hue = Math.round(360 * response.Hue / 254);
-      this.updateColor(colormode);
-    }
-    if (this.supportHS && response.Sat !== undefined) {
-      this.saturation = Math.round(100 * response.Sat / 254);
-      this.updateColor(colormode);
-    }
-    if (this.supportXY && response.X !== undefined) {
-      this.colorX = response.X;
-      this.updateColor(colormode);
-    }
-    if (this.supportXY && response.Y !== undefined) {
-      this.colorY = response.Y;
-      this.updateColor(colormode);
-    }
-    if (this.supportCT && response.CT !== undefined) {
-      this.ct = response.CT;
-      this.updateColor(colormode);
-    }
-
     this.log('%s%s%s%s%s%s%s%s',
       this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
       this.supportDimmer && this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
-      colormode !== undefined ? ', colorMode: ' + colormode : '',
+      msg.ColorMode !== undefined ? ', ColorMode: ' + msg.ColorMode : '',
       this.supportHS && this.hue !== undefined ? ', Hue: ' + this.hue : '',
       this.supportHS && this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
       this.supportXY && this.colorX !== undefined ? ', X: ' + this.colorX : '',
@@ -176,126 +216,174 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   async setOn(value: CharacteristicValue) {
-    if (this.power !== value) {
-      this.power = value as boolean;
-      this.updated = Date.now();
+    const power = value as boolean;
+    if (this.power !== power) {
       if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, value ? 'ON' : 'OFF');
+        this.updated = Date.now();
+        this.power = power;
+        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, power ? 'ON' : 'OFF');
       } else {
-        this.platform.mqttClient.send({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
+        try {
+          const msg = await this.mqttSubmit({ device: this.addr, send: { Power: (power ? 'On' : 'Off') } });
+          this.updatePower(msg);
+        } catch (err) {
+          throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
       }
     }
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    this.updated = undefined;
     if (this.power === undefined) {
       if (this.powerTopic !== undefined) {
+        this.updated = undefined;
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
-        this.platform.mqttClient.send({ device: this.addr, cluster: 6, read: 0 });
+        try {
+          const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
+          this.updatePower(msg);
+          if (this.power) {
+            return this.power;
+          }
+        } catch (err) {
+          this.log(err);
+        }
       }
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
     return this.power;
   }
 
-  setBrightness(value: CharacteristicValue) {
-    if (this.dimmer !== value) {
-      this.dimmer = value as number;
-      this.updated = Date.now();
-      this.platform.mqttClient.send({ device: this.addr, send: { Dimmer: Math.round(254 * this.dimmer / 100) } });
+  async setBrightness(value: CharacteristicValue) {
+    const dimmer = value as number;
+    if (this.dimmer !== dimmer) {
+      try {
+        const msg = await this.mqttSubmit({ device: this.addr, send: { Dimmer: this.mapValue(dimmer, 0, 100, 0, 254) } });
+        this.updateDimmer(msg);
+      } catch (err) {
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
     }
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
-    this.updated = undefined;
-    if (this.dimmer === undefined) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 8, read: 0 });
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    try {
+      const msg = await this.mqttSubmit({ device: this.addr, cluster: 8, read: 0 });
+      this.updateDimmer(msg);
+      if (this.dimmer) {
+        return this.dimmer;
+      }
+    } catch (err) {
+      this.log(err);
     }
-    return this.dimmer;
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
   async setColorTemperature(value: CharacteristicValue) {
-    if (this.ct !== value) {
-      this.ct = value as number;
-      this.platform.mqttClient.send({ device: this.addr, send: { CT: this.ct } });
+    const ct = value as number;
+    if (this.ct !== ct) {
+      try {
+        const msg = await this.mqttSubmit({ device: this.addr, send: { CT: ct } });
+        this.updateColor(msg);
+      } catch (err) {
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
     }
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
-    this.updated = undefined;
-    if (this.ct === undefined) {
-      this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    try {
+      const msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
+      this.updateColor(msg);
+      if (this.ct) {
+        return this.ct;
+      }
+    } catch (err) {
+      this.log(err);
     }
-    return this.ct;
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
   async setHue(value: CharacteristicValue) {
-    if (this.hue !== value) {
-      this.hue = value as number;
-      this.updated = Date.now();
-      if (this.supportXY) {
-        this.convertHStoXY();
-        this.platform.mqttClient.send({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
-      }
-      if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, send: { Hue: Math.round(254 * this.hue / 360) } });
+    const hue = value as number;
+    if (this.hue !== hue) {
+      try {
+        let msg;
+        if (this.supportHS) {
+          msg = await this.mqttSubmit({ device: this.addr, send: { Hue: this.mapValue(hue, 0, 360, 0, 254) } });
+        } else if (this.supportXY && !this.supportHS) {
+          this.hue = hue;
+          this.convertHStoXY(hue, this.saturation);
+          msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
+        }
+        this.updateColor(msg);
+      } catch (err) {
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
   }
 
   async getHue(): Promise<CharacteristicValue> {
-    this.updated = undefined;
-    if (this.hue === undefined) {
-      if (this.supportXY) {
-        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
-      }
+    try {
+      let msg;
       if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 0 });
+        msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
+      } else if (this.supportXY && !this.supportHS) {
+        msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: [3, 4] });
       }
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      this.updateColor(msg);
+      if (this.hue) {
+        return this.hue;
+      }
+    } catch (err) {
+      this.log(err);
     }
-    return this.hue;
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
   async setSaturation(value: CharacteristicValue) {
-    if (this.saturation !== value) {
-      this.saturation = value as number;
-      this.updated = Date.now();
-      if (this.supportXY) {
-        this.convertHStoXY();
-        this.platform.mqttClient.send({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
-      }
-      if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, send: { Sat: Math.round(254 * this.saturation / 100) } });
+    const saturation = value as number;
+    if (this.hue !== saturation) {
+      try {
+        let msg;
+        if (this.supportHS) {
+          msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 0, 360, 0, 254) } });
+        } else if (this.supportXY && !this.supportHS) {
+          this.convertHStoXY(this.hue, saturation);
+          msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
+        }
+        this.updateColor(msg);
+      } catch (err) {
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
-    this.updated = undefined;
-    if (this.saturation === undefined) {
-      if (this.supportXY) {
-        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: [3, 4] });
-      }
+    try {
+      let msg;
       if (this.supportHS) {
-        this.platform.mqttClient.send({ device: this.addr, cluster: 768, read: 1 });
+        msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 1 });
+      } else if (this.supportXY) {
+        msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: [3, 4] });
       }
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      this.updateColor(msg);
+      if (this.saturation) {
+        return this.saturation;
+      }
+    } catch (err) {
+      this.log(err);
     }
-    return this.saturation;
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
-  convertHStoXY() {
-    if (this.hue === undefined || this.saturation === undefined) {
+  convertHStoXY(hue: CharacteristicValue | undefined, saturation: CharacteristicValue | undefined) {
+    if (hue === undefined || saturation === undefined) {
       return;
     }
 
-    const h = (this.hue as number) / 360;
-    const s = (this.saturation as number) / 100;
+    const h = (hue as number) / 360;
+    const s = (saturation as number) / 100;
 
     let r = 1;
     let g = 1;
@@ -328,7 +416,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
       this.colorX = Math.round(65535.0 * X / (X + Y + Z));
       this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
-      this.log(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
+      //this.log(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
     }
   }
 
@@ -368,8 +456,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
     this.hue = Math.round(h * 360);
     this.saturation = Math.round(s * 100);
-
-    this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
+    //this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
   }
 
   convertCTtoHS() {
@@ -412,7 +499,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
     this.colorX = Math.round(x * 65535.0);
     this.colorY = Math.round(y * 65535.0);
-    this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
+    //this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
     this.convertXYtoHS();
   }
 
