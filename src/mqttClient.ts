@@ -85,40 +85,5 @@ export class MQTTClient {
     this.client.publish(topic, message);
     this.log.debug('MQTT: Published: %s :- %s', topic, message);
   }
-
-  send(command) {
-    const topic = 'cmnd/' + this.topic + '/zbsend';
-    const message = JSON.stringify(command);
-    this.publish(topic, message);
-  }
-
-  receive(device: string) {
-    return new Promise((resolve: (data) => void, reject) => {
-      let id = '';
-      const timeOutValue = 5000; // wait timeout (ms)
-
-      const topic = 'tele/' + this.topic + '/SENSOR';
-
-      const timer = setTimeout(() => {
-        reject(`receive: Timeout: id: ${id} device: ${device}`);
-        this.unsubscribe(id);
-      }, timeOutValue);
-
-      id = this.subscribe(topic, (msg) => {
-        clearTimeout(timer);
-        this.unsubscribe(id);
-        const obj = JSON.parse(msg);
-        if (obj && obj.ZbReceived) {
-          const responseDevice: string = Object.keys(obj.ZbReceived)[0];
-          if ((responseDevice.toUpperCase() === device.toUpperCase()) && obj.ZbReceived[responseDevice]) {
-            this.log.debug('receive: device: %s :- %s', device, JSON.stringify(obj.ZbReceived[responseDevice]));
-            resolve(obj.ZbReceived[responseDevice]);
-          }
-        } else {
-          reject('receive: invalid JSON: ' + msg);
-        }
-      });
-    });
-  }
 }
 
