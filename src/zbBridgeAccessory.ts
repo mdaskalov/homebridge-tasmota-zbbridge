@@ -65,7 +65,7 @@ export abstract class ZbBridgeAccessory {
     this.registerHandlers();
 
     // Query Manufacturer, Model
-    this.platform.mqttClient.send({ device: this.addr, cluster: 0, read: [0, 4, 5] });
+    this.mqttSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
     this.onQueryInnitialState();
   }
 
@@ -106,7 +106,35 @@ export abstract class ZbBridgeAccessory {
       this.onStatusUpdate(message);
     }
   }
-      this.onStatusUpdate(response);
-    }
+
+  mqttSend(command): void {
+    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbsend';
+    const message = JSON.stringify(command);
+    this.platform.mqttClient.publish(topic, message);
+  }
+
+  mqttSubmit(command) {
+    return new Promise((resolve: (message) => void, reject) => {
+      const timeOutValue = 2000; // wait timeout (ms)
+      const id = this.platform.mqttClient.uniqueID();
+
+      const removeHandler = () => {
+        this.statusUpdateHandlers = this.statusUpdateHandlers.filter(h => h.id !== id);
+      };
+
+      const timer = setTimeout(() => {
+        removeHandler();
+        reject(`Timeout (${timeOutValue}ms): id: ${id}, command: ${JSON.stringify(command)}`);
+      }, timeOutValue);
+
+      const updateCallback: (message) => void = message => {
+        removeHandler();
+        clearTimeout(timer);
+        resolve(message);
+      };
+
+      this.statusUpdateHandlers.push({ id, callback: updateCallback });
+      this.mqttSend(command);
+    });
   }
 }
