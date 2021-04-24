@@ -11,6 +11,11 @@ export type ZbBridgeDevice = {
   name: string
 }
 
+type StatusUpdateHandler = {
+  id: string;
+  callback: (message) => void;
+};
+
 const UPDATE_DELAY = 2000;
 
 export abstract class ZbBridgeAccessory {
@@ -19,6 +24,7 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected type: string;
   protected updated?: number;
+  private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.service = this.getService();
@@ -78,24 +84,28 @@ export abstract class ZbBridgeAccessory {
 
   abstract onStatusUpdate(response): void;
 
-  statusUpdate(response) {
+  statusUpdate(message) {
     if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
-      this.platform.log.debug('%s (%s) updateStatus ignored updated %sms ago...',
+      this.log('updateStatus ignored updated %sms ago...',
         this.accessory.context.device.name, this.addr,
         Date.now() - this.updated);
       return;
     }
-    if (response.Manufacturer && response.ModelId) {
+    if (message.Manufacturer && message.ModelId) {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .setCharacteristic(this.platform.Characteristic.Manufacturer, response.Manufacturer)
-        .setCharacteristic(this.platform.Characteristic.Model, response.ModelId)
+        .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
+        .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
         .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
-      this.platform.log.debug('%s (%s) Manufacturer: %s, Model: %s',
-        this.accessory.context.device.name, this.addr,
-        response.Manufacturer,
-        response.ModelId,
+      this.log('Manufacturer: %s, Model: %s',
+        message.Manufacturer,
+        message.ModelId,
       );
+    } else if (this.statusUpdateHandlers.length !== 0) {
+      this.statusUpdateHandlers.forEach(h => h.callback(message));
     } else {
+      this.onStatusUpdate(message);
+    }
+  }
       this.onStatusUpdate(response);
     }
   }
