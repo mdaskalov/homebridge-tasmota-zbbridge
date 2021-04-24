@@ -123,16 +123,16 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
   updateDimmer(msg): void {
     if (msg.Dimmer !== undefined) {
-      this.dimmer = this.mapValue(msg.Dimmer, 0, 254, 0, 100);
+      this.dimmer = this.mapValue(msg.Dimmer, 254, 100);
     }
   }
 
   updateHS(msg): void {
     if (msg.Hue !== undefined) {
-      this.hue = this.mapValue(msg.Dimmer, 0, 254, 0, 360);
+      this.hue = this.mapValue(msg.Hue, 254, 360);
     }
     if (msg.Sat !== undefined) {
-      this.saturation = this.mapValue(msg.Dimmer, 0, 254, 0, 100);
+      this.saturation = this.mapValue(msg.Sat, 254, 100);
     }
   }
 
@@ -174,9 +174,21 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
         break;
       case 2:
         this.updateCT(msg);
-        this.convertCTtoHS();
+        this.convertCTtoXY();
+        this.convertXYtoHS();
         break;
     }
+    this.log('updateColor: %s%s%s%s%s%s%s%s',
+      colormode !== undefined ? 'ColorMode: ' + colormode : '',
+      this.power !== undefined ? ', Power: ' + (this.power ? 'On' : 'Off') : '',
+      this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
+      this.hue !== undefined ? ', Hue: ' + this.hue : '',
+      this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
+      this.colorX !== undefined ? ', X: ' + this.colorX : '',
+      this.colorY !== undefined ? ', Y: ' + this.colorY : '',
+      this.ct !== undefined ? ', CT: ' + this.ct : '',
+    );
+
     return colormode;
   }
 
@@ -203,16 +215,6 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     if (colormode === 2 && this.ct !== undefined) {
       this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(this.ct);
     }
-    this.log('%s%s%s%s%s%s%s%s',
-      this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
-      this.supportDimmer && this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
-      msg.ColorMode !== undefined ? ', ColorMode: ' + msg.ColorMode : '',
-      this.supportHS && this.hue !== undefined ? ', Hue: ' + this.hue : '',
-      this.supportHS && this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
-      this.supportXY && this.colorX !== undefined ? ', X: ' + this.colorX : '',
-      this.supportXY && this.colorY !== undefined ? ', Y: ' + this.colorY : '',
-      this.supportCT && this.ct !== undefined ? ', CT: ' + this.ct : '',
-    );
   }
 
   async setOn(value: CharacteristicValue) {
@@ -258,7 +260,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     const dimmer = value as number;
     if (this.dimmer !== dimmer) {
       try {
-        const msg = await this.mqttSubmit({ device: this.addr, send: { Dimmer: this.mapValue(dimmer, 0, 100, 0, 254) } });
+        const msg = await this.mqttSubmit({ device: this.addr, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
         this.updateDimmer(msg);
       } catch (err) {
         throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
@@ -310,7 +312,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
       try {
         let msg;
         if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, send: { Hue: this.mapValue(hue, 0, 360, 0, 254) } });
+          msg = await this.mqttSubmit({ device: this.addr, send: { Hue: this.mapValue(hue, 360, 254) } });
         } else if (this.supportXY && !this.supportHS) {
           this.hue = hue;
           this.convertHStoXY(hue, this.saturation);
@@ -343,11 +345,11 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
   async setSaturation(value: CharacteristicValue) {
     const saturation = value as number;
-    if (this.hue !== saturation) {
+    if (this.saturation !== saturation) {
       try {
         let msg;
         if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 0, 360, 0, 254) } });
+          msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 100, 254) } });
         } else if (this.supportXY && !this.supportHS) {
           this.convertHStoXY(this.hue, saturation);
           msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
@@ -459,7 +461,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     //this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
   }
 
-  convertCTtoHS() {
+  convertCTtoXY() {
     if (this.ct === undefined) {
       return;
     }
@@ -499,8 +501,7 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
     this.colorX = Math.round(x * 65535.0);
     this.colorY = Math.round(y * 65535.0);
-    //this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
-    this.convertXYtoHS();
+    this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
   }
 
   HSVtoRGB(hue: number, saturation: number, brightness: number) {
