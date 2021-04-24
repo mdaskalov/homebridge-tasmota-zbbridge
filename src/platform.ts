@@ -1,7 +1,9 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { ZbBridgeDevice, ZbBridgeAccessory } from './zbBridgeAccessory';
+import { ZbBridgeDevice, ZbBridgeAccessory } from './zbBridgeLightbulb';
+import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
+import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { TasmotaDevice, TasmotaAccessory } from './tasmotaAccessory';
 import { MQTTClient } from './mqttClient';
 
@@ -39,6 +41,14 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     return this.api.hap.uuid.generate(device.topic + '-' + device.type);
   }
 
+  getZbBridgeAccessory(accessory: PlatformAccessory) {
+    const type = accessory.context.device.type;
+    if (type.startsWith('ligth')) {
+      return new ZbBridgeLightbulb(this, accessory);
+    }
+    return new ZbBridgeSwitch(this, accessory);
+  }
+
   discoverDevices() {
     if (Array.isArray(this.config.zbBridgeDevices)) {
       for (const device of this.config.zbBridgeDevices) {
@@ -48,12 +58,12 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           this.log.info('Restoring existing zbBridge accessory from cache: %s', device.name);
           existingAccessory.context.device = device;
           this.api.updatePlatformAccessories([existingAccessory]);
-          new ZbBridgeAccessory(this, existingAccessory);
+          this.getZbBridgeAccessory(existingAccessory);
         } else {
           this.log.info('Adding new zbBridge accessory: %s', device.name);
           const accessory = new this.api.platformAccessory(device.name, uuid);
           accessory.context.device = device;
-          new ZbBridgeAccessory(this, accessory);
+          this.getZbBridgeAccessory(accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }
