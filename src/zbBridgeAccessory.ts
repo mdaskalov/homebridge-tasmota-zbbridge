@@ -122,6 +122,7 @@ export abstract class ZbBridgeAccessory {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(message: string, ...parameters: any[]): void {
     this.platform.log.debug('%s (%s) ' + message,
       this.accessory.context.device.name, this.addr,
