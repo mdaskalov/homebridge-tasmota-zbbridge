@@ -219,13 +219,13 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     }
     if (msg.Power !== undefined) {
       this.updatePower(msg);
-      if (this.power) {
+      if (this.power !== undefined) {
         this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
       }
     }
     if (this.supportDimmer) {
       this.updateDimmer(msg);
-      if (this.dimmer) {
+      if (this.dimmer !== undefined) {
         this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
       }
     }
