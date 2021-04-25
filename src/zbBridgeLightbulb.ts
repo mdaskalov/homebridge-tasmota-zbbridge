@@ -507,6 +507,13 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
 
     this.hue = Math.round(h * 360);
     this.saturation = Math.round(s * 100);
+
+    if (isNaN(this.hue)) {
+      this.hue = undefined;
+    }
+    if (isNaN(this.saturation)) {
+      this.saturation = undefined;
+    }
     //this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
   }
 
