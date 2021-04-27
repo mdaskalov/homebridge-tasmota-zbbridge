@@ -1,11 +1,12 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
+import { TasmotaDevice, TasmotaAccessory } from './tasmotaAccessory';
+import { MQTTClient } from './mqttClient';
 import { ZbBridgeDevice } from './zbBridgeAccessory';
 import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
-import { TasmotaDevice, TasmotaAccessory } from './tasmotaAccessory';
-import { MQTTClient } from './mqttClient';
+import { ZbBridgeSensor } from './zbBridgeSensor';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -43,6 +44,9 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
   createZbBridgeAccessory(accessory: PlatformAccessory) {
     const type = accessory.context.device.type;
+    if (type.startsWith('sensor')) {
+      new ZbBridgeSensor(this, accessory);
+    }
     if (type.startsWith('light')) {
       new ZbBridgeLightbulb(this, accessory);
     }

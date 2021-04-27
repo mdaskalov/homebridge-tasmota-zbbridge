@@ -27,9 +27,9 @@ export abstract class ZbBridgeAccessory {
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
-    this.service = this.getService();
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
+    this.service = this.getService();
 
     // set the service name, this is what is displayed as the default name on the Home app
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
@@ -67,6 +67,10 @@ export abstract class ZbBridgeAccessory {
     // Query Manufacturer, Model
     this.mqttSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
     this.onQueryInnitialState();
+  }
+
+  getObjectByPath(obj, path: string) {
+    return path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
   }
 
   statusUpdate(message) {

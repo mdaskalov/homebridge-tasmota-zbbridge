@@ -54,6 +54,15 @@
               }, {
                 "title": "On/Off Switch",
                 "enum": ["switch"]
+              }, {
+                "title": "Contact Sensor",
+                "enum": ["sensor_0x500_0xFFF2_ContactSensor_ContactSensorState_Contact"]
+              }, {
+                "title": "Temperature Sensor",
+                "enum": ["sensor_0x405_0_TemperatureSensor_CurrentTemperature_Temperature"]
+              }, {
+                "title": "Humidity Sensor",
+                "enum": ["sensor_0x402_0_HumiditySensor_CurrentRelativeHumidity_Humidity"]
               }],
               "required": true
             },
