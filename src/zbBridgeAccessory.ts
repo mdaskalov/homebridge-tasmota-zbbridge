@@ -100,9 +100,8 @@ export abstract class ZbBridgeAccessory {
     this.platform.mqttClient.publish(topic, message);
   }
 
-  mqttSubmit(command) {
+  mqttSubmit(command, timeOutValue = 1500) {
     return new Promise((resolve: (message) => void, reject) => {
-      const timeOutValue = 2000; // wait timeout (ms)
       const id = this.platform.mqttClient.uniqueID();
 
       const removeHandler = () => {
