@@ -29,15 +29,16 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   updatePower(msg): void {
     if (msg.Power !== undefined) {
       this.power = (msg.Power === 1);
+      if (this.powerTopic !== undefined) {
+        this.reachable = !this.powerTopic;
+      }
     }
   }
 
   onStatusUpdate(msg) {
-    if (msg.Power !== undefined) {
-      this.updatePower(msg);
-      if (this.power !== undefined) {
-        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
-      }
+    this.updatePower(msg);
+    if (this.power !== undefined) {
+      this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
     }
     this.log('%s',
       this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
@@ -64,24 +65,23 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    if (this.power === undefined) {
-      if (this.powerTopic !== undefined) {
-        this.updated = undefined;
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-      } else {
-        try {
-          const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
-          this.updatePower(msg);
-          if (this.power !== undefined) {
-            return this.power;
-          }
-        } catch (err) {
-          this.log(err);
-        }
+    if (this.powerTopic !== undefined) {
+      this.updated = undefined;
+      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
+    } else {
+      try {
+        const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
+        this.updatePower(msg);
+      } catch (err) {
+        this.reachable = false;
+        this.power = false;
+        this.log(err);
       }
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
-    return this.power;
+    if (this.power !== undefined) {
+      return this.power;
+    }
+    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 
 }
