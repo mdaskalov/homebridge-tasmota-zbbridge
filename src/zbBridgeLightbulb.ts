@@ -1,5 +1,4 @@
 import {
-  Service,
   PlatformAccessory,
   CharacteristicValue,
 } from 'homebridge';
@@ -28,9 +27,8 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
     super(platform, accessory);
   }
 
-  getService(): Service {
-    const service = this.platform.Service.Lightbulb;
-    return this.accessory.getService(service) || this.accessory.addService(service);
+  getServiceName() {
+    return 'Lightbulb';
   }
 
   configureLightFeatures() {
