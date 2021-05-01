@@ -1,23 +1,14 @@
 import {
-  Service,
-  PlatformAccessory,
   CharacteristicValue,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
-import { TasmotaZbBridgePlatform } from './platform';
 
 export class ZbBridgeSwitch extends ZbBridgeAccessory {
   private power?: CharacteristicValue;
 
-  constructor(platform: TasmotaZbBridgePlatform, accessory: PlatformAccessory) {
-    super(platform, accessory);
-  }
-
-  getService(): Service {
-    const service = this.platform.Service.Switch;
-    // get the service if it exists, otherwise create a new service
-    return this.accessory.getService(service) || this.accessory.addService(service);
+  getServiceName() {
+    return 'Switch';
   }
 
   registerHandlers() {
