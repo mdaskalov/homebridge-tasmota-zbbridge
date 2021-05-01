@@ -30,7 +30,7 @@ export abstract class ZbBridgeAccessory {
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
-    this.reachable = undefined;
+    this.reachable = true;
 
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
@@ -86,6 +86,8 @@ export abstract class ZbBridgeAccessory {
         message.Manufacturer,
         message.ModelId,
       );
+    } else if (message.Reachable === false) {
+      this.reachable = false;
     } else if (this.statusUpdateHandlers.length !== 0) {
       this.statusUpdateHandlers.forEach(h => h.callback(message));
     } else {
@@ -94,10 +96,6 @@ export abstract class ZbBridgeAccessory {
         return;
       }
       this.onStatusUpdate(message);
-    }
-    if (message.Reachable === false) {
-      this.log('Not reachable.');
-      this.reachable = false;
     }
   }
 
