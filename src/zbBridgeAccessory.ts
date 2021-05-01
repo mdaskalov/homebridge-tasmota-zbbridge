@@ -107,9 +107,10 @@ export abstract class ZbBridgeAccessory {
     this.platform.mqttClient.publish(topic, message);
   }
 
-  mqttSubmit(command, timeOutValue = 1500) {
+  mqttSubmit(command, timeOutValue = 2000) {
     return new Promise((resolve: (message) => void, reject) => {
       const id = this.platform.mqttClient.uniqueID();
+      const startTS = Date.now();
 
       const removeHandler = () => {
         this.statusUpdateHandlers = this.statusUpdateHandlers.filter(h => h.id !== id);
@@ -142,6 +143,7 @@ export abstract class ZbBridgeAccessory {
       ...parameters,
     );
   }
+
 
   mapValue(value: number, in_max: number, out_max: number): number {
     return Math.round(out_max * value / in_max);
