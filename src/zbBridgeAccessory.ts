@@ -32,6 +32,12 @@ export abstract class ZbBridgeAccessory {
     this.type = this.accessory.context.device.type;
     this.reachable = undefined;
 
+    const serviceName = this.getServiceName();
+    const service = this.platform.Service[serviceName];
+    if (service === undefined) {
+      throw new Error('Unnknown service: ' + serviceName);
+    }
+    this.service = this.accessory.getService(service) || this.accessory.addService(service);
 
     // set the service name, this is what is displayed as the default name on the Home app
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
@@ -153,7 +159,7 @@ export abstract class ZbBridgeAccessory {
   //   return undefined;
   // }
 
-  abstract getService(): Service;
+  abstract getServiceName(): string;
 
   abstract registerHandlers(): void;
 
