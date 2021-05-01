@@ -212,11 +212,6 @@ export class ZbBridgeLightbulb extends ZbBridgeAccessory {
   }
 
   onStatusUpdate(msg) {
-    if (msg.Reachable === false) {
-      this.log('Not reachable.');
-      this.power = false;
-      this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
-    }
     if (msg.Power !== undefined) {
       this.updatePower(msg);
       if (this.power !== undefined) {
