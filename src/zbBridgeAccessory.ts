@@ -23,13 +23,15 @@ export abstract class ZbBridgeAccessory {
   protected powerTopic?: string;
   protected addr: string;
   protected type: string;
+  protected reachable: boolean | undefined;
   protected updated?: number;
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
-    this.service = this.getService();
+    this.reachable = undefined;
+
 
     // set the service name, this is what is displayed as the default name on the Home app
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
@@ -91,6 +93,10 @@ export abstract class ZbBridgeAccessory {
         return;
       }
       this.onStatusUpdate(message);
+    }
+    if (message.Reachable === false) {
+      this.log('Not reachable.');
+      this.reachable = false;
     }
   }
 
