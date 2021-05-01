@@ -30,7 +30,7 @@ export abstract class ZbBridgeAccessory {
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
-    this.reachable = true;
+    this.reachable = undefined;
 
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
