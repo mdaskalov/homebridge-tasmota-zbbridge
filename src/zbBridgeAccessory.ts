@@ -129,7 +129,6 @@ export abstract class ZbBridgeAccessory {
       };
 
       this.statusUpdateHandlers.push({ id, callback: updateCallback });
-      this.updated = Date.now();
       this.mqttSend(command);
     });
   }
