@@ -44,6 +44,9 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
   createZbBridgeAccessory(accessory: PlatformAccessory) {
     const type = accessory.context.device.type;
+    if (type === undefined) {
+      return;
+    }
     if (type.startsWith('sensor')) {
       new ZbBridgeSensor(this, accessory);
     }
@@ -61,17 +64,17 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         const uuid = this.zbBridgeDeviceUUID(device);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
         if (existingAccessory) {
-          this.log.info('Restoring existing zbBridge accessory from cache: %s', device.name);
           existingAccessory.context.device = device;
           this.api.updatePlatformAccessories([existingAccessory]);
           this.createZbBridgeAccessory(existingAccessory);
         } else {
-          this.log.info('Adding new zbBridge accessory: %s', device.name);
           const accessory = new this.api.platformAccessory(device.name, uuid);
           accessory.context.device = device;
           this.createZbBridgeAccessory(accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
+        this.log.info('Adding %s zbBridge accessory: %s (%s) - %s',
+          existingAccessory ? 'cached' : 'new', device.name, device.addr, device.type);
       }
     }
     if (Array.isArray(this.config.tasmotaDevices)) {
