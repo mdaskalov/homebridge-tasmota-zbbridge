@@ -54,15 +54,12 @@ export abstract class ZbBridgeAccessory {
     }
 
     // Update
-    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', (message, topic) => {
+    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', message => {
       const obj = JSON.parse(message);
       if (obj && obj.ZbReceived) {
         const responseDevice: string = Object.keys(obj.ZbReceived)[0];
         const response = obj.ZbReceived[responseDevice];
         if ((responseDevice.toUpperCase() === this.addr.toUpperCase()) && response) {
-          this.platform.log.debug('%s (%s) MQTT: Received %s :- %s',
-            this.accessory.context.device.name, this.addr,
-            topic, message);
           this.statusUpdate(response);
         }
       }
@@ -119,8 +116,11 @@ export abstract class ZbBridgeAccessory {
       };
 
       const timer = setTimeout(() => {
+        this.platform.log.error('%s (%s) mqttSubmit: timeout after %sms %s',
+          this.accessory.context.device.name, this.addr,
+          Date.now() - startTS, JSON.stringify(command));
         removeHandler();
-        reject(`mqttSubmit timeout (${timeOutValue}ms): id: ${id}, command: ${JSON.stringify(command)}`);
+        reject('mqttSubmit timeout');
       }, timeOutValue);
 
       const updateCallback: (message) => void = message => {
