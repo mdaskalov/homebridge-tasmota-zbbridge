@@ -35,7 +35,7 @@ export abstract class ZbBridgeAccessory {
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
-      throw new Error('Unnknown service: ' + serviceName);
+      throw new Error('Unknown service: ' + serviceName);
     }
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
 
