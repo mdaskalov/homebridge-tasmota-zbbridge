@@ -40,12 +40,7 @@ export abstract class ZbBridgeAccessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    this.platform.mqttClient.publish(
-      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-      this.addr + ',' + accessory.context.device.name,
-    );
-
-    // Use separated topic for power
+    // Subscribe for the power topic updates
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
       this.platform.mqttClient.subscribe('stat/' + this.powerTopic, (message) => {
@@ -53,7 +48,7 @@ export abstract class ZbBridgeAccessory {
       });
     }
 
-    // Update
+    // Subscribe for sensor updates
     this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', message => {
       const obj = JSON.parse(message);
       if (obj && obj.ZbReceived) {
@@ -64,6 +59,11 @@ export abstract class ZbBridgeAccessory {
         }
       }
     });
+
+    this.platform.mqttClient.publish(
+      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+      this.addr + ',' + accessory.context.device.name,
+    );
 
     this.registerHandlers();
 
