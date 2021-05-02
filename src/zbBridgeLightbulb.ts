@@ -237,7 +237,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
-    if (this.reachable === true) {
+    if (this.reachable === true && this.dimmer === undefined) {
       try {
         const msg = await this.mqttSubmit({ device: this.addr, cluster: 8, read: 0 });
         this.updateDimmer(msg);
@@ -264,7 +264,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
-    if (this.reachable === true) {
+    if (this.reachable === true && this.ct === undefined) {
       try {
         const msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
         this.updateColor(msg);
@@ -298,7 +298,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   async getHue(): Promise<CharacteristicValue> {
-    if (this.reachable === true) {
+    if (this.reachable === true && this.hue === undefined) {
       try {
         let msg;
         if (this.supportHS) {
@@ -337,7 +337,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
-    if (this.reachable === true) {
+    if (this.reachable === true && this.saturation === undefined) {
       try {
         let msg;
         if (this.supportHS) {

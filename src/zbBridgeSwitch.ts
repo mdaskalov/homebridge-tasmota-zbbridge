@@ -74,15 +74,17 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    try {
-      if (this.powerTopic !== undefined) {
-        await this.updateExternalPower();
-      } else {
-        const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
-        this.updatePower(msg);
+    if (this.power === undefined) {
+      try {
+        if (this.powerTopic !== undefined) {
+          await this.updateExternalPower();
+        } else {
+          const msg = await this.mqttSubmit({ device: this.addr, cluster: 6, read: 0 });
+          this.updatePower(msg);
+        }
+      } catch (err) {
+        this.log(err);
       }
-    } catch (err) {
-      this.log(err);
     }
     if (this.power !== undefined) {
       return this.power;
