@@ -41,12 +41,10 @@ export class MQTTClient {
     this.client.on('message', (topic, message) => {
       const callOnceHandlers = this.messageHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
       if (callOnceHandlers.length !== 0) {
-        this.log.debug('MQTT: message %d once handler(s) %s :- %s', callOnceHandlers.length, topic, message);
         callOnceHandlers.forEach(h => h.callback(message.toString(), topic));
         this.messageHandlers = this.messageHandlers.filter(h => !callOnceHandlers.includes(h));
       } else {
         const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
-        this.log.debug('MQTT: message %d handler(s) %s :- %s', hadnlers.length, topic, message);
         hadnlers.forEach(h => h.callback(message.toString(), topic));
       }
     });
@@ -73,9 +71,6 @@ export class MQTTClient {
       const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, topic)).length;
       if (handlersCount === 1) {
         this.client.subscribe(topic);
-        this.log.debug('MQTT: Subscribed %s :- %s', id, topic);
-      } else {
-        this.log.debug('MQTT: Added handler %s :- %s %d handler(s)', id, topic, handlersCount);
       }
       return id;
     }
@@ -105,8 +100,6 @@ export class MQTTClient {
 
       const handlerId = this.subscribe(responseTopic, msg => {
         clearTimeout(timer);
-        this.log.debug('MQTT: Submit: response after %sms %s %s',
-          Date.now() - startTS, responseTopic, msg);
         resolve(msg);
       }, true);
 

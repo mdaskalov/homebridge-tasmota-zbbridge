@@ -62,9 +62,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.power !== power) {
       try {
         if (this.powerTopic !== undefined) {
-          this.log('start');
           await this.updateExternalPower(power ? 'ON' : 'OFF');
-          this.log('end');
         } else {
           const msg = await this.mqttSubmit({ device: this.addr, send: { Power: (power ? 'On' : 'Off') } });
           this.updatePower(msg);
