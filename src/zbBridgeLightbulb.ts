@@ -1,6 +1,7 @@
 import {
   PlatformAccessory,
   CharacteristicValue,
+  HAPStatus,
 } from 'homebridge';
 
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
@@ -223,7 +224,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         const msg = await this.mqttSubmit({ device: this.addr, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
         this.updateDimmer(msg);
       } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
   }
@@ -240,7 +241,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.dimmer !== undefined) {
       return this.dimmer;
     }
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   async setColorTemperature(value: CharacteristicValue) {
@@ -250,7 +251,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         const msg = await this.mqttSubmit({ device: this.addr, send: { CT: ct } });
         this.updateColor(msg);
       } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
   }
@@ -267,7 +268,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.ct !== undefined) {
       return this.ct;
     }
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   async setHue(value: CharacteristicValue) {
@@ -284,7 +285,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         }
         this.updateColor(msg);
       } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
       }
     }
   }
@@ -306,7 +307,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.hue !== undefined) {
       return this.hue;
     }
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   async setSaturation(value: CharacteristicValue) {
@@ -323,7 +324,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         }
         this.updateColor(msg);
       } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
   }
@@ -345,7 +346,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.saturation !== undefined) {
       return this.saturation;
     }
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   convertHStoXY() {
