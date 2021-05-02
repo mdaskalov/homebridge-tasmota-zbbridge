@@ -7,6 +7,7 @@ type HandlerCallback =
 type Handler = {
   id: string;
   topic: string;
+  callOnce: boolean;
   callback: HandlerCallback;
 };
 
@@ -38,8 +39,16 @@ export class MQTTClient {
     });
 
     this.client.on('message', (topic, message) => {
-      const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
-      hadnlers.forEach(h => h.callback(message.toString(), topic));
+      const callOnceHandlers = this.messageHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
+      if (callOnceHandlers.length !== 0) {
+        this.log.debug('MQTT: message %d once handler(s) %s :- %s', callOnceHandlers.length, topic, message);
+        callOnceHandlers.forEach(h => h.callback(message.toString(), topic));
+        this.messageHandlers = this.messageHandlers.filter(h => !callOnceHandlers.includes(h));
+      } else {
+        const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
+        this.log.debug('MQTT: message %d handler(s) %s :- %s', hadnlers.length, topic, message);
+        hadnlers.forEach(h => h.callback(message.toString(), topic));
+      }
     });
   }
 
@@ -57,13 +66,17 @@ export class MQTTClient {
     return pid + this.last.toString(36);
   }
 
-  subscribe(topic: string, callback: HandlerCallback): string {
+  subscribe(topic: string, callback: HandlerCallback, callOnce = false): string {
     if (this.client) {
       const id = this.uniqueID();
-      this.messageHandlers.push({ id, topic, callback });
-      this.client.subscribe(topic);
+      this.messageHandlers.push({ id, topic, callOnce, callback });
       const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, topic)).length;
-      this.log.debug('MQTT: Subscribed %s :- %s %d handler(s)', id, topic, handlersCount);
+      if (handlersCount === 1) {
+        this.client.subscribe(topic);
+        this.log.debug('MQTT: Subscribed %s :- %s', id, topic);
+      } else {
+        this.log.debug('MQTT: Added handler %s :- %s %d handler(s)', id, topic, handlersCount);
+      }
       return id;
     }
     return '';
@@ -84,6 +97,29 @@ export class MQTTClient {
   publish(topic: string, message: string) {
     this.client.publish(topic, message);
     this.log.debug('MQTT: Published: %s :- %s', topic, message);
+  }
+
+  submit(topic: string, message: string, responseTopic = topic, timeOut = 2000): Promise<string> {
+    return new Promise((resolve: (message) => void, reject) => {
+      const startTS = Date.now();
+
+      const handlerId = this.subscribe(responseTopic, msg => {
+        clearTimeout(timer);
+        this.log.debug('MQTT: Submit: response after %sms %s %s',
+          Date.now() - startTS, responseTopic, msg);
+        resolve(msg);
+      }, true);
+
+      const timer = setTimeout(() => {
+        this.log.error('MQTT: Submit: timeout after %sms %s',
+          Date.now() - startTS, message);
+        if (handlerId !== undefined) {
+          this.unsubscribe(handlerId);
+        }
+        reject('MQTT: Submit timeout');
+      }, timeOut);
+      this.publish(topic, message);
+    });
   }
 }
 
