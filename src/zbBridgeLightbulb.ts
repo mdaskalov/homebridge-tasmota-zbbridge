@@ -321,15 +321,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const saturation = value as number;
     if (this.saturation !== saturation) {
       try {
-        let msg;
         if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 100, 254) } });
-        } else if (this.supportXY) {
+          const msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 100, 254) } });
+          this.updateColor(msg);
+        } else {
           this.saturation = saturation;
-          this.convertHStoXY();
-          msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
         }
-        this.updateColor(msg);
       } catch (err) {
         throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
