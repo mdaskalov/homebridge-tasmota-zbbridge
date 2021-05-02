@@ -110,14 +110,21 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.supportDimmer) {
       this.mqttSend({ device: this.addr, cluster: 8, read: 0 });
     }
-    if (this.supportCT) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [7, 8] });
-    }
-    if (this.supportHS) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [0, 1, 8] });
-    }
-    if (this.supportXY) {
-      this.mqttSend({ device: this.addr, cluster: 768, read: [3, 4, 8] });
+    if (this.supportCT === true || this.supportHS === true || this.supportXY === true) {
+      const readArray: number[] = []; // color mode
+      if (this.supportHS === true) {
+        readArray.push(0);
+        readArray.push(1);
+      }
+      if (this.supportXY === true) {
+        readArray.push(3);
+        readArray.push(4);
+      }
+      if (this.supportCT === true) {
+        readArray.push(7);
+      }
+      readArray.push(8);
+      this.mqttSend({ device: this.addr, cluster: 768, read: readArray });
     }
   }
 
@@ -184,7 +191,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         }
         break;
     }
-    this.log('updateColor: %s%s%s%s%s%s%s%s',
+    this.log('updateColor: %s%s%s%s%s%s%s',
       colormode !== undefined ? 'ColorMode: ' + colormode : '',
       this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
       this.hue !== undefined ? ', Hue: ' + this.hue : '',
