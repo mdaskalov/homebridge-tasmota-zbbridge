@@ -1,5 +1,6 @@
 import {
   CharacteristicValue,
+  HAPStatus,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
@@ -58,7 +59,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
           const msg = await this.mqttSubmit({ device: this.addr, send: { Power: (power ? 'On' : 'Off') } });
           this.updatePower(msg);
         } catch (err) {
-          throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+          throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
         }
       }
     }
@@ -81,7 +82,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.power !== undefined) {
       return this.power;
     }
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
 }
