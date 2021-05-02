@@ -59,7 +59,7 @@ export abstract class ZbBridgeAccessory {
       if (obj && obj.ZbReceived) {
         const responseDevice: string = Object.keys(obj.ZbReceived)[0];
         const response = obj.ZbReceived[responseDevice];
-        if ((responseDevice.toUpperCase() === this.addr.toUpperCase()) && response) {
+        if (Number(responseDevice) === Number(this.addr) && response !== undefined) {
           this.statusUpdate(response);
         }
       }
