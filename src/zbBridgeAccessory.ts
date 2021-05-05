@@ -1,6 +1,7 @@
 import {
   Service,
   PlatformAccessory,
+  HAPStatus,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -16,7 +17,7 @@ type StatusUpdateHandler = {
   callback: (message) => void;
 };
 
-const UPDATE_DELAY = 2000;
+const IGNORE_UPDATES_TIME = 2000;
 
 export abstract class ZbBridgeAccessory {
   protected service: Service;
@@ -24,7 +25,7 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected type: string;
   protected reachable: boolean | undefined;
-  protected updated?: number;
+  protected ignoreUpdatesUntil = 0;
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
@@ -47,6 +48,14 @@ export abstract class ZbBridgeAccessory {
         this.statusUpdate({ Power: (message === 'ON') ? 1 : 0 });
       });
     }
+
+    //subscribe for zbsend updates
+    this.platform.mqttClient.subscribe('stat/' + this.platform.mqttClient.topic + '/RESULT', message => {
+      const msg = JSON.parse(message);
+      if (this.statusUpdateHandlers.length !== 0) {
+        this.statusUpdateHandlers.forEach(h => h.callback(msg));
+      }
+    });
 
     // Subscribe for sensor updates
     this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', message => {
@@ -88,11 +97,10 @@ export abstract class ZbBridgeAccessory {
       );
     } else if (message.Reachable === false) {
       this.reachable = false;
-    } else if (this.statusUpdateHandlers.length !== 0) {
-      this.statusUpdateHandlers.forEach(h => h.callback(message));
     } else {
-      if ((this.updated !== undefined) && (Date.now() - this.updated < UPDATE_DELAY)) {
-        this.log('updateStatus ignored, updated %sms ago...', Date.now() - this.updated);
+      const waitTime = this.ignoreUpdatesUntil - Date.now();
+      if (waitTime > 0) {
+        this.log('updateStatus ignored, waiting %sms...', waitTime);
         return;
       }
       this.onStatusUpdate(message);
@@ -133,6 +141,23 @@ export abstract class ZbBridgeAccessory {
     });
   }
 
+  async zbSend(command, ignoreUpdates = true) {
+    try {
+      const msg = await this.mqttSubmit(command);
+      if (msg.ZbSend !== 'Done') {
+        this.platform.log.error('%s (%s) zbSend: Unexpected response: %s',
+          this.accessory.context.device.name, this.addr,
+          JSON.stringify(msg));
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      }
+      if (ignoreUpdates) {
+        this.ignoreUpdatesUntil = Date.now() + IGNORE_UPDATES_TIME;
+      }
+    } catch (err) {
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(message: string, ...parameters: any[]): void {
     this.platform.log.debug('%s (%s) ' + message,
@@ -140,7 +165,6 @@ export abstract class ZbBridgeAccessory {
       ...parameters,
     );
   }
-
 
   mapValue(value: number, in_max: number, out_max: number): number {
     return Math.round(out_max * value / in_max);
