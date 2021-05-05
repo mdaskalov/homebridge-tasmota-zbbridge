@@ -61,20 +61,20 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     super.registerHandlers();
     this.configureLightFeatures();
     if (this.supportDimmer) {
-      this.dimmer = 0;
+      //this.dimmer = 0;
       this.service.getCharacteristic(this.platform.Characteristic.Brightness)
         .onSet(this.setBrightness.bind(this))
         .onGet(this.getBrightness.bind(this));
     }
     if (this.supportCT) {
-      this.ct = 140;
+      //this.ct = 140;
       this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
         .onSet(this.setColorTemperature.bind(this))
         .onGet(this.getColorTemperature.bind(this));
     }
     if (this.supportHS || this.supportXY) {
-      this.hue = 0;
-      this.saturation = 0;
+      //this.hue = 0;
+      //this.saturation = 0;
       this.service.getCharacteristic(this.platform.Characteristic.Hue)
         .onSet(this.setHue.bind(this))
         .onGet(this.getHue.bind(this));
@@ -227,26 +227,17 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async setBrightness(value: CharacteristicValue) {
     const dimmer = value as number;
     if (this.dimmer !== dimmer) {
-      try {
-        const msg = await this.mqttSubmit({ device: this.addr, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
-        this.updateDimmer(msg);
-      } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-      }
+      this.dimmer = dimmer;
+      await this.zbSend({ device: this.addr, send: { Dimmer: this.mapValue(this.dimmer, 100, 254) } });
     }
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
-    if (this.reachable === true && this.dimmer === undefined) {
-      try {
-        const msg = await this.mqttSubmit({ device: this.addr, cluster: 8, read: 0 });
-        this.updateDimmer(msg);
-      } catch (err) {
-        this.log(err);
-      }
-    }
     if (this.dimmer !== undefined) {
       return this.dimmer;
+    }
+    if (this.reachable === true) {
+      await this.zbSend({ device: this.addr, cluster: 8, read: 0 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
@@ -254,26 +245,17 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async setColorTemperature(value: CharacteristicValue) {
     const ct = value as number;
     if (this.ct !== ct) {
-      try {
-        const msg = await this.mqttSubmit({ device: this.addr, send: { CT: ct } });
-        this.updateColor(msg);
-      } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-      }
+      this.ct = ct;
+      await this.zbSend({ device: this.addr, send: { CT: this.ct } });
     }
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
-    if (this.reachable === true && this.ct === undefined) {
-      try {
-        const msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
-        this.updateColor(msg);
-      } catch (err) {
-        this.log(err);
-      }
-    }
     if (this.ct !== undefined) {
       return this.ct;
+    }
+    if (this.reachable === true) {
+      await this.zbSend({ device: this.addr, cluster: 768, read: 0 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
@@ -281,38 +263,26 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async setHue(value: CharacteristicValue) {
     const hue = value as number;
     if (this.hue !== hue) {
-      try {
-        let msg;
-        if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, send: { Hue: this.mapValue(hue, 360, 254) } });
-        } else if (this.supportXY) {
-          this.hue = hue;
-          this.convertHStoXY();
-          msg = await this.mqttSubmit({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
-        }
-        this.updateColor(msg);
-      } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+      this.hue = hue;
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, send: { Hue: this.mapValue(this.hue, 360, 254) } });
+      } else if (this.supportXY) {
+        this.convertHStoXY();
+        await this.zbSend({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
       }
     }
   }
 
   async getHue(): Promise<CharacteristicValue> {
-    if (this.reachable === true && this.hue === undefined) {
-      try {
-        let msg;
-        if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 0 });
-        } else if (this.supportXY) {
-          msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: [3, 4] });
-        }
-        this.updateColor(msg);
-      } catch (err) {
-        this.log(err);
-      }
-    }
     if (this.hue !== undefined) {
       return this.hue;
+    }
+    if (this.reachable === true) {
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, cluster: 768, read: 0 }, false);
+      } else if (this.supportXY) {
+        await this.zbSend({ device: this.addr, cluster: 768, read: [3, 4] }, false);
+      }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
@@ -320,35 +290,21 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async setSaturation(value: CharacteristicValue) {
     const saturation = value as number;
     if (this.saturation !== saturation) {
-      try {
-        if (this.supportHS) {
-          const msg = await this.mqttSubmit({ device: this.addr, send: { Sat: this.mapValue(saturation, 100, 254) } });
-          this.updateColor(msg);
-        } else {
-          this.saturation = saturation;
-        }
-      } catch (err) {
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+      this.saturation = saturation;
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, send: { Sat: this.mapValue(this.saturation, 100, 254) } });
       }
     }
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
-    if (this.reachable === true && this.saturation === undefined) {
-      try {
-        let msg;
-        if (this.supportHS) {
-          msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: 1 });
-        } else if (this.supportXY) {
-          msg = await this.mqttSubmit({ device: this.addr, cluster: 768, read: [3, 4] });
-        }
-        this.updateColor(msg);
-      } catch (err) {
-        this.log(err);
-      }
-    }
     if (this.saturation !== undefined) {
       return this.saturation;
+    }
+    if (this.reachable === true) {
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, cluster: 768, read: 1 }, false);
+      }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
