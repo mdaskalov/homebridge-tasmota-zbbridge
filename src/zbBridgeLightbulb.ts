@@ -309,6 +309,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
+  // based on: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
   convertHStoXY() {
     if (this.hue === undefined || this.saturation === undefined) {
       return;
@@ -335,20 +336,23 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       case 5: g = p, b = q; break;
     }
 
-    if (r + g + b > 0) {
-      // apply gamma correction
-      r = (r > 0.04045) ? Math.pow((r + 0.055) / (1.0 + 0.055), 2.4) : (r / 12.92);
-      g = (g > 0.04045) ? Math.pow((g + 0.055) / (1.0 + 0.055), 2.4) : (g / 12.92);
-      b = (b > 0.04045) ? Math.pow((b + 0.055) / (1.0 + 0.055), 2.4) : (b / 12.92);
+    // apply gamma correction
+    r = (r > 0.04045) ? Math.pow((r + 0.055) / (1.0 + 0.055), 2.4) : (r / 12.92);
+    g = (g > 0.04045) ? Math.pow((g + 0.055) / (1.0 + 0.055), 2.4) : (g / 12.92);
+    b = (b > 0.04045) ? Math.pow((b + 0.055) / (1.0 + 0.055), 2.4) : (b / 12.92);
 
-      // Convert the RGB values to XYZ using the Wide RGB D65
-      const X = r * 0.649926 + g * 0.103455 + b * 0.197109;
-      const Y = r * 0.234327 + g * 0.743075 + b * 0.022598;
-      const Z = r * 0.000000 + g * 0.053077 + b * 1.035763;
+    // Convert the RGB values to XYZ using the Wide RGB D65 conversion formula
+    const X = r * 0.664511 + g * 0.154324 + b * 0.162028;
+    const Y = r * 0.283881 + g * 0.668433 + b * 0.047685;
+    const Z = r * 0.000088 + g * 0.072310 + b * 0.986039;
 
-      this.colorX = Math.round(65535.0 * X / (X + Y + Z));
-      this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
-      //this.log(`HStoXY: ${this.hue},${this.saturation} -> ${this.colorX},${this.colorY}`);
+    this.colorX = Math.round(65535.0 * X / (X + Y + Z));
+    this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
+    if (isNaN(this.colorX)) {
+      this.colorX = 0;
+    }
+    if (isNaN(this.colorY)) {
+      this.colorY = 0;
     }
   }
 
@@ -365,13 +369,40 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const X = (Y / y) * x;
     const Z = (Y / y) * z;
 
-    let r = X * 1.4628067 - Y * 0.1840623 - Z * 0.2743606;
-    let g = -X * 0.5217933 + Y * 1.4472381 + Z * 0.0677227;
-    let b = X * 0.0349342 - Y * 0.0968930 + Z * 1.2884099;
-    // apply gamma correction
+    //Convert to RGB using Wide RGB D65 conversion
+    let r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
+    let g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
+    let b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+
+    //If red, green or blue is larger than 1.0 set it back to the maximum of 1.0
+    if (r > b && r > g && r > 1.0) {
+      g = g / r;
+      b = b / r;
+      r = 1.0;
+    } else if (g > b && g > r && g > 1.0) {
+      r = r / g;
+      b = b / g;
+      g = 1.0;
+    } else if (b > r && b > g && b > 1.0) {
+      r = r / b;
+      g = g / b;
+      b = 1.0;
+    }
+
+    // reverse gamma correction
     r = r <= 0.0031308 ? 12.92 * r : (1.0 + 0.055) * Math.pow(r, (1.0 / 2.4)) - 0.055;
     g = g <= 0.0031308 ? 12.92 * g : (1.0 + 0.055) * Math.pow(g, (1.0 / 2.4)) - 0.055;
     b = b <= 0.0031308 ? 12.92 * b : (1.0 + 0.055) * Math.pow(b, (1.0 / 2.4)) - 0.055;
+
+    if (isNaN(r)) {
+      r = 0;
+    }
+    if (isNaN(g)) {
+      g = 0;
+    }
+    if (isNaN(b)) {
+      b = 0;
+    }
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -390,10 +421,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     this.saturation = Math.round(s * 100);
 
     if (isNaN(this.hue)) {
-      this.hue = undefined;
+      this.hue = 0;
     }
     if (isNaN(this.saturation)) {
-      this.saturation = undefined;
+      this.saturation = 0;
     }
     //this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
   }
