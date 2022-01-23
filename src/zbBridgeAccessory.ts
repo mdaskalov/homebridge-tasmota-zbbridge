@@ -23,6 +23,7 @@ export abstract class ZbBridgeAccessory {
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
+  protected endpoint: number;
   protected type: string;
   protected reachable: boolean | undefined;
   protected ignoreUpdatesUntil = 0;
@@ -32,6 +33,11 @@ export abstract class ZbBridgeAccessory {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
     this.reachable = undefined;
+    this.endpoint = -1; 
+
+    if (this.accessory.context.device.endpoint !== undefined) {
+      this.endpoint = this.accessory.context.device.endpoint;
+    }
 
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
