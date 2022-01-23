@@ -9,7 +9,8 @@ import { TasmotaZbBridgePlatform } from './platform';
 export type ZbBridgeDevice = {
   addr: string,
   type: string,
-  name: string
+  name: string, 
+  endpoint: number
 }
 
 type StatusUpdateHandler = {
