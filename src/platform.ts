@@ -35,7 +35,11 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   zbBridgeDeviceUUID(device: ZbBridgeDevice) {
-    return this.api.hap.uuid.generate(device.addr);
+    if (device.endpoint !== -1) {
+      return this.api.hap.uuid.generate(device.addr + '-' + device.endpoint);
+    } else {
+      return this.api.hap.uuid.generate(device.addr);
+    }
   }
 
   tasmotaDeviceUUID(device: TasmotaDevice) {
