@@ -46,7 +46,13 @@ It is also possible to combine devices - tasmota device can be used to switch a 
         {
             "addr": "0xAC3C",
             "type": "switch",
-            "name": "Switch"
+            "name": "Switch", 
+            "endpoint": 1
+        }, 
+        {
+            "addr": "0xAD0B",
+            "type": "switch",
+            "name": "Kitchen Ligths"
         }
     ],
     "tasmotaDevices": [

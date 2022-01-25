@@ -27,7 +27,6 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       } else {
         this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
       }
-      
     }
   }
 
