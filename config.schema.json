@@ -72,6 +72,11 @@
               "placeholder": "HomeKit name",
               "required": true
             },
+            "endpoint": {
+              "title": "Endpoint number",
+              "type": "number",
+              "placeholder": "Endpoint number"
+            },
             "powerTopic": {
               "title": "Power Topic",
               "placeholder": "Topic",
