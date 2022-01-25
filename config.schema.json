@@ -243,6 +243,15 @@
                 "notitle": true,
                 "key": "zbBridgeDevices[].name"
               }]
+            }, 
+            {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].endpoint"
+              }]
             }
           ]
         }, {
