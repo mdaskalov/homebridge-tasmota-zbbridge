@@ -6,4 +6,4 @@ export const PLATFORM_NAME = 'TasmotaZbBridge';
 /**
  * This must match the name of your plugin as defined the package.json
  */
-export const PLUGIN_NAME = 'homebridge-tasmota-zbbridge-me';
+export const PLUGIN_NAME = 'homebridge-tasmota-zbbridge';

@@ -61,11 +61,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         await this.externalPower(power ? 'ON' : 'OFF');
       } else {
         this.power = power;
-        if (this.endpoint !== -1) {
-          await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (this.power ? 'On' : 'Off') } });
-        } else {
-          await this.zbSend({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
-        }
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (this.power ? 'On' : 'Off') } });
       }
     }
   }
@@ -77,11 +73,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic !== undefined) {
       await this.externalPower();
     } else {
-      if (this.endpoint !== -1) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
-      } else {
-        await this.zbSend({ device: this.addr, cluster: 6, read: 0 }, false);
-      }
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }

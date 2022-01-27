@@ -33,13 +33,9 @@ export abstract class ZbBridgeAccessory {
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
+    this.endpoint = this.accessory.context.device.endpoint; 
     this.reachable = undefined;
-    this.endpoint = -1; 
-
-    if (this.accessory.context.device.endpoint !== undefined) {
-      this.endpoint = this.accessory.context.device.endpoint;
-    }
-
+    
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
@@ -76,10 +72,12 @@ export abstract class ZbBridgeAccessory {
       }
     });
 
-    // this.platform.mqttClient.publish(
-    //   'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-    //   this.addr + ',' + accessory.context.device.name,
-    // );
+    if (this.endpoint === undefined) {
+      this.platform.mqttClient.publish(
+        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+        this.addr + ',' + accessory.context.device.name,
+      );
+    }
 
     this.registerHandlers();
 
