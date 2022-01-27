@@ -1,5 +1,5 @@
 {
-  "displayName": "Homebridge Tasmota ZbBridge Marek",
+  "displayName": "Homebridge Tasmota ZbBridge",
   "name": "homebridge-tasmota-zbbridge",
   "version": "0.11.2",
   "description": "Control Zigbee Devices Using Tasmota ZbBridge",
