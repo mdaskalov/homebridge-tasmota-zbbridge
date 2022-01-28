@@ -72,12 +72,10 @@ export abstract class ZbBridgeAccessory {
       }
     });
 
-    if (this.endpoint === undefined) {
-      this.platform.mqttClient.publish(
-        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-        this.addr + ',' + accessory.context.device.name,
-      );
-    }
+    this.platform.mqttClient.publish(
+      'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+      this.addr + ',' + accessory.context.device.name,
+    );
 
     this.registerHandlers();
 
