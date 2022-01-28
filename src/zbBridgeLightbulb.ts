@@ -61,24 +61,19 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     super.registerHandlers();
     this.configureLightFeatures();
     if (this.supportDimmer) {
-      //this.dimmer = 0;
       this.service.getCharacteristic(this.platform.Characteristic.Brightness)
         .onSet(this.setBrightness.bind(this))
         .onGet(this.getBrightness.bind(this));
     }
     if (this.supportCT) {
-      //this.ct = 140;
       this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
         .onSet(this.setColorTemperature.bind(this))
         .onGet(this.getColorTemperature.bind(this));
     }
     if (this.supportHS || this.supportXY) {
-      //this.hue = 0;
-      //this.saturation = 0;
       this.service.getCharacteristic(this.platform.Characteristic.Hue)
         .onSet(this.setHue.bind(this))
         .onGet(this.getHue.bind(this));
-      // register handlers for the Saturation Characteristic
       this.service.getCharacteristic(this.platform.Characteristic.Saturation)
         .onSet(this.setSaturation.bind(this))
         .onGet(this.getSaturation.bind(this));
@@ -150,11 +145,20 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (msg.Y !== undefined) {
       this.colorY = msg.Y;
     }
+    this.convertXYtoHS();
   }
 
   updateCT(msg): void {
     if (msg.CT !== undefined) {
       this.ct = msg.CT;
+    }
+    if (this.supportHS) {
+      this.convertCTtoXY();
+      this.convertXYtoHS();
+      if (!this.supportXY) {
+        this.colorX = undefined;
+        this.colorY = undefined;
+      }
     }
   }
 
@@ -177,20 +181,26 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         break;
       case 1:
         this.updateXY(msg);
-        this.convertXYtoHS();
         break;
       case 2:
         this.updateCT(msg);
-        if (this.supportHS) {
-          this.convertCTtoXY();
-          this.convertXYtoHS();
-          if (!this.supportXY) {
-            this.colorX = undefined;
-            this.colorY = undefined;
-          }
-        }
         break;
     }
+
+    // initial update
+    if (this.dimmer && this.dimmer === undefined) {
+      this.updateDimmer(msg);
+    }
+    if (this.supportHS && (this.hue === undefined || this.saturation === undefined)) {
+      this.updateHS(msg);
+    }
+    if (this.supportXY && (this.colorX === undefined || this.colorY === undefined)) {
+      this.updateXY(msg);
+    }
+    if (this.supportCT && this.ct === undefined) {
+      this.updateCT(msg);
+    }
+
     this.log('updateColor: %s%s%s%s%s%s%s',
       colormode !== undefined ? 'ColorMode: ' + colormode : '',
       this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
