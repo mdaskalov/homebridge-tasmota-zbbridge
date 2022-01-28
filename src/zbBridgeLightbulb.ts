@@ -108,7 +108,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   onQueryInnitialState() {
     super.onQueryInnitialState();
     if (this.supportDimmer) {
-      this.mqttSend({ device: this.addr, cluster: 8, read: 0 });
+      this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
     }
     if (this.supportCT === true || this.supportHS === true || this.supportXY === true) {
       const readArray: number[] = []; // color mode
@@ -124,7 +124,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         readArray.push(7);
       }
       readArray.push(8);
-      this.mqttSend({ device: this.addr, cluster: 768, read: readArray });
+      this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: readArray });
     }
   }
 
@@ -228,7 +228,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const dimmer = value as number;
     if (this.dimmer !== dimmer) {
       this.dimmer = dimmer;
-      await this.zbSend({ device: this.addr, send: { Dimmer: this.mapValue(this.dimmer, 100, 254) } });
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(this.dimmer, 100, 254) } });
     }
   }
 
@@ -237,7 +237,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       return this.dimmer;
     }
     if (this.reachable === true) {
-      await this.zbSend({ device: this.addr, cluster: 8, read: 0 }, false);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
@@ -246,7 +246,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const ct = value as number;
     if (this.ct !== ct) {
       this.ct = ct;
-      await this.zbSend({ device: this.addr, send: { CT: this.ct } });
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: this.ct } });
     }
   }
 
@@ -255,7 +255,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       return this.ct;
     }
     if (this.reachable === true) {
-      await this.zbSend({ device: this.addr, cluster: 768, read: 0 }, false);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 0 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
@@ -265,10 +265,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.hue !== hue) {
       this.hue = hue;
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, send: { Hue: this.mapValue(this.hue, 360, 254) } });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(this.hue, 360, 254) } });
       } else if (this.supportXY) {
         this.convertHStoXY();
-        await this.zbSend({ device: this.addr, send: { color: `${this.colorX},${this.colorY}` } });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.colorX},${this.colorY}` } });
       }
     }
   }
@@ -279,9 +279,9 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     }
     if (this.reachable === true) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, cluster: 768, read: 0 }, false);
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 0 }, false);
       } else if (this.supportXY) {
-        await this.zbSend({ device: this.addr, cluster: 768, read: [3, 4] }, false);
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] }, false);
       }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
@@ -292,7 +292,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (this.saturation !== saturation) {
       this.saturation = saturation;
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, send: { Sat: this.mapValue(this.saturation, 100, 254) } });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(this.saturation, 100, 254) } });
       }
     }
   }
@@ -303,7 +303,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     }
     if (this.reachable === true) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, cluster: 768, read: 1 }, false);
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 1 }, false);
       }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);

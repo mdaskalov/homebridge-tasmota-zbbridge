@@ -40,7 +40,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
   }
 
   onQueryInnitialState() {
-    this.mqttSend({ device: this.addr, cluster: this.cluster, read: this.attribute });
+    this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
   }
 
   onStatusUpdate(msg) {
@@ -65,7 +65,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
 
   async getValue(): Promise<CharacteristicValue> {
     //TODO: should find out how to get currennt value
-    //this.mqttSend({ device: this.addr, cluster: this.cluster, read: this.attribute });
+    //this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
     if (this.value !== undefined) {
       return this.value;
     }
