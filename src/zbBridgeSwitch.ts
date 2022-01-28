@@ -22,7 +22,11 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic !== undefined) {
       this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
     } else {
-      this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
+      if (this.endpoint !== undefined) {
+        this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
+      } else {
+        this.mqttSend({ device: this.addr, cluster: 6, read: 0 });
+      }
     }
   }
 
@@ -35,7 +39,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   onStatusUpdate(msg) {
-    if (msg.Power !== undefined) {
+    if (msg.Power !== undefined && ((this.endpoint !== undefined && msg.Endpoint === this.endpoint) || this.endpoint === undefined)) {
       this.setPower(msg.Power === 1);
     }
     this.log('%s',
@@ -57,7 +61,11 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         await this.externalPower(power ? 'ON' : 'OFF');
       } else {
         this.power = power;
-        await this.zbSend({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
+        if (this.endpoint !== undefined) {
+          await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (this.power ? 'On' : 'Off') } });
+        } else {
+          await this.zbSend({ device: this.addr, send: { Power: (this.power ? 'On' : 'Off') } });
+        }
       }
     }
   }
@@ -69,7 +77,11 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic !== undefined) {
       await this.externalPower();
     } else {
-      await this.zbSend({ device: this.addr, cluster: 6, read: 0 }, false);
+      if (this.endpoint !== undefined) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
+      } else {
+        await this.zbSend({ device: this.addr, cluster: 6, read: 0 }, false);
+      }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }

@@ -72,6 +72,11 @@
               "placeholder": "HomeKit name",
               "required": true
             },
+            "endpoint": {
+              "title": "Endpoint number",
+              "type": "number",
+              "placeholder": "Endpoint number"
+            },
             "powerTopic": {
               "title": "Power Topic",
               "placeholder": "Topic",
@@ -237,6 +242,15 @@
                 "nodescription": true,
                 "notitle": true,
                 "key": "zbBridgeDevices[].name"
+              }]
+            }, 
+            {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].endpoint"
               }]
             }
           ]
