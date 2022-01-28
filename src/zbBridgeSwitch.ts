@@ -77,11 +77,11 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic !== undefined) {
       await this.externalPower();
     } else {
-        if (this.endpoint !== undefined) {
-          await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
-        } else {
-          await this.zbSend({ device: this.addr, cluster: 6, read: 0 }, false);
-        }
+      if (this.endpoint !== undefined) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
+      } else {
+        await this.zbSend({ device: this.addr, cluster: 6, read: 0 }, false);
+      }
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
