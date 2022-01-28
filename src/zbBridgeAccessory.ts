@@ -24,7 +24,7 @@ export abstract class ZbBridgeAccessory {
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
-  protected endpoint: number;
+  protected endpoint: number | undefined;
   protected type: string;
   protected reachable: boolean | undefined;
   protected ignoreUpdatesUntil = 0;
