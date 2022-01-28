@@ -35,7 +35,7 @@ export abstract class ZbBridgeAccessory {
     this.type = this.accessory.context.device.type;
     this.endpoint = this.accessory.context.device.endpoint; 
     this.reachable = undefined;
-    
+
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
