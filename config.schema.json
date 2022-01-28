@@ -29,7 +29,7 @@
             "addr": {
               "title": "Short Address",
               "type": "string",
-              "placeholder": "Short addr",
+              "placeholder": "Address",
               "pattern": "^0x[A-Fa-f0-9]{4}$",
               "required": true
             },
@@ -73,9 +73,9 @@
               "required": true
             },
             "endpoint": {
-              "title": "Endpoint number",
+              "title": "Endpoint",
               "type": "number",
-              "placeholder": "Endpoint number"
+              "placeholder": "Endpoint"
             },
             "powerTopic": {
               "title": "Power Topic",
@@ -217,7 +217,7 @@
           "flex-flow": "row wrap",
           "items": [{
               "type": "flex",
-              "flex": "1 1 90px",
+              "flex": "1 1 40px",
               "flex-flow": "column",
               "items": [{
                 "nodescription": true,
@@ -227,7 +227,17 @@
             },
             {
               "type": "flex",
-              "flex": "1 1 150px",
+              "flex": "1 1 50px",
+              "flex-flow": "column",
+              "items": [{
+                "nodescription": true,
+                "notitle": true,
+                "key": "zbBridgeDevices[].endpoint"
+              }]
+            },
+            {
+              "type": "flex",
+              "flex": "1 1 130px",
               "flex-flow": "column",
               "items": [{
                 "nodescription": true,
@@ -242,15 +252,6 @@
                 "nodescription": true,
                 "notitle": true,
                 "key": "zbBridgeDevices[].name"
-              }]
-            }, 
-            {
-              "type": "flex",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "zbBridgeDevices[].endpoint"
               }]
             }
           ]
