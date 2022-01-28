@@ -10,7 +10,7 @@ export type ZbBridgeDevice = {
   addr: string,
   type: string,
   name: string, 
-  endpoint: number
+  endpoint: number | undefined
 }
 
 type StatusUpdateHandler = {
