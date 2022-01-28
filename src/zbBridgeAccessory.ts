@@ -9,7 +9,7 @@ import { TasmotaZbBridgePlatform } from './platform';
 export type ZbBridgeDevice = {
   addr: string,
   type: string,
-  name: string, 
+  name: string,
   endpoint: number | undefined
 }
 
@@ -24,7 +24,7 @@ export abstract class ZbBridgeAccessory {
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
-  protected endpoint: number | undefined;
+  protected endpoint: number | undefined;
   protected type: string;
   protected reachable: boolean | undefined;
   protected ignoreUpdatesUntil = 0;
@@ -33,7 +33,7 @@ export abstract class ZbBridgeAccessory {
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
-    this.endpoint = this.accessory.context.device.endpoint; 
+    this.endpoint = this.accessory.context.device.endpoint;
     this.reachable = undefined;
 
     const serviceName = this.getServiceName();
