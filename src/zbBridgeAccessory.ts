@@ -26,7 +26,7 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected endpoint: number | undefined;
   protected type: string;
-  protected reachable: boolean | undefined;
+  protected reachable: boolean;
   protected ignoreUpdatesUntil = 0;
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
@@ -34,7 +34,7 @@ export abstract class ZbBridgeAccessory {
     this.addr = this.accessory.context.device.addr;
     this.type = this.accessory.context.device.type;
     this.endpoint = this.accessory.context.device.endpoint;
-    this.reachable = undefined;
+    this.reachable = true;
 
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
