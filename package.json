@@ -6,10 +6,10 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/maerneker/homebridge-tasmota-zbbridge.git"
+    "url": "git://github.com/mdaskalov/homebridge-tasmota-zbbridge.git"
   },
   "bugs": {
-    "url": "https://github.com/maerneker/homebridge-tasmota-zbbridge/issues"
+    "url": "https://github.com/mdaskalov/homebridge-tasmota-zbbridge/issues"
   },
   "engines": {
     "node": ">=10.17.0",
