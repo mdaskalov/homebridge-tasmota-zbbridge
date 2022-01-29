@@ -265,7 +265,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       return this.ct;
     }
     if (this.reachable === true) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 0 }, false);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 7 }, false);
     }
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
