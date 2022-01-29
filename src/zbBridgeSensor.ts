@@ -39,7 +39,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     }
   }
 
-  onQueryInnitialState() {
+  onQueryInitialState() {
     this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
   }
 

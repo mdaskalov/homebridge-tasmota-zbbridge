@@ -85,7 +85,7 @@ export abstract class ZbBridgeAccessory {
 
     // Query Manufacturer, Model
     this.mqttSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
-    this.onQueryInnitialState();
+    this.onQueryInitialState();
   }
 
   getObjectByPath(obj, path: string) {
@@ -189,7 +189,7 @@ export abstract class ZbBridgeAccessory {
 
   abstract registerHandlers(): void;
 
-  abstract onQueryInnitialState(): void;
+  abstract onQueryInitialState(): void;
 
   abstract onStatusUpdate(response): void;
 }

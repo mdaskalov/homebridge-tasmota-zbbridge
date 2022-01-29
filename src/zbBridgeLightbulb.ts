@@ -100,7 +100,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
   //Scene           ZbSend { "device": "0x9E82", "cluster": "0x0005", "read": [0, 1, 2, 3] }
 
-  onQueryInnitialState() {
+  onQueryInitialState() {
+    super.onQueryInitialState(); //switch
     if (this.supportDimmer) {
       this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
     }
@@ -214,6 +215,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   onStatusUpdate(msg) {
+    super.onStatusUpdate(msg); // switch
     if (this.supportDimmer) {
       this.updateDimmer(msg);
       if (this.dimmer !== undefined) {

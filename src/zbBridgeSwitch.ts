@@ -18,7 +18,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       .onGet(this.getOn.bind(this));
   }
 
-  onQueryInnitialState() {
+  onQueryInitialState() {
     if (this.powerTopic !== undefined) {
       this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
     } else {
