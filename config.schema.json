@@ -30,7 +30,7 @@
               "title": "Short Address",
               "type": "string",
               "placeholder": "Address",
-              "pattern": "^0x[A-Fa-f0-9]{4}$",
+              "pattern": "^0x[A-Fa-f0-9]{4}(:[1-9]{1}[0-9]{0,2})?$",
               "required": true
             },
             "type": {
@@ -71,11 +71,6 @@
               "type": "string",
               "placeholder": "HomeKit name",
               "required": true
-            },
-            "endpoint": {
-              "title": "Endpoint",
-              "type": "number",
-              "placeholder": "Endpoint"
             },
             "powerTopic": {
               "title": "Power Topic",
@@ -227,17 +222,7 @@
             },
             {
               "type": "flex",
-              "flex": "1 1 50px",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "zbBridgeDevices[].endpoint"
-              }]
-            },
-            {
-              "type": "flex",
-              "flex": "1 1 130px",
+              "flex": "1 1 150px",
               "flex-flow": "column",
               "items": [{
                 "nodescription": true,

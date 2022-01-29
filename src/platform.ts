@@ -35,7 +35,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   zbBridgeDeviceUUID(device: ZbBridgeDevice) {
-    return this.api.hap.uuid.generate(device.addr + (device.endpoint ? '-' + device.endpoint : ''));
+    return this.api.hap.uuid.generate(device.addr);
   }
 
   tasmotaDeviceUUID(device: TasmotaDevice) {
@@ -73,9 +73,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           this.createZbBridgeAccessory(accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
-        const address = device.addr + (device.endpoint ? '/' + device.endpoint : '');
         this.log.info('Adding %s zbBridge accessory: %s (%s) - %s',
-          existingAccessory ? 'cached' : 'new', device.name, address, device.type);
+          existingAccessory ? 'cached' : 'new', device.name, device.addr, device.type);
       }
     }
     if (Array.isArray(this.config.tasmotaDevices)) {

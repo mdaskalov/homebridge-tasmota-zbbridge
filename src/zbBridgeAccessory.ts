@@ -31,9 +31,10 @@ export abstract class ZbBridgeAccessory {
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
-    this.addr = this.accessory.context.device.addr;
+    const addr = this.accessory.context.device.addr.split(':');
+    this.addr = addr[0];
+    this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
-    this.endpoint = this.accessory.context.device.endpoint;
     this.reachable = true;
 
     const serviceName = this.getServiceName();
@@ -109,7 +110,7 @@ export abstract class ZbBridgeAccessory {
         this.log('updateStatus ignored, waiting %sms...', waitTime);
         return;
       }
-      if (this.endpoint === undefined || this.endpoint === message.Endpoint) {
+      if (this.endpoint === undefined || Number(this.endpoint) === Number(message.Endpoint)) {
         this.onStatusUpdate(message);
       }
     }

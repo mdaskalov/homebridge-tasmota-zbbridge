@@ -43,16 +43,14 @@ It is also possible to combine devices - tasmota device can be used to switch a 
             "name": "Go"
         },
         {
-            "addr": "0xAC3C",
+            "addr": "0xAC3C:1",
             "type": "switch",
             "name": "Switch-1",
-            "endpoint": 1
         },
         {
-            "addr": "0xAC3C",
+            "addr": "0xAC3C:2",
             "type": "switch",
             "name": "Switch-2",
-            "endpoint": 2
         },
         {
             "addr": "0xAD0B",
@@ -91,13 +89,12 @@ It is also possible to combine devices - tasmota device can be used to switch a 
 
 `zbBridgeDevices` - Zigbee devices connected to the Sonoff Zigbee Bridge
 
-* `addr` - Device short address
+* `addr` - Device short address and optional endpoint (for example Tuya 2ch switch). Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
 * `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`. Alternatively use generic `light` and add features as needed: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support.
 Generic sennsors are suported by defining the type as follows: `sensor_<Cluster>_<ReadCommand>_<Service>_<Characteristic>_<ValuePath>`
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name if endpoint is not used.
-* `endpoint` - (optional) Use more than one endpoint for Switch accessories (for example Tuya 2ch Switch)
 * `powerTopic` - (optional) Use another tasmota device to controll the power
-* `powerType` - (optional) Which tasmota switch to use, default: `POWER`
+* `powerType` - (optional) Tasmota switch to use, default: `POWER`
 
 `tasmotaDevices` - Tasmota flashed devices
 
