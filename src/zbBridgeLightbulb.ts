@@ -214,7 +214,6 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   onStatusUpdate(msg) {
-    super.onStatusUpdate(msg);
     if (this.supportDimmer) {
       this.updateDimmer(msg);
       if (this.dimmer !== undefined) {
