@@ -102,8 +102,6 @@ export abstract class ZbBridgeAccessory {
         message.Manufacturer,
         message.ModelId,
       );
-    } else if (message.Reachable === false) {
-      this.reachable = false;
     } else {
       const waitTime = this.ignoreUpdatesUntil - Date.now();
       if (waitTime > 0) {
