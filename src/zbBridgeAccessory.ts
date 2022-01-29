@@ -137,9 +137,11 @@ export abstract class ZbBridgeAccessory {
       }, timeOutValue);
 
       const updateCallback: (message) => void = message => {
-        removeHandler();
-        clearTimeout(timer);
-        resolve(message);
+        if (message.ZbSend === 'Done') {
+          removeHandler();
+          clearTimeout(timer);
+          resolve(message);
+        }
       };
 
       this.statusUpdateHandlers.push({ id, callback: updateCallback });
@@ -149,13 +151,7 @@ export abstract class ZbBridgeAccessory {
 
   async zbSend(command, ignoreUpdates = true) {
     try {
-      const msg = await this.mqttSubmit(command);
-      if (msg.ZbSend !== 'Done') {
-        this.platform.log.error('%s (%s) zbSend: Unexpected response: %s',
-          this.accessory.context.device.name, this.addr,
-          JSON.stringify(msg));
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-      }
+      await this.mqttSubmit(command);
       if (ignoreUpdates) {
         this.ignoreUpdatesUntil = Date.now() + IGNORE_UPDATES_TIME;
       }
