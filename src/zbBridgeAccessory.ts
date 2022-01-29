@@ -109,7 +109,9 @@ export abstract class ZbBridgeAccessory {
         this.log('updateStatus ignored, waiting %sms...', waitTime);
         return;
       }
-      this.onStatusUpdate(message);
+      if (this.endpoint === undefined || this.endpoint === message.Endpoint) {
+        this.onStatusUpdate(message);
+      }
     }
   }
 

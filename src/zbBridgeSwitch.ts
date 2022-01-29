@@ -35,7 +35,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   }
 
   onStatusUpdate(msg) {
-    if (msg.Power !== undefined && ((this.endpoint !== undefined && msg.Endpoint === this.endpoint) || this.endpoint === undefined)) {
+    if (msg.Power !== undefined) {
       this.setPower(msg.Power === 1);
     }
     this.log('%s',
