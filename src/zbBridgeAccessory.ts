@@ -151,6 +151,9 @@ export abstract class ZbBridgeAccessory {
   }
 
   async zbSend(command, ignoreUpdates = true) {
+    if (this.reachable !== true) {
+      return;
+    }
     try {
       await this.mqttSubmit(command);
       if (ignoreUpdates) {
