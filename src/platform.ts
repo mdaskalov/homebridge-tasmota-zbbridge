@@ -83,17 +83,17 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         const uuid = this.tasmotaDeviceUUID(device);
         const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
         if (existingAccessory) {
-          this.log.info('Restoring existing tasmota accessory from cache: %s', device.name);
           existingAccessory.context.device = device;
           this.api.updatePlatformAccessories([existingAccessory]);
           new TasmotaAccessory(this, existingAccessory);
         } else {
-          this.log.info('Adding new tasmota accessory: %s', device.name);
           const accessory = new this.api.platformAccessory(device.name, uuid);
           accessory.context.device = device;
           new TasmotaAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
+        this.log.info('Adding %s tasmota accessory: %s (%s) - %s',
+          existingAccessory ? 'cached' : 'new', device.name, device.topic, device.type);
       }
     }
   }
