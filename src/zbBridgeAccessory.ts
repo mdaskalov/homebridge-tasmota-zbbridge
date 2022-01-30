@@ -17,8 +17,6 @@ type StatusUpdateHandler = {
   callback: (message) => void;
 };
 
-const IGNORE_UPDATES_TIME = 2000;
-
 export abstract class ZbBridgeAccessory {
   protected service: Service;
   protected powerTopic?: string;
@@ -26,8 +24,8 @@ export abstract class ZbBridgeAccessory {
   protected endpoint: number | undefined;
   protected type: string;
   protected reachable: boolean;
-  protected ignoreUpdatesUntil = 0;
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
+  private updatedInfo = false;
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     const addr = this.accessory.context.device.addr.split(':');
@@ -65,9 +63,11 @@ export abstract class ZbBridgeAccessory {
       const obj = JSON.parse(message);
       if (obj && obj.ZbReceived) {
         const responseDevice: string = Object.keys(obj.ZbReceived)[0];
-        const response = obj.ZbReceived[responseDevice];
-        if (Number(responseDevice) === Number(this.addr) && response !== undefined) {
-          this.statusUpdate(response);
+        if (Number(responseDevice) === Number(this.addr)) {
+          const response = obj.ZbReceived[responseDevice];
+          if (response !== undefined && (this.endpoint === undefined || Number(this.endpoint) === Number(response.Endpoint))) {
+            this.statusUpdate(response);
+          }
         }
       }
     });
@@ -92,7 +92,7 @@ export abstract class ZbBridgeAccessory {
   }
 
   statusUpdate(message) {
-    if (message.Manufacturer && message.ModelId) {
+    if (!this.updatedInfo && message.Manufacturer && message.ModelId) {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
         .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
@@ -101,16 +101,9 @@ export abstract class ZbBridgeAccessory {
         message.Manufacturer,
         message.ModelId,
       );
-    } else {
-      const waitTime = this.ignoreUpdatesUntil - Date.now();
-      if (waitTime > 0) {
-        this.log('updateStatus ignored, waiting %sms...', waitTime);
-        return;
-      }
-      if (this.endpoint === undefined || Number(this.endpoint) === Number(message.Endpoint)) {
-        this.onStatusUpdate(message);
-      }
+      this.updatedInfo = true;
     }
+    this.onStatusUpdate(message);
   }
 
   mqttSend(command): void {
@@ -149,15 +142,12 @@ export abstract class ZbBridgeAccessory {
     });
   }
 
-  async zbSend(command, ignoreUpdates = true) {
+  async zbSend(command) {
     if (this.reachable !== true) {
       return;
     }
     try {
       await this.mqttSubmit(command);
-      if (ignoreUpdates) {
-        this.ignoreUpdatesUntil = Date.now() + IGNORE_UPDATES_TIME;
-      }
     } catch (err) {
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
