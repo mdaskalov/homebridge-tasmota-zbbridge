@@ -102,8 +102,9 @@ export abstract class ZbBridgeAccessory {
         message.ModelId,
       );
       this.updatedInfo = true;
+    } else {
+      this.onStatusUpdate(message);
     }
-    this.onStatusUpdate(message);
   }
 
   mqttSend(command): void {
