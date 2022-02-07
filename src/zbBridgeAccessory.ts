@@ -25,7 +25,6 @@ export abstract class ZbBridgeAccessory {
   protected type: string;
   protected reachable: boolean;
   private statusUpdateHandlers: StatusUpdateHandler[] = [];
-  private updatedInfo = false;
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     const addr = this.accessory.context.device.addr.split(':');
@@ -84,7 +83,17 @@ export abstract class ZbBridgeAccessory {
 
     // Query Manufacturer, Model
     this.mqttSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
-    this.onQueryInitialState();
+  }
+
+  static formatTs(dt?: number): string {
+    if (dt === undefined) {
+      return 'undefined';
+    }
+    const d = new Date(dt);
+    const dformat =[d.getHours().toString().padStart(2, '0'),
+      d.getMinutes().toString().padStart(2, '0'),
+      d.getSeconds().toString().padStart(2, '0')].join(':')+'.'+d.getMilliseconds().toString();
+    return dformat;
   }
 
   getObjectByPath(obj, path: string) {
@@ -92,7 +101,7 @@ export abstract class ZbBridgeAccessory {
   }
 
   statusUpdate(message) {
-    if (!this.updatedInfo && message.Manufacturer && message.ModelId) {
+    if (message.Manufacturer && message.ModelId) {
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
         .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
@@ -101,9 +110,11 @@ export abstract class ZbBridgeAccessory {
         message.Manufacturer,
         message.ModelId,
       );
-      this.updatedInfo = true;
     } else {
-      this.onStatusUpdate(message);
+      const statusText = this.onStatusUpdate(message);
+      if (statusText !== '') {
+        this.log('onStatusUpdate:%s', statusText);
+      }
     }
   }
 
@@ -180,7 +191,5 @@ export abstract class ZbBridgeAccessory {
 
   abstract registerHandlers(): void;
 
-  abstract onQueryInitialState(): void;
-
-  abstract onStatusUpdate(response): void;
+  abstract onStatusUpdate(response): string;
 }
