@@ -1,12 +1,23 @@
 import {
+  PlatformAccessory,
   CharacteristicValue,
   HAPStatus,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { TasmotaZbBridgePlatform } from './platform';
+import { ZbBridgeValue } from './zbBridgeValue';
 
 export class ZbBridgeSwitch extends ZbBridgeAccessory {
-  private power?: CharacteristicValue;
+  private power: ZbBridgeValue;
+
+  constructor(
+    readonly platform: TasmotaZbBridgePlatform,
+    readonly accessory: PlatformAccessory,
+  ) {
+    super(platform, accessory);
+    this.power = new ZbBridgeValue();
+  }
 
   getServiceName() {
     return 'Switch';
@@ -18,60 +29,47 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       .onGet(this.getOn.bind(this));
   }
 
-  onQueryInitialState() {
-    if (this.powerTopic !== undefined) {
-      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-    } else {
-      this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
-    }
-  }
-
-  setPower(value: boolean) {
-    this.power = value;
-    this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.power);
-    if (this.powerTopic !== undefined) {
-      this.reachable = this.power; // will be unreachable if the power is switched off
-    }
-  }
-
-  onStatusUpdate(msg) {
+  onStatusUpdate(msg): string {
+    let statusText = '';
     if (msg.Power !== undefined) {
-      this.setPower(msg.Power === 1);
+      const power = (msg.Power === 1);
+      const ignored = this.power.update(power);
+      if (!ignored) {
+        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
+        statusText = ` Power: ${power ? 'On' : 'Off'}`;
+      }
     }
-    this.log('%s',
-      this.power !== undefined ? 'Power: ' + (this.power ? 'On' : 'Off') : '',
-    );
+    return statusText;
   }
 
-  async externalPower(cmd = '') {
+  async externalPower(cmd = ''): Promise<boolean> {
     const topic = 'cmnd/' + this.powerTopic;
     const responseTopic = 'stat/' + this.powerTopic;
     const msg = await this.platform.mqttClient.submit(topic, cmd, responseTopic);
-    this.setPower(msg === 'ON');
+    return (msg === 'ON');
   }
 
   async setOn(value: CharacteristicValue) {
     const power = value as boolean;
-    if (this.power !== power) {
-      if (this.powerTopic !== undefined) {
-        await this.externalPower(power ? 'ON' : 'OFF');
-      } else {
-        this.power = power;
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (this.power ? 'On' : 'Off') } });
-      }
+    if (this.powerTopic !== undefined) {
+      await this.externalPower(power ? 'ON' : 'OFF');
+    } else {
+      this.power.set(power);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (power ? 'On' : 'Off') } });
     }
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    if (this.power !== undefined) {
-      return this.power;
-    }
     if (this.powerTopic !== undefined) {
-      await this.externalPower();
+      return await this.externalPower();
     } else {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 }, false);
+      const power = this.power.get();
+      if (power === undefined) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+      }
+      return power;
     }
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
 }
