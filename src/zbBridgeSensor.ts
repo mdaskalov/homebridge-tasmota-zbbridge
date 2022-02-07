@@ -39,21 +39,19 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     }
   }
 
-  onQueryInitialState() {
-    this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
-  }
-
   onStatusUpdate(msg) {
+    let statusText = '';
     this.log('message: ' + JSON.stringify(msg));
     if (this.valuePath && this.characteristicName) {
       const characteristic = this.platform.Characteristic[this.characteristicName];
       const value = this.getObjectByPath(msg, this.valuePath);
       if (characteristic && value) {
-        this.log('value: %s', value);
+        statusText += `sensor Value: ${value}`;
         this.value = value;
         this.service.getCharacteristic(characteristic).updateValue(value);
       }
     }
+    return statusText;
   }
 
   //Motion      ZbSend { "device": "0x01F3", "cluster": "0x0006", "read": "0x42" }
