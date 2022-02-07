@@ -204,6 +204,7 @@ export class Color {
     };
   }
 
+  // based on: https://github.com/ebaauw/homebridge-lib/blob/main/lib/Colour.js
   private CTtoXY(ct: number) {
     const kelvin = 1000000 / ct;
     let x: number, y: number;
