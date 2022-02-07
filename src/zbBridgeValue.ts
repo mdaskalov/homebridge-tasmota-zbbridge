@@ -6,54 +6,56 @@ const UPDATE_TIMEOUT = 2000;
 
 export class ZbBridgeValue {
   private value?: CharacteristicValue
-  private newValue?: CharacteristicValue
-  private setTs?: number
-  private queryTs?: number
-  private updateTs?: number
+  private setValue?: CharacteristicValue
+  private setTs: number;
+  private queryTs: number;
+  private updateTs: number;
 
   constructor() {
     this.value = undefined;
-    this.setTs = undefined;
-    this.queryTs = undefined;
-    this.updateTs = undefined;
-  }
-
-  query() {
-    this.queryTs = Date.now();
-  }
-
-  set(to: CharacteristicValue) {
-    this.setTs = Date.now();
-    this.newValue = to;
-  }
-
-  update(to: CharacteristicValue) {
-    this.updateTs = Date.now();
-    this.value = to;
+    this.setTs = this.queryTs = Date.now();
+    this.updateTs = this.setTs +1;
   }
 
   timeouted(ts: number): boolean {
-    return ts + UPDATE_TIMEOUT > Date.now();
+    return (Date.now() > (ts + UPDATE_TIMEOUT)) ;
+  }
+
+  update(to: CharacteristicValue): boolean {
+    const now = Date.now();
+    let ignored = (to === this.value) || (this.setTs > this.updateTs && !this.timeouted(this.setTs));
+    if (to === this.setValue) {
+      this.value = to;
+      this.updateTs = now;
+      ignored = true;
+    }
+    if (!ignored) {
+      this.updateTs = now;
+      this.value = to;
+    }
+    return ignored;
+  }
+
+  set(to: CharacteristicValue) {
+    this.setValue = to;
+    this.setTs = Date.now();
   }
 
   get(): CharacteristicValue | undefined {
-    // not updated yet
-    if (this.updateTs === undefined) {
-      return (this.setTs !== undefined && !this.timeouted(this.setTs)) ? this.newValue : undefined;
+    let res: CharacteristicValue | undefined = undefined;
+    if (this.setTs > this.updateTs && !this.timeouted(this.setTs)) {
+      res = this.setValue;
+    } else if (this.queryTs > this.updateTs && this.timeouted(this.queryTs)) {
+      res = undefined;
+    } else {
+      res = this.value;
     }
 
-    // set but not udpated
-    if (this.setTs !== undefined && this.setTs > this.updateTs && !this.timeouted(this.setTs)) {
-      return this.newValue;
+    if (res === undefined) {
+      this.queryTs = Date.now();
     }
 
-    // query timeout
-    if (this.queryTs !== undefined && this.queryTs > this.updateTs && this.timeouted(this.queryTs)) {
-      return undefined;
-    }
-
-    return this.value;
+    return res;
   }
-
 
 }
