@@ -205,9 +205,6 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         colormode = 2;
       }
     }
-    if (colormode !== undefined) {
-      statusText += ` ColorMode: ${colormode}`;
-    }
     switch (colormode) {
       case 0:
         statusText += this.updateHS(msg);
@@ -218,6 +215,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       case 2:
         statusText += this.updateCT(msg);
         break;
+    }
+
+    if (colormode !== undefined && statusText !== '') {
+      statusText = ` ColorMode: ${colormode}`+statusText;
     }
 
     return statusText;
