@@ -4,7 +4,7 @@ import {
   HAPStatus,
 } from 'homebridge';
 
-import { Color } from './Color';
+import { Color } from './color';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { TasmotaZbBridgePlatform } from './platform';
 import { ZbBridgeValue } from './zbBridgeValue';
