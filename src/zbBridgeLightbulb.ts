@@ -4,16 +4,19 @@ import {
   HAPStatus,
 } from 'homebridge';
 
+import { Color } from './Color';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { TasmotaZbBridgePlatform } from './platform';
+import { ZbBridgeValue } from './zbBridgeValue';
 
 export class ZbBridgeLightbulb extends ZbBridgeSwitch {
-  private dimmer?: CharacteristicValue;
-  private ct?: CharacteristicValue;
-  private hue?: CharacteristicValue;
-  private saturation?: CharacteristicValue;
-  private colorX?: CharacteristicValue;
-  private colorY?: CharacteristicValue;
+  private color: Color = new Color();
+  private dimmer: ZbBridgeValue;
+  private ct: ZbBridgeValue;
+  private hue: ZbBridgeValue;
+  private saturation: ZbBridgeValue;
+  private colorX: ZbBridgeValue;
+  private colorY: ZbBridgeValue;
 
   private supportDimmer?: boolean;
   private supportCT?: boolean;
@@ -25,6 +28,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
+    this.dimmer = new ZbBridgeValue();
+    this.ct = new ZbBridgeValue();
+    this.hue = new ZbBridgeValue();
+    this.saturation = new ZbBridgeValue();
+    this.colorX = new ZbBridgeValue();
+    this.colorY = new ZbBridgeValue();
   }
 
   getServiceName() {
@@ -47,14 +56,13 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.supportXY = true;
     }
 
-    this.log('configureLightFeatures: type: %s :- %s%s%s%s',
+    this.log('configureLightFeatures: type: %s :-%s',
       this.type,
-      this.supportDimmer ? ' Dimmer ' : '',
-      this.supportCT ? ' CT ' : '',
-      this.supportHS ? ' HS ' : '',
-      this.supportXY ? ' XY ' : '',
+      this.supportDimmer ? ' Dimmer' : ''+
+        this.supportCT ? ' CT' : ''+
+        this.supportHS ? ' HS' : ''+
+        this.supportXY ? ' XY' : '',
     );
-
   }
 
   registerHandlers() {
@@ -100,69 +108,93 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
   //Scene           ZbSend { "device": "0x9E82", "cluster": "0x0005", "read": [0, 1, 2, 3] }
 
-  onQueryInitialState() {
-    super.onQueryInitialState(); //switch
-    if (this.supportDimmer) {
-      this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
-    }
-    if (this.supportCT === true || this.supportHS === true || this.supportXY === true) {
-      const readArray: number[] = []; // color mode
-      if (this.supportHS === true) {
-        readArray.push(0);
-        readArray.push(1);
-      }
-      if (this.supportXY === true) {
-        readArray.push(3);
-        readArray.push(4);
-      }
-      if (this.supportCT === true) {
-        readArray.push(7);
-      }
-      readArray.push(8);
-      this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: readArray });
-    }
-  }
-
-  updateDimmer(msg): void {
+  updateDimmer(msg) {
+    let statusText = '';
     if (msg.Dimmer !== undefined) {
-      this.dimmer = this.mapValue(msg.Dimmer, 254, 100);
+      const dimmer = this.mapValue(msg.Dimmer, 254, 100);
+      this.color.brightness = dimmer;
+      const ignoreDimmer = this.dimmer.update(dimmer);
+      if (!ignoreDimmer) {
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(dimmer);
+        statusText += ` Dimmer: ${msg.Dimmer} (${dimmer})`;
+      }
     }
+    return statusText;
   }
 
-  updateHS(msg): void {
+  updateHS(msg) {
+    let statusText = '';
     if (msg.Hue !== undefined) {
-      this.hue = this.mapValue(msg.Hue, 254, 360);
+      const hue = this.mapValue(msg.Hue, 254, 360);
+      this.color.hue = hue;
+      const ignoreHue = this.hue.update(hue);
+      if (!ignoreHue) {
+        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(hue);
+        statusText += ` Hue: ${msg.Hue} (${hue})`;
+      }
     }
     if (msg.Sat !== undefined) {
-      this.saturation = this.mapValue(msg.Sat, 254, 100);
-    }
-  }
-
-  updateXY(msg): void {
-    if (msg.X !== undefined) {
-      this.colorX = msg.X;
-    }
-    if (msg.Y !== undefined) {
-      this.colorY = msg.Y;
-    }
-    this.convertXYtoHS();
-  }
-
-  updateCT(msg): void {
-    if (msg.CT !== undefined) {
-      this.ct = msg.CT;
-    }
-    if (this.supportHS) {
-      this.convertCTtoXY();
-      this.convertXYtoHS();
-      if (!this.supportXY) {
-        this.colorX = undefined;
-        this.colorY = undefined;
+      const sat = this.mapValue(msg.Sat, 254, 100);
+      this.color.saturation = sat;
+      const ignoreSat = this.saturation.update(sat);
+      if (!ignoreSat) {
+        statusText += ` Sat: ${msg.Sat} (${sat})`;
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(sat);
       }
     }
+    return statusText;
   }
 
-  updateColor(msg): number | undefined {
+  updateXY(msg) {
+    let ignoreX = true;
+    let ignoreY = true;
+    let statusText = '';
+    if (msg.X !== undefined) {
+      const x = msg.X;
+      this.color.colorX = x;
+      ignoreX = this.colorX.update(x);
+      if (!ignoreX) {
+        statusText += ` X: ${x}`;
+      }
+    }
+    if (msg.Y !== undefined) {
+      const y = msg.Y;
+      this.color.colorY = y;
+      ignoreY = this.colorY.update(y);
+      if (!ignoreY) {
+        statusText += ` Y: ${y}`;
+      }
+    }
+    if (!ignoreX || !ignoreY) {
+      this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
+      this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
+    }
+    return statusText;
+  }
+
+  updateCT(msg) {
+    let statusText = '';
+    if (msg.CT !== undefined) {
+      const ct = msg.CT;
+      this.color.ct = ct;
+      const ignoreCT = this.ct.update(ct);
+      if (!ignoreCT) {
+        this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(ct);
+        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
+        statusText += ` CT: ${ct}`;
+      }
+    }
+    return statusText;
+  }
+
+  onStatusUpdate(msg): string {
+    let statusText = super.onStatusUpdate(msg); // switch
+
+    if (this.supportDimmer) {
+      statusText += this.updateDimmer(msg);
+    }
+
     let colormode = msg.ColorMode;
     if (colormode === undefined) {
       if (this.supportHS) {
@@ -171,356 +203,108 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         colormode = 1;
       } else if (this.supportCT) {
         colormode = 2;
-      } else {
-        return undefined;
       }
+    }
+    if (colormode !== undefined) {
+      statusText += ` ColorMode: ${colormode}`;
     }
     switch (colormode) {
       case 0:
-        this.updateHS(msg);
+        statusText += this.updateHS(msg);
         break;
       case 1:
-        this.updateXY(msg);
+        statusText += this.updateXY(msg);
         break;
       case 2:
-        this.updateCT(msg);
+        statusText += this.updateCT(msg);
         break;
     }
 
-    // initial update
-    if (this.dimmer && this.dimmer === undefined) {
-      this.updateDimmer(msg);
-    }
-    if (this.supportHS && (this.hue === undefined || this.saturation === undefined)) {
-      this.updateHS(msg);
-    }
-    if (this.supportXY && (this.colorX === undefined || this.colorY === undefined)) {
-      this.updateXY(msg);
-    }
-    if (this.supportCT && this.ct === undefined) {
-      this.updateCT(msg);
-    }
-
-    this.log('updateColor: %s%s%s%s%s%s%s',
-      colormode !== undefined ? 'ColorMode: ' + colormode : '',
-      this.dimmer !== undefined ? ', Dimmer: ' + this.dimmer + '%' : '',
-      this.hue !== undefined ? ', Hue: ' + this.hue : '',
-      this.saturation !== undefined ? ', Saturation: ' + this.saturation : '',
-      this.colorX !== undefined ? ', X: ' + this.colorX : '',
-      this.colorY !== undefined ? ', Y: ' + this.colorY : '',
-      this.ct !== undefined ? ', CT: ' + this.ct : '',
-    );
-
-    return colormode;
-  }
-
-  onStatusUpdate(msg) {
-    super.onStatusUpdate(msg); // switch
-    if (this.supportDimmer) {
-      this.updateDimmer(msg);
-      if (this.dimmer !== undefined) {
-        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.dimmer);
-      }
-    }
-    const colormode = this.updateColor(msg);
-    if (this.hue !== undefined) {
-      this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
-    }
-    if (this.saturation !== undefined) {
-      this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
-    }
-    if (colormode === 2 && this.ct !== undefined) {
-      this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(this.ct);
-    }
+    return statusText;
   }
 
   async setBrightness(value: CharacteristicValue) {
     const dimmer = value as number;
-    if (this.dimmer !== dimmer) {
-      this.dimmer = dimmer;
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(this.dimmer, 100, 254) } });
-    }
+    this.color.brightness = dimmer;
+    this.dimmer.set(dimmer);
+    await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
-    if (this.dimmer !== undefined) {
-      return this.dimmer;
+    const dimmer = this.dimmer.get();
+    if (dimmer === undefined ) {
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
-    await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 }, false);
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    return dimmer;
   }
 
   async setColorTemperature(value: CharacteristicValue) {
     const ct = value as number;
-    if (this.ct !== ct) {
-      this.ct = ct;
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: this.ct } });
-    }
+    this.color.ct = ct;
+    this.ct.set(ct);
+    await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: ct } });
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
-    if (this.ct !== undefined) {
-      return this.ct;
+    const ct = this.ct.get();
+    if (ct === undefined) {
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 7 });
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
-    await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 7 }, false);
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    return ct;
   }
 
   async setHue(value: CharacteristicValue) {
     const hue = value as number;
-    if (this.hue !== hue) {
-      this.hue = hue;
-      if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(this.hue, 360, 254) } });
-      } else if (this.supportXY) {
-        this.convertHStoXY();
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.colorX},${this.colorY}` } });
-      }
+    this.color.hue = hue;
+    if (this.supportHS) {
+      this.hue.set(hue);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(hue, 360, 254) } });
+    } else if (this.supportXY) {
+      this.colorX.set(this.color.colorX);
+      this.colorY.set(this.color.colorY);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 
   async getHue(): Promise<CharacteristicValue> {
-    if (this.hue !== undefined) {
-      return this.hue;
+    const hue = this.hue.get();
+    if (hue === undefined) {
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 0 });
+      } else if (this.supportXY) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] });
+      }
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
-    if (this.supportHS) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 1] }, false);
-    } else if (this.supportXY) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] }, false);
-    }
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    return hue;
   }
 
   async setSaturation(value: CharacteristicValue) {
     const saturation = value as number;
-    if (this.saturation !== saturation) {
-      this.saturation = saturation;
-      if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(this.saturation, 100, 254) } });
-      }
+    this.color.saturation = saturation;
+    if (this.supportHS) {
+      this.saturation.set(saturation);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(saturation, 100, 254) } });
+    } else if (this.supportXY) {
+      this.colorX.set(this.color.colorX);
+      this.colorY.set(this.color.colorY);
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
-    if (this.saturation !== undefined) {
-      return this.saturation;
+    const saturation = this.saturation.get();
+    if (saturation === undefined) {
+      if (this.supportHS) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 1 });
+      } else if (this.supportXY) {
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] });
+      }
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
-    if (this.supportHS) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 1] }, false);
-    }
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-  }
-
-  // based on: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
-  convertHStoXY() {
-    if (this.hue === undefined || this.saturation === undefined) {
-      return;
-    }
-
-    const h = (this.hue as number) / 360;
-    const s = (this.saturation as number) / 100;
-
-    let r = 1;
-    let g = 1;
-    let b = 1;
-
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = 1 - s;
-    const q = 1 - f * s;
-    const t = 1 - (1 - f) * s;
-    switch (i % 6) {
-      case 0: g = t, b = p; break;
-      case 1: r = q, b = p; break;
-      case 2: r = p, b = t; break;
-      case 3: r = p, g = q; break;
-      case 4: r = t, g = p; break;
-      case 5: g = p, b = q; break;
-    }
-
-    // apply gamma correction
-    r = (r > 0.04045) ? Math.pow((r + 0.055) / (1.0 + 0.055), 2.4) : (r / 12.92);
-    g = (g > 0.04045) ? Math.pow((g + 0.055) / (1.0 + 0.055), 2.4) : (g / 12.92);
-    b = (b > 0.04045) ? Math.pow((b + 0.055) / (1.0 + 0.055), 2.4) : (b / 12.92);
-
-    // Convert the RGB values to XYZ using the Wide RGB D65 conversion formula
-    const X = r * 0.664511 + g * 0.154324 + b * 0.162028;
-    const Y = r * 0.283881 + g * 0.668433 + b * 0.047685;
-    const Z = r * 0.000088 + g * 0.072310 + b * 0.986039;
-
-    this.colorX = Math.round(65535.0 * X / (X + Y + Z));
-    this.colorY = Math.round(65535.0 * Y / (X + Y + Z));
-    if (isNaN(this.colorX)) {
-      this.colorX = 0;
-    }
-    if (isNaN(this.colorY)) {
-      this.colorY = 0;
-    }
-  }
-
-  convertXYtoHS() {
-    if (this.colorX === undefined || this.colorY === undefined) {
-      return;
-    }
-
-    const x = (this.colorX as number) / 65535.0;
-    const y = (this.colorY as number) / 65535.0;
-    const z = 1.0 - x - y;
-
-    const Y = this.dimmer === undefined ? 1 : (this.dimmer as number) / 100;
-    const X = (Y / y) * x;
-    const Z = (Y / y) * z;
-
-    //Convert to RGB using Wide RGB D65 conversion
-    let r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
-    let g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
-    let b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
-
-    //If red, green or blue is larger than 1.0 set it back to the maximum of 1.0
-    if (r > b && r > g && r > 1.0) {
-      g = g / r;
-      b = b / r;
-      r = 1.0;
-    } else if (g > b && g > r && g > 1.0) {
-      r = r / g;
-      b = b / g;
-      g = 1.0;
-    } else if (b > r && b > g && b > 1.0) {
-      r = r / b;
-      g = g / b;
-      b = 1.0;
-    }
-
-    // reverse gamma correction
-    r = r <= 0.0031308 ? 12.92 * r : (1.0 + 0.055) * Math.pow(r, (1.0 / 2.4)) - 0.055;
-    g = g <= 0.0031308 ? 12.92 * g : (1.0 + 0.055) * Math.pow(g, (1.0 / 2.4)) - 0.055;
-    b = b <= 0.0031308 ? 12.92 * b : (1.0 + 0.055) * Math.pow(b, (1.0 / 2.4)) - 0.055;
-
-    if (isNaN(r)) {
-      r = 0;
-    }
-    if (isNaN(g)) {
-      g = 0;
-    }
-    if (isNaN(b)) {
-      b = 0;
-    }
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-    let h = 0;
-    const s = (max === 0 ? 0 : d / max);
-
-    switch (max) {
-      case min: h = 0; break;
-      case r: h = (g - b) + d * (g < b ? 6 : 0); h /= 6 * d; break;
-      case g: h = (b - r) + d * 2; h /= 6 * d; break;
-      case b: h = (r - g) + d * 4; h /= 6 * d; break;
-    }
-
-    this.hue = Math.round(h * 360);
-    this.saturation = Math.round(s * 100);
-
-    if (isNaN(this.hue)) {
-      this.hue = 0;
-    }
-    if (isNaN(this.saturation)) {
-      this.saturation = 0;
-    }
-    //this.log(`XYtoHS: ${this.colorX},${this.colorY} -> ${this.hue},${this.saturation}`);
-  }
-
-  convertCTtoXY() {
-    if (this.ct === undefined) {
-      return;
-    }
-    const kelvin = 1000000 / (this.ct as number);
-    let x, y;
-
-    if (kelvin < 4000) {
-      x = 11790 +
-        57520658 / kelvin +
-        -15358885888 / kelvin / kelvin +
-        -17440695910400 / kelvin / kelvin / kelvin;
-    } else {
-      x = 15754 +
-        14590587 / kelvin +
-        138086835814 / kelvin / kelvin +
-        -198301902438400 / kelvin / kelvin / kelvin;
-    }
-    if (kelvin < 2222) {
-      y = -3312 +
-        35808 * x / 0x10000 +
-        -22087 * x * x / 0x100000000 +
-        -18126 * x * x * x / 0x1000000000000;
-    } else if (kelvin < 4000) {
-      y = -2744 +
-        34265 * x / 0x10000 +
-        -22514 * x * x / 0x100000000 +
-        -15645 * x * x * x / 0x1000000000000;
-    } else {
-      y = -6062 +
-        61458 * x / 0x10000 +
-        -96229 * x * x / 0x100000000 +
-        50491 * x * x * x / 0x1000000000000;
-    }
-    y *= 4;
-    x /= 0xFFFF;
-    y /= 0xFFFF;
-
-    this.colorX = Math.round(x * 65535.0);
-    this.colorY = Math.round(y * 65535.0);
-    this.log(`CTtoXY: ${this.ct} -> ${this.colorX},${this.colorY}`);
-  }
-
-  HSVtoRGB(hue: number, saturation: number, brightness: number) {
-    const h = hue / 360;
-    const s = saturation / 100;
-    const v = brightness / 100;
-    let r = 1;
-    let g = 1;
-    let b = 1;
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-    switch (i % 6) {
-      case 0: r = v, g = t, b = p; break;
-      case 1: r = q, g = v, b = p; break;
-      case 2: r = p, g = v, b = t; break;
-      case 3: r = p, g = q, b = v; break;
-      case 4: r = t, g = p, b = v; break;
-      case 5: r = v, g = p, b = q; break;
-    }
-    return {
-      r,
-      g,
-      b,
-    };
-  }
-
-  RGBtoHSV(r: number, g: number, b: number) {
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-    let h = 0;
-    const s = (max === 0 ? 0 : d / max);
-    const v = max / 255;
-
-    switch (max) {
-      case min: h = 0; break;
-      case r: h = (g - b) + d * (g < b ? 6 : 0); h /= 6 * d; break;
-      case g: h = (b - r) + d * 2; h /= 6 * d; break;
-      case b: h = (r - g) + d * 4; h /= 6 * d; break;
-    }
-
-    return {
-      hue: Math.round(h * 360),
-      saturation: Math.round(s * 100),
-      brightness: Math.round(v * 100),
-    };
+    return saturation;
   }
 
 }
