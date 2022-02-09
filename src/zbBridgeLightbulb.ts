@@ -202,11 +202,11 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
 
     let colormode = msg.ColorMode;
     if (colormode === undefined) {
-      if (this.supportHS) {
+      if (this.supportHS && msg.Hue !== undefined) {
         colormode = 0;
-      } else if (this.supportXY) {
+      } else if (this.supportXY && msg.X !== undefined) {
         colormode = 1;
-      } else if (this.supportCT) {
+      } else if (this.supportCT && msg.CT !== undefined) {
         colormode = 2;
       }
     }
@@ -255,7 +255,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async getColorTemperature(): Promise<CharacteristicValue> {
     const ct = this.ct.get();
     if (ct === undefined) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 7 });
+      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [7, 8] });
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return ct;
@@ -278,9 +278,9 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const hue = this.hue.get();
     if (hue === undefined) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 0 });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 8] });
       } else if (this.supportXY) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
       }
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
@@ -304,9 +304,9 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const saturation = this.saturation.get();
     if (saturation === undefined) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: 1 });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [1, 8] });
       } else if (this.supportXY) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4] });
+        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
       }
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
