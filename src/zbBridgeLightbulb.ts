@@ -166,8 +166,11 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       }
     }
     if (!ignoreX || !ignoreY) {
+      this.hue.update(this.color.hue);
+      this.saturation.update(this.color.saturation);
       this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
       this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
+      statusText += ` (Hue: ${this.color.hue}, Sat:${this.color.saturation})`;
     }
     return statusText;
   }
@@ -179,10 +182,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.color.ct = ct;
       const ignoreCT = this.ct.update(ct);
       if (!ignoreCT) {
+        this.hue.update(this.color.hue);
+        this.saturation.update(this.color.saturation);
         this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(ct);
         this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
         this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
-        statusText += ` CT: ${ct}`;
+        statusText += ` CT: ${ct} (Hue: ${this.color.hue}, Sat:${this.color.saturation})`;
       }
     }
     return statusText;
