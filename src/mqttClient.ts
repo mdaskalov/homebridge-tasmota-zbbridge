@@ -1,19 +1,29 @@
 import { Logger, PlatformConfig } from 'homebridge';
 import { MqttClient, connect } from 'mqtt';
 
-type HandlerCallback =
+type TopicCallback =
   (msg: string, topic: string) => void;
 
-type Handler = {
+type TopicHandler = {
   id: string;
   topic: string;
   callOnce: boolean;
-  callback: HandlerCallback;
+  callback: TopicCallback;
+};
+
+type DeviceCallback =
+  (msg) => void;
+
+type DeviceHandler = {
+  addr: number;
+  endpoint: number | undefined;
+  callback: DeviceCallback;
 };
 
 export class MQTTClient {
 
-  private messageHandlers: Array<Handler> = [];
+  private topicHandlers: Array<TopicHandler> = [];
+  private deviceHandlers: Array<DeviceHandler> = [];
   private client: MqttClient;
   public topic: string;
   private last = 0;
@@ -39,18 +49,66 @@ export class MQTTClient {
     });
 
     this.client.on('message', (topic, message) => {
-      const callOnceHandlers = this.messageHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
+      if (topic.startsWith('tele/'+this.topic)) {
+        try {
+          const msg = JSON.parse(message.toString());
+          this.onDeviceMessage(msg);
+        } catch (err) {
+          this.log.error('MQTT: message parse error: '+message);
+        }
+        return;
+      }
+      const callOnceHandlers = this.topicHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
       if (callOnceHandlers.length !== 0) {
         callOnceHandlers.forEach(h => h.callback(message.toString(), topic));
-        this.messageHandlers = this.messageHandlers.filter(h => !callOnceHandlers.includes(h));
+        this.topicHandlers = this.topicHandlers.filter(h => !callOnceHandlers.includes(h));
       } else {
-        const hadnlers = this.messageHandlers.filter(h => this.matchTopic(h, topic));
+        const hadnlers = this.topicHandlers.filter(h => this.matchTopic(h, topic));
         hadnlers.forEach(h => h.callback(message.toString(), topic));
       }
     });
+
+    // zbBridge device messages
+    this.client.subscribe('tele/'+this.topic+'/SENSOR');
+    this.client.subscribe('tele/'+this.topic+'/+/SENSOR');
   }
 
-  matchTopic(handler: Handler, topic: string) {
+  findDevice(obj) {
+    if (obj) {
+      if (obj.Device) {
+        return obj;
+      }
+      for (const prop in obj) {
+        const child = obj[prop];
+        if (typeof child === 'object' && !Array.isArray(child) && child !== null) {
+          const found = this.findDevice(child);
+          if (found !== undefined) {
+            return found;
+          }
+        }
+      }
+    }
+  }
+
+  onDeviceMessage(message) {
+    const msg = this.findDevice(message);
+    if (msg !== undefined) {
+      const handler = this.deviceHandlers.find(h => {
+        const addrMatch = (h.addr === Number(msg.Device));
+        const endpointMatch = (h.endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
+        return addrMatch && endpointMatch;
+      });
+      if (handler) {
+        handler.callback(msg);
+      }
+    }
+  }
+
+  subscribeDevice(addr: number, endpoint: number | undefined, callback: DeviceCallback) {
+    this.deviceHandlers.push({ addr, endpoint, callback});
+  }
+
+  matchTopic(handler: TopicHandler, topic: string) {
     if (handler.topic.includes('+')) {
       return topic.includes(handler.topic.substr(0, handler.topic.indexOf('+')));
     }
@@ -64,11 +122,11 @@ export class MQTTClient {
     return pid + this.last.toString(36);
   }
 
-  subscribe(topic: string, callback: HandlerCallback, callOnce = false): string {
+  subscribeTopic(topic: string, callback: TopicCallback, callOnce = false): string {
     if (this.client) {
       const id = this.uniqueID();
-      this.messageHandlers.push({ id, topic, callOnce, callback });
-      const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, topic)).length;
+      this.topicHandlers.push({ id, topic, callOnce, callback });
+      const handlersCount = this.topicHandlers.filter(h => this.matchTopic(h, topic)).length;
       if (handlersCount === 1) {
         this.client.subscribe(topic);
       }
@@ -78,10 +136,10 @@ export class MQTTClient {
   }
 
   unsubscribe(id: string) {
-    const handler = this.messageHandlers.find(h => h.id === id);
+    const handler = this.topicHandlers.find(h => h.id === id);
     if (handler) {
-      this.messageHandlers = this.messageHandlers.filter(h => h.id !== id);
-      const handlersCount = this.messageHandlers.filter(h => this.matchTopic(h, handler.topic)).length;
+      this.topicHandlers = this.topicHandlers.filter(h => h.id !== id);
+      const handlersCount = this.topicHandlers.filter(h => this.matchTopic(h, handler.topic)).length;
       if (handlersCount === 0) {
         this.client.unsubscribe(handler.topic);
       }
@@ -98,7 +156,7 @@ export class MQTTClient {
     return new Promise((resolve: (message) => void, reject) => {
       const startTS = Date.now();
 
-      const handlerId = this.subscribe(responseTopic, msg => {
+      const handlerId = this.subscribeTopic(responseTopic, msg => {
         clearTimeout(timer);
         resolve(msg);
       }, true);
