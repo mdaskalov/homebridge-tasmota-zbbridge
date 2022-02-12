@@ -44,31 +44,22 @@ export abstract class ZbBridgeAccessory {
     // Subscribe for the power topic updates
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
-      this.platform.mqttClient.subscribe('stat/' + this.powerTopic, (message) => {
+      this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, (message) => {
         this.statusUpdate({ Power: (message === 'ON') ? 1 : 0 });
       });
     }
 
     //subscribe for zbsend updates
-    this.platform.mqttClient.subscribe('stat/' + this.platform.mqttClient.topic + '/RESULT', message => {
+    this.platform.mqttClient.subscribeTopic('stat/' + this.platform.mqttClient.topic + '/RESULT', message => {
       const msg = JSON.parse(message);
       if (this.statusUpdateHandlers.length !== 0) {
         this.statusUpdateHandlers.forEach(h => h.callback(msg));
       }
     });
 
-    // Subscribe for sensor updates
-    this.platform.mqttClient.subscribe('tele/' + this.platform.mqttClient.topic + '/SENSOR', message => {
-      const obj = JSON.parse(message);
-      if (obj && obj.ZbReceived) {
-        const responseDevice: string = Object.keys(obj.ZbReceived)[0];
-        if (Number(responseDevice) === Number(this.addr)) {
-          const response = obj.ZbReceived[responseDevice];
-          if (response !== undefined && (this.endpoint === undefined || Number(this.endpoint) === Number(response.Endpoint))) {
-            this.statusUpdate(response);
-          }
-        }
-      }
+    // Subscribe for device updates
+    this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
+      this.statusUpdate(msg);
     });
 
     // udpate name only if no endpoint is defined
