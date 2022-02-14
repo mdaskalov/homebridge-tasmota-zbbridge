@@ -54,7 +54,7 @@ export class MQTTClient {
           const msg = JSON.parse(message.toString());
           this.onDeviceMessage(msg);
         } catch (err) {
-          this.log.error('MQTT: message parse error: '+message);
+          this.log.error('MQTT: message parse error: %s', message.toString());
         }
         return;
       }
