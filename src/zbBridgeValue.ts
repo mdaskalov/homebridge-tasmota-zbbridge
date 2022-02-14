@@ -5,16 +5,15 @@ import {
 const UPDATE_TIMEOUT = 2000;
 
 export class ZbBridgeValue {
-  private value?: CharacteristicValue
-  private setValue?: CharacteristicValue
+  private value: CharacteristicValue
+  private setValue: CharacteristicValue
   private setTs: number;
-  private queryTs: number;
   private updateTs: number;
 
-  constructor() {
-    this.value = undefined;
-    this.setTs = this.queryTs = Date.now();
-    this.updateTs = this.setTs +1;
+  constructor(initial: CharacteristicValue) {
+    this.value = this.setValue = initial;
+    this.setTs = Date.now();
+    this.updateTs = 0;
   }
 
   timeouted(ts: number): boolean {
@@ -41,21 +40,15 @@ export class ZbBridgeValue {
     this.setTs = Date.now();
   }
 
-  get(): CharacteristicValue | undefined {
-    let res: CharacteristicValue | undefined = undefined;
+  get(): CharacteristicValue {
     if (this.setTs > this.updateTs && !this.timeouted(this.setTs)) {
-      res = this.setValue;
-    } else if (this.queryTs > this.updateTs && this.timeouted(this.queryTs)) {
-      res = undefined;
-    } else {
-      res = this.value;
+      return this.setValue;
     }
+    return this.value;
+  }
 
-    if (res === undefined) {
-      this.queryTs = Date.now();
-    }
-
-    return res;
+  queryNeeded(): boolean {
+    return (this.setTs > this.updateTs) && this.timeouted(this.setTs);
   }
 
 }
