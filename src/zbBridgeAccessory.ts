@@ -1,7 +1,6 @@
 import {
   Service,
   PlatformAccessory,
-  HAPStatus,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -12,26 +11,18 @@ export type ZbBridgeDevice = {
   name: string
 }
 
-type StatusUpdateHandler = {
-  id: string;
-  callback: (message) => void;
-};
-
 export abstract class ZbBridgeAccessory {
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
   protected endpoint: number | undefined;
   protected type: string;
-  protected reachable: boolean;
-  private statusUpdateHandlers: StatusUpdateHandler[] = [];
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     const addr = this.accessory.context.device.addr.split(':');
     this.addr = addr[0];
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
-    this.reachable = true;
 
     const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
@@ -40,22 +31,6 @@ export abstract class ZbBridgeAccessory {
     }
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-
-    // Subscribe for the power topic updates
-    if (this.accessory.context.device.powerTopic !== undefined) {
-      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
-      this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, (message) => {
-        this.statusUpdate({ Power: (message === 'ON') ? 1 : 0 });
-      });
-    }
-
-    //subscribe for zbsend updates
-    this.platform.mqttClient.subscribeTopic('stat/' + this.platform.mqttClient.topic + '/RESULT', message => {
-      const msg = JSON.parse(message);
-      if (this.statusUpdateHandlers.length !== 0) {
-        this.statusUpdateHandlers.forEach(h => h.callback(msg));
-      }
-    });
 
     // Subscribe for device updates
     this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
@@ -73,7 +48,7 @@ export abstract class ZbBridgeAccessory {
     this.registerHandlers();
 
     // Query Manufacturer, Model
-    this.mqttSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
+    this.zbSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
   }
 
   static formatTs(dt?: number): string {
@@ -109,51 +84,10 @@ export abstract class ZbBridgeAccessory {
     }
   }
 
-  mqttSend(command): void {
+  zbSend(command): void {
     const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbsend';
     const message = JSON.stringify(command);
     this.platform.mqttClient.publish(topic, message);
-  }
-
-  mqttSubmit(command, timeOutValue = 2000) {
-    return new Promise((resolve: (message) => void, reject) => {
-      const id = this.platform.mqttClient.uniqueID();
-      const startTS = Date.now();
-
-      const removeHandler = () => {
-        this.statusUpdateHandlers = this.statusUpdateHandlers.filter(h => h.id !== id);
-      };
-
-      const timer = setTimeout(() => {
-        this.platform.log.error('%s (%s) mqttSubmit: timeout after %sms %s',
-          this.accessory.context.device.name, this.addr,
-          Date.now() - startTS, JSON.stringify(command));
-        removeHandler();
-        reject('mqttSubmit timeout');
-      }, timeOutValue);
-
-      const updateCallback: (message) => void = message => {
-        if (message.ZbSend === 'Done') {
-          removeHandler();
-          clearTimeout(timer);
-          resolve(message);
-        }
-      };
-
-      this.statusUpdateHandlers.push({ id, callback: updateCallback });
-      this.mqttSend(command);
-    });
-  }
-
-  async zbSend(command) {
-    if (this.reachable !== true) {
-      return;
-    }
-    try {
-      await this.mqttSubmit(command);
-    } catch (err) {
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
