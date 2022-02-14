@@ -28,12 +28,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    this.dimmer = new ZbBridgeValue();
-    this.ct = new ZbBridgeValue();
-    this.hue = new ZbBridgeValue();
-    this.saturation = new ZbBridgeValue();
-    this.colorX = new ZbBridgeValue();
-    this.colorY = new ZbBridgeValue();
+    this.dimmer = new ZbBridgeValue(100);
+    this.ct = new ZbBridgeValue(370);
+    this.hue = new ZbBridgeValue(20);
+    this.saturation = new ZbBridgeValue(100);
+    this.colorX = new ZbBridgeValue(30265);
+    this.colorY = new ZbBridgeValue(24947);
   }
 
   getServiceName() {
@@ -93,20 +93,26 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   //768/7 -> CT
   //768/8 -> colorMode
 
-  //Info:   ZbSend {"Device": '0xC016', "Cluster": 0, "Read": [4,5]} // get Manufacturer, Model
-  //Power:  ZbSend {"Device": "0x6769", "Cluster": 6, "Read": 0}
-  //Dimmer: ZbSend {"Device": "0x6769", "Cluster": 8, "Read": 0}
-  //Hue:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 0}
-  //Sat:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 1}
-  //HueSat: ZbSend {"Device": "0x6769", "Cluster": 768, "Read": [0,1]}
-  //CT:     ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 7}
+  // Unreachable
+  // tele/zbbridge/SENSOR {"Device":"0x4275","Name":"Lamp","Reachable":false}
+  // tele/zbbridge/RESULT {"ZbRouteError":{"ShortAddr":"0x4275","Status":170,"StatusMessage":"MANY_TO_ONE_ROUTE_FAILURE"}}
+  // tele/zbbridge/RESULT {"ZbRouteError":{"ShortAddr":"0x4275","Status":169,"StatusMessage":"SOURCE_ROUTE_FAILURE"}}
+
+  //Info:      ZbSend {"Device": '0xC016', "Cluster": 0, "Read": [4,5]} // get Manufacturer, Model
+  //Scene      ZbSend {"Device": "0x9E82", "Cluster": 5, "Read": [0, 1, 2, 3] }
+  //Power:     ZbSend {"Device": "0x6769", "Cluster": 6, "Read": 0}
+  //Dimmer:    ZbSend {"Device": "0x6769", "Cluster": 8, "Read": 0}
+  //Hue:       ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 0}
+  //Sat:       ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 1}
+  //HueSat:    ZbSend {"Device": "0x6769", "Cluster": 768, "Read": [0, 1]}
+  //CT:        ZbSend {"Device": "0x6769", "Cluster": 768, "Read": 7}
   //ColorMode: ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": 8}
-  //Color:  ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": [3,4  ]}
+  //Color:     ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": [3, 4]}
+
   //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] };
   //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 };
   //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 };
-  //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 7] }
-  //Scene           ZbSend { "device": "0x9E82", "cluster": "0x0005", "read": [0, 1, 2, 3] }
+  //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 3, 4, 7, 8] }
 
   updateDimmer(msg) {
     let statusText = '';
@@ -233,14 +239,13 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const dimmer = value as number;
     this.color.brightness = dimmer;
     this.dimmer.set(dimmer);
-    await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
+    this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
     const dimmer = this.dimmer.get();
-    if (dimmer === undefined ) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    if (this.dimmer.needsUpdate()) {
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
     }
     return dimmer;
   }
@@ -249,14 +254,13 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const ct = value as number;
     this.color.ct = ct;
     this.ct.set(ct);
-    await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: ct } });
+    this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: ct } });
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
     const ct = this.ct.get();
-    if (ct === undefined) {
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [7, 8] });
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    if (this.ct.needsUpdate()) {
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [7, 8] });
     }
     return ct;
   }
@@ -266,21 +270,21 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     this.color.hue = hue;
     if (this.supportHS) {
       this.hue.set(hue);
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(hue, 360, 254) } });
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(hue, 360, 254) } });
     } else if (this.supportXY) {
       this.colorX.set(this.color.colorX);
       this.colorY.set(this.color.colorY);
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 
   async getHue(): Promise<CharacteristicValue> {
     const hue = this.hue.get();
-    if (hue === undefined) {
+    if (this.hue.needsUpdate()) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 8] });
+        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 8] });
       } else if (this.supportXY) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
+        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
       }
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
@@ -292,23 +296,22 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     this.color.saturation = saturation;
     if (this.supportHS) {
       this.saturation.set(saturation);
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(saturation, 100, 254) } });
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(saturation, 100, 254) } });
     } else if (this.supportXY) {
       this.colorX.set(this.color.colorX);
       this.colorY.set(this.color.colorY);
-      await this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
+      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 
   async getSaturation(): Promise<CharacteristicValue> {
     const saturation = this.saturation.get();
-    if (saturation === undefined) {
+    if (this.saturation.needsUpdate()) {
       if (this.supportHS) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [1, 8] });
+        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [1, 8] });
       } else if (this.supportXY) {
-        await this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
+        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
       }
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return saturation;
   }
