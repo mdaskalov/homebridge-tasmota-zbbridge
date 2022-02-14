@@ -19,6 +19,9 @@ export abstract class ZbBridgeAccessory {
   protected type: string;
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
+    if (this.accessory.context.device.powerTopic !== undefined) {
+      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
+    }
     const addr = this.accessory.context.device.addr.split(':');
     this.addr = addr[0];
     this.endpoint = addr[1]; // optional endpoint 1–240
