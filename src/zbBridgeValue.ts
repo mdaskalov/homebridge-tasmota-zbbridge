@@ -47,7 +47,7 @@ export class ZbBridgeValue {
     return this.value;
   }
 
-  queryNeeded(): boolean {
+  needsUpdate(): boolean {
     return (this.setTs > this.updateTs) && this.timeouted(this.setTs);
   }
 
