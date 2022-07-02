@@ -16,7 +16,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    this.power = new ZbBridgeValue();
+    this.power = new ZbBridgeValue(false);
   }
 
   getServiceName() {
