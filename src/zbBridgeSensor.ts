@@ -45,7 +45,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     if (this.valuePath && this.characteristicName) {
       const characteristic = this.platform.Characteristic[this.characteristicName];
       const value = this.getObjectByPath(msg, this.valuePath);
-      if (characteristic && value) {
+      if (characteristic && value !== undefined) {
         statusText += `sensor Value: ${value}`;
         this.value = value;
         this.service.getCharacteristic(characteristic).updateValue(value);
