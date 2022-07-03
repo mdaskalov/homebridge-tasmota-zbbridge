@@ -16,8 +16,8 @@ export class ZbBridgeValue {
 
   constructor(private logger: Logger, private label: string, initial: CharacteristicValue) {
     this.value = this.setValue = initial;
-    this.setTs = Date.now();
-    this.updateTs = 0;
+    this.setTs = Date.now()-UPDATE_TIMEOUT;
+    this.updateTs = Date.now();
   }
 
   timeouted(ts: number): boolean {
