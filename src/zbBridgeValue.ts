@@ -34,7 +34,6 @@ export class ZbBridgeValue {
     );
     let ignored = (to === this.value) || (this.setTs > this.updateTs && !this.timeouted(this.setTs));
     if (to === this.setValue) {
-      this.log('in1');
       this.value = to;
       this.updateTs = now;
       ignored = true;
