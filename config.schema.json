@@ -49,6 +49,12 @@
                 "title": "RGB Light",
                 "enum": ["light3"]
               }, {
+                "title": "RGBW Light",
+                "enum": ["light4"]
+              }, {
+                "title": "RGBCW Light, RGB and Cold/Warm White",
+                "enum": ["light5"]
+              }, {
                 "title": "RGB (With XY color and CT)",
                 "enum": ["light_XY_B_CT"]
               }, {
