@@ -243,7 +243,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async getBrightness(): Promise<CharacteristicValue> {
     const dimmer = this.dimmer.get();
     if (this.dimmer.needsUpdate()) {
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 8, read: 0 });
+      this.zbInfo();
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return dimmer;
   }
@@ -258,7 +259,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async getColorTemperature(): Promise<CharacteristicValue> {
     const ct = this.ct.get();
     if (this.ct.needsUpdate()) {
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [7, 8] });
+      this.zbInfo();
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return ct;
   }
@@ -279,11 +281,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async getHue(): Promise<CharacteristicValue> {
     const hue = this.hue.get();
     if (this.hue.needsUpdate()) {
-      if (this.supportHS) {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [0, 8] });
-      } else if (this.supportXY) {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
-      }
+      this.zbInfo();
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return hue;
@@ -305,11 +303,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   async getSaturation(): Promise<CharacteristicValue> {
     const saturation = this.saturation.get();
     if (this.saturation.needsUpdate()) {
-      if (this.supportHS) {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [1, 8] });
-      } else if (this.supportXY) {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 768, read: [3, 4, 8] });
-      }
+      this.zbInfo();
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return saturation;
   }

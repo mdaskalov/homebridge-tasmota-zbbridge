@@ -17,6 +17,7 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected endpoint: number | undefined;
   protected type: string;
+  private updatedAccessoryInfo = false;
 
   constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
     if (this.accessory.context.device.powerTopic !== undefined) {
@@ -50,8 +51,8 @@ export abstract class ZbBridgeAccessory {
 
     this.registerHandlers();
 
-    // Query Manufacturer, Model
-    this.zbSend({ device: this.addr, cluster: 0, read: [0, 4, 5] });
+    // // Query device info
+    this.zbInfo();
   }
 
   static formatTs(dt?: number): string {
@@ -70,7 +71,8 @@ export abstract class ZbBridgeAccessory {
   }
 
   statusUpdate(message) {
-    if (message.Manufacturer && message.ModelId) {
+    if (!this.updatedAccessoryInfo && message.Manufacturer && message.ModelId) {
+      this.updatedAccessoryInfo = true;
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
         .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
@@ -79,12 +81,16 @@ export abstract class ZbBridgeAccessory {
         message.Manufacturer,
         message.ModelId,
       );
-    } else {
-      const statusText = this.onStatusUpdate(message);
-      if (statusText !== '') {
-        this.log('onStatusUpdate:%s', statusText);
-      }
     }
+    const statusText = this.onStatusUpdate(message);
+    if (statusText !== '') {
+      this.log('onStatusUpdate:%s', statusText);
+    }
+  }
+
+  zbInfo(): void {
+    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbinfo';
+    this.platform.mqttClient.publish(topic, this.addr);
   }
 
   zbSend(command): void {

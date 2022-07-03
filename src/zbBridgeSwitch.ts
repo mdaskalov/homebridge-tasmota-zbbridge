@@ -1,6 +1,7 @@
 import {
   PlatformAccessory,
   CharacteristicValue,
+  HAPStatus,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
@@ -77,7 +78,8 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
+        this.zbInfo();
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
     return power;
