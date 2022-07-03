@@ -74,7 +74,6 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   getOn() {
     const power = this.power.get();
     if (this.power.needsUpdate()) {
-      this.log('needs update');
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
