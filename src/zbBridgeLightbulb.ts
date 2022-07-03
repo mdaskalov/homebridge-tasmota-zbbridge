@@ -41,7 +41,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   configureLightFeatures() {
-    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3' || this.type.includes('_B')) {
+    if (this.type === 'light1' || this.type.includes('_B')) {
       this.supportDimmer = true;
     }
     if (this.type === 'light2' || this.type === 'light5' || this.type.includes('_CT')) {
@@ -58,10 +58,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
 
     this.log('configureLightFeatures: type: %s :-%s',
       this.type,
-      this.supportDimmer ? ' Dimmer' : ''+
-        this.supportCT ? ' CT' : ''+
-        this.supportHS ? ' HS' : ''+
-        this.supportXY ? ' XY' : '',
+      (this.supportDimmer ? ' B' : '')+
+      (this.supportCT ? ' CT' : '')+
+      (this.supportHS ? ' HS' : '')+
+      (this.supportXY ? ' XY' : ''),
     );
   }
 
