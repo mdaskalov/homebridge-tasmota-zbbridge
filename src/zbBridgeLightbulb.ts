@@ -28,12 +28,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    this.dimmer = new ZbBridgeValue(100);
-    this.ct = new ZbBridgeValue(370);
-    this.hue = new ZbBridgeValue(20);
-    this.saturation = new ZbBridgeValue(100);
-    this.colorX = new ZbBridgeValue(30265);
-    this.colorY = new ZbBridgeValue(24947);
+    this.dimmer = new ZbBridgeValue(this.platform.log, 'dimmer', 100);
+    this.ct = new ZbBridgeValue(this.platform.log, 'ct', 370);
+    this.hue = new ZbBridgeValue(this.platform.log, 'hue', 20);
+    this.saturation = new ZbBridgeValue(this.platform.log, 'saturation', 100);
+    this.colorX = new ZbBridgeValue(this.platform.log, 'colorX', 30265);
+    this.colorY = new ZbBridgeValue(this.platform.log, 'colorY', 24947);
   }
 
   getServiceName() {
@@ -41,7 +41,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   }
 
   configureLightFeatures() {
-    if (this.type === 'light1' || this.type === 'light2' || this.type === 'light3' || this.type.includes('_B')) {
+    if (this.type === 'light1' || this.type.includes('_B')) {
       this.supportDimmer = true;
     }
     if (this.type === 'light2' || this.type === 'light5' || this.type.includes('_CT')) {
@@ -58,10 +58,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
 
     this.log('configureLightFeatures: type: %s :-%s',
       this.type,
-      this.supportDimmer ? ' Dimmer' : ''+
-        this.supportCT ? ' CT' : ''+
-        this.supportHS ? ' HS' : ''+
-        this.supportXY ? ' XY' : '',
+      (this.supportDimmer ? ' B' : '')+
+      (this.supportCT ? ' CT' : '')+
+      (this.supportHS ? ' HS' : '')+
+      (this.supportXY ? ' XY' : ''),
     );
   }
 
@@ -191,9 +191,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         this.hue.update(this.color.hue);
         this.saturation.update(this.color.saturation);
         this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(ct);
-        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
-        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
-        statusText += ` CT: ${ct} (Hue: ${this.color.hue}, Sat:${this.color.saturation})`;
+        statusText += ` CT: ${ct}`;
       }
     }
     return statusText;

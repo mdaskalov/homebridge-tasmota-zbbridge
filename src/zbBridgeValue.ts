@@ -1,6 +1,10 @@
 import {
   CharacteristicValue,
+  Logger,
 } from 'homebridge';
+
+import { ZbBridgeAccessory } from './zbBridgeAccessory';
+
 
 const UPDATE_TIMEOUT = 2000;
 
@@ -10,7 +14,7 @@ export class ZbBridgeValue {
   private setTs: number;
   private updateTs: number;
 
-  constructor(initial: CharacteristicValue) {
+  constructor(private logger: Logger, private label: string, initial: CharacteristicValue) {
     this.value = this.setValue = initial;
     this.setTs = Date.now();
     this.updateTs = 0;
@@ -22,6 +26,12 @@ export class ZbBridgeValue {
 
   update(to: CharacteristicValue): boolean {
     const now = Date.now();
+    this.log('to: %s, value: %s, updateTs: %s, setTs: %s',
+      to,
+      this.value,
+      ZbBridgeAccessory.formatTs(this.updateTs),
+      ZbBridgeAccessory.formatTs(this.setTs),
+    );
     let ignored = (to === this.value) || (this.setTs > this.updateTs && !this.timeouted(this.setTs));
     if (to === this.setValue) {
       this.value = to;
@@ -32,6 +42,8 @@ export class ZbBridgeValue {
       this.updateTs = now;
       this.value = to;
     }
+
+    this.log('ignored: %s', ignored);
     return ignored;
   }
 
@@ -49,6 +61,14 @@ export class ZbBridgeValue {
 
   needsUpdate(): boolean {
     return (this.setTs > this.updateTs) && this.timeouted(this.setTs);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  log(message: string, ...parameters: any[]): void {
+    this.logger.debug('Value (%s) ' + message,
+      this.label,
+      ...parameters,
+    );
   }
 
 }

@@ -60,10 +60,12 @@ export class MQTTClient {
       }
       const callOnceHandlers = this.topicHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
       if (callOnceHandlers.length !== 0) {
+        this.log.debug('MQTT message %s %s onceHandlers: %s', topic, message, callOnceHandlers.length);
         callOnceHandlers.forEach(h => h.callback(message.toString(), topic));
         this.topicHandlers = this.topicHandlers.filter(h => !callOnceHandlers.includes(h));
       } else {
         const hadnlers = this.topicHandlers.filter(h => this.matchTopic(h, topic));
+        this.log.debug('MQTT message %s %s handlers: %s', topic, message, hadnlers.length);
         hadnlers.forEach(h => h.callback(message.toString(), topic));
       }
     });
@@ -125,6 +127,7 @@ export class MQTTClient {
   subscribeTopic(topic: string, callback: TopicCallback, callOnce = false): string {
     if (this.client) {
       const id = this.uniqueID();
+      this.log.debug('MQTT subscribe: %s, %s', topic, id);
       this.topicHandlers.push({ id, topic, callOnce, callback });
       const handlersCount = this.topicHandlers.filter(h => this.matchTopic(h, topic)).length;
       if (handlersCount === 1) {
