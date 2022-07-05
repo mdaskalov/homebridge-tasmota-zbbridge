@@ -61,14 +61,8 @@
                 "title": "On/Off Switch",
                 "enum": ["switch"]
               }, {
-                "title": "Contact Sensor",
-                "enum": ["sensor_0x500_0xFFF2_ContactSensor_ContactSensorState_Contact"]
-              }, {
-                "title": "Temperature Sensor",
-                "enum": ["sensor_0x405_0_TemperatureSensor_CurrentTemperature_Temperature"]
-              }, {
-                "title": "Humidity Sensor",
-                "enum": ["sensor_0x402_0_HumiditySensor_CurrentRelativeHumidity_Humidity"]
+                "title": "Sensor",
+                "enum": ["sensor"]
               }],
               "required": true
             },
@@ -80,7 +74,7 @@
             },
             "powerTopic": {
               "title": "Power Topic",
-              "placeholder": "Topic",
+              "placeholder": "Power Topic",
               "type": "string"
             },
             "powerType": {
@@ -102,6 +96,97 @@
                 "title": "Switch 4",
                 "enum": ["POWER4"]
               }]
+            },
+            "SensorService": {
+              "title": "Sensor Service",
+              "type": "string",
+              "oneOf": [
+                { "title": "AccessCode", "enum": ["AccessCode"] },
+                { "title": "AccessControl", "enum": ["AccessControl"] },
+                { "title": "AccessoryInformation", "enum": ["AccessoryInformation"] },
+                { "title": "AccessoryMetrics", "enum": ["AccessoryMetrics"] },
+                { "title": "AccessoryRuntimeInformation", "enum": ["AccessoryRuntimeInformation"] },
+                { "title": "AirPurifier", "enum": ["AirPurifier"] },
+                { "title": "AirQualitySensor", "enum": ["AirQualitySensor"] },
+                { "title": "AssetUpdate", "enum": ["AssetUpdate"] },
+                { "title": "Assistant", "enum": ["Assistant"] },
+                { "title": "AudioStreamManagement", "enum": ["AudioStreamManagement"] },
+                { "title": "Battery", "enum": ["Battery"] },
+                { "title": "BridgeConfiguration", "enum": ["BridgeConfiguration"] },
+                { "title": "BridgingState", "enum": ["BridgingState"] },
+                { "title": "CameraControl", "enum": ["CameraControl"] },
+                { "title": "CameraOperatingMode", "enum": ["CameraOperatingMode"] },
+                { "title": "CameraRecordingManagement", "enum": ["CameraRecordingManagement"] },
+                { "title": "CameraRTPStreamManagement", "enum": ["CameraRTPStreamManagement"] },
+                { "title": "CarbonDioxideSensor", "enum": ["CarbonDioxideSensor"] },
+                { "title": "CarbonMonoxideSensor", "enum": ["CarbonMonoxideSensor"] },
+                { "title": "CloudRelay", "enum": ["CloudRelay"] },
+                { "title": "ContactSensor", "enum": ["ContactSensor"] },
+                { "title": "DataStreamTransportManagement", "enum": ["DataStreamTransportManagement"] },
+                { "title": "Diagnostics", "enum": ["Diagnostics"] },
+                { "title": "Door", "enum": ["Door"] },
+                { "title": "Doorbell", "enum": ["Doorbell"] },
+                { "title": "Fan", "enum": ["Fan"] },
+                { "title": "Fanv2", "enum": ["Fanv2"] },
+                { "title": "Faucet", "enum": ["Faucet"] },
+                { "title": "FilterMaintenance", "enum": ["FilterMaintenance"] },
+                { "title": "GarageDoorOpener", "enum": ["GarageDoorOpener"] },
+                { "title": "HeaterCooler", "enum": ["HeaterCooler"] },
+                { "title": "HumidifierDehumidifier", "enum": ["HumidifierDehumidifier"] },
+                { "title": "HumiditySensor", "enum": ["HumiditySensor"] },
+                { "title": "InputSource", "enum": ["InputSource"] },
+                { "title": "IrrigationSystem", "enum": ["IrrigationSystem"] },
+                { "title": "LeakSensor", "enum": ["LeakSensor"] },
+                { "title": "Lightbulb", "enum": ["Lightbulb"] },
+                { "title": "LightSensor", "enum": ["LightSensor"] },
+                { "title": "LockManagement", "enum": ["LockManagement"] },
+                { "title": "LockMechanism", "enum": ["LockMechanism"] },
+                { "title": "Microphone", "enum": ["Microphone"] },
+                { "title": "MotionSensor", "enum": ["MotionSensor"] },
+                { "title": "NFCAccess", "enum": ["NFCAccess"] },
+                { "title": "OccupancySensor", "enum": ["OccupancySensor"] },
+                { "title": "Outlet", "enum": ["Outlet"] },
+                { "title": "Pairing", "enum": ["Pairing"] },
+                { "title": "PowerManagement", "enum": ["PowerManagement"] },
+                { "title": "ProtocolInformation", "enum": ["ProtocolInformation"] },
+                { "title": "SecuritySystem", "enum": ["SecuritySystem"] },
+                { "title": "ServiceLabel", "enum": ["ServiceLabel"] },
+                { "title": "Siri", "enum": ["Siri"] },
+                { "title": "SiriEndpoint", "enum": ["SiriEndpoint"] },
+                { "title": "Slats", "enum": ["Slats"] },
+                { "title": "SmartSpeaker", "enum": ["SmartSpeaker"] },
+                { "title": "SmokeSensor", "enum": ["SmokeSensor"] },
+                { "title": "Speaker", "enum": ["Speaker"] },
+                { "title": "StatefulProgrammableSwitch", "enum": ["StatefulProgrammableSwitch"] },
+                { "title": "StatelessProgrammableSwitch", "enum": ["StatelessProgrammableSwitch"] },
+                { "title": "Switch", "enum": ["Switch"] },
+                { "title": "TargetControl", "enum": ["TargetControl"] },
+                { "title": "TargetControlManagement", "enum": ["TargetControlManagement"] },
+                { "title": "Television", "enum": ["Television"] },
+                { "title": "TelevisionSpeaker", "enum": ["TelevisionSpeaker"] },
+                { "title": "TemperatureSensor", "enum": ["TemperatureSensor"] },
+                { "title": "Thermostat", "enum": ["Thermostat"] },
+                { "title": "ThreadTransport", "enum": ["ThreadTransport"] },
+                { "title": "TimeInformation", "enum": ["TimeInformation"] },
+                { "title": "TransferTransportManagement", "enum": ["TransferTransportManagement"] },
+                { "title": "Tunnel", "enum": ["Tunnel"] },
+                { "title": "Valve", "enum": ["Valve"] },
+                { "title": "WiFiRouter", "enum": ["WiFiRouter"] },
+                { "title": "WiFiSatellite", "enum": ["WiFiSatellite"] },
+                { "title": "WiFiTransport", "enum": ["WiFiTransport"] },
+                { "title": "Window", "enum": ["Window"] },
+                { "title": "WindowCovering", "enum": ["WindowCovering"] }
+              ]
+            },
+            "SensorCharacteristic": {
+              "title": "Sensor Characteristic",
+              "placeholder": "Characteristic",
+              "type": "string"
+            },
+            "SensorValuePath": {
+              "title": "Sensor Value Path",
+              "placeholder": "Value Path",
+              "type": "string"
             }
           }
         }
@@ -248,7 +333,7 @@
           ]
         }, {
           "type": "fieldset",
-          "title": "Power Control",
+          "title": "Advanced",
           "expandable": true,
           "expanded": false,
           "items": [{
@@ -275,6 +360,41 @@
                   "nodescription": true,
                   "notitle": true,
                   "key": "zbBridgeDevices[].powerType"
+                }]
+              }]
+            }]
+          }, {
+            "type": "help",
+            "helpvalue": "Sensor device configuration, see <a href='https://developers.homebridge.io/#/service'>here</a> for detailed explanation"
+          },{
+            "type": "div",
+            "displayFlex": true,
+            "items": [{
+              "type": "flex",
+              "flex-flow": "row",
+              "items": [{
+                "type": "flex",
+                "flex-flow": "column",
+                "items": [{
+                  "nodescription": true,
+                  "notitle": true,
+                  "key": "zbBridgeDevices[].SensorService"
+                }]
+              }, {
+                "type": "flex",
+                "flex-flow": "column",
+                "items": [{
+                  "nodescription": true,
+                  "notitle": true,
+                  "key": "zbBridgeDevices[].SensorCharacteristic"
+                }]
+              }, {
+                "type": "flex",
+                "flex-flow": "column",
+                "items": [{
+                  "nodescription": true,
+                  "notitle": true,
+                  "key": "zbBridgeDevices[].SensorValuePath"
                 }]
               }]
             }]
