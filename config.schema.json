@@ -97,7 +97,7 @@
                 "enum": ["POWER4"]
               }]
             },
-            "SensorService": {
+            "sensorService": {
               "title": "Sensor Service",
               "type": "string",
               "oneOf": [
@@ -178,12 +178,12 @@
                 { "title": "WindowCovering", "enum": ["WindowCovering"] }
               ]
             },
-            "SensorCharacteristic": {
+            "sensorCharacteristic": {
               "title": "Sensor Characteristic",
               "placeholder": "Characteristic",
               "type": "string"
             },
-            "SensorValuePath": {
+            "sensorValuePath": {
               "title": "Sensor Value Path",
               "placeholder": "Value Path",
               "type": "string"
@@ -378,7 +378,7 @@
                 "items": [{
                   "nodescription": true,
                   "notitle": true,
-                  "key": "zbBridgeDevices[].SensorService"
+                  "key": "zbBridgeDevices[].sensorService"
                 }]
               }, {
                 "type": "flex",
@@ -386,7 +386,7 @@
                 "items": [{
                   "nodescription": true,
                   "notitle": true,
-                  "key": "zbBridgeDevices[].SensorCharacteristic"
+                  "key": "zbBridgeDevices[].sensorCharacteristic"
                 }]
               }, {
                 "type": "flex",
@@ -394,7 +394,7 @@
                 "items": [{
                   "nodescription": true,
                   "notitle": true,
-                  "key": "zbBridgeDevices[].SensorValuePath"
+                  "key": "zbBridgeDevices[].sensorValuePath"
                 }]
               }]
             }]
