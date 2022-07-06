@@ -26,9 +26,10 @@ export class ZbBridgeValue {
 
   update(to: CharacteristicValue): boolean {
     const now = Date.now();
-    this.log('to: %s, value: %s, updateTs: %s, setTs: %s',
+    this.log('update to: %s, value: %s, setValue: %s, updateTs: %s, setTs: %s',
       to,
       this.value,
+      this.setValue,
       ZbBridgeAccessory.formatTs(this.updateTs),
       ZbBridgeAccessory.formatTs(this.setTs),
     );
