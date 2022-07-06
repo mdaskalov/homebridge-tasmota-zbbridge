@@ -8,7 +8,12 @@ import { TasmotaZbBridgePlatform } from './platform';
 export type ZbBridgeDevice = {
   addr: string,
   type: string,
-  name: string
+  name: string,
+  powerTopic?: string,
+  powerType?: string,
+  sensorService?: string,
+  sensorCharacteristic?: string,
+  sensorValuePath?: string
 }
 
 export abstract class ZbBridgeAccessory {
