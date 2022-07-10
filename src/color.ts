@@ -14,7 +14,7 @@ export class Color {
     this._hue = 0;
     this._saturation = 0;
     this._colorX = 0;
-    this._colorY=0;
+    this._colorY = 0;
     this._ct = 0;
   }
 

@@ -58,9 +58,9 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
 
     this.log('configureLightFeatures: type: %s :-%s',
       this.type,
-      (this.supportDimmer ? ' B' : '')+
-      (this.supportCT ? ' CT' : '')+
-      (this.supportHS ? ' HS' : '')+
+      (this.supportDimmer ? ' B' : '') +
+      (this.supportCT ? ' CT' : '') +
+      (this.supportHS ? ' HS' : '') +
       (this.supportXY ? ' XY' : ''),
     );
   }
@@ -227,7 +227,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     }
 
     if (colormode !== undefined && statusText !== '') {
-      statusText = ` ColorMode: ${colormode}`+statusText;
+      statusText = ` ColorMode: ${colormode}` + statusText;
     }
 
     return statusText;
