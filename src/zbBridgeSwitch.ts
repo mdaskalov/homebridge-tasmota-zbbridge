@@ -46,17 +46,18 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
 
   onStatusUpdate(msg): string {
     let statusText = '';
+    if (this.powerTopic === undefined) {
+      if (msg.Reachable === false) {
+        this.reachable = false;
+      }
 
-    if (msg.Reachable === false) {
-      this.reachable = false;
-    }
-
-    if (msg.Power !== undefined) {
-      const power = (msg.Power === 1);
-      const ignored = this.power.update(power);
-      if (!ignored) {
-        this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
-        statusText = ` Power: ${power ? 'On' : 'Off'}`;
+      if (msg.Power !== undefined) {
+        const power = (msg.Power === 1);
+        const ignored = this.power.update(power);
+        if (!ignored) {
+          this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
+          statusText = ` Power: ${power ? 'On' : 'Off'}`;
+        }
       }
     }
     return statusText;
