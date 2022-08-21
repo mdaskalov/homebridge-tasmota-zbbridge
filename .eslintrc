@@ -28,6 +28,7 @@
     "comma-spacing": ["error"],
     "no-multi-spaces": ["warn", { "ignoreEOLComments": true }],
     "lines-between-class-members": ["warn", "always", {"exceptAfterSingleLine": true}],
-    "@typescript-eslint/no-non-null-assertion": "off"
+    "@typescript-eslint/semi": ["warn"],
+    "@typescript-eslint/member-delimiter-style": ["warn"]
   }
 }
