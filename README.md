@@ -12,14 +12,17 @@
 
 # Homebridge Tasmota ZbBridge
 
-Thsis plugin can controll zigbee devices connected to [Sonoff Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or any other device running [Tasmota](https://tasmota.github.io/docs) firmware using MQTT commands.
-Requires MQTT broker to communicate.
+This plugin can controll devices connected to a Zigbee bridge running [Tasmota](https://tasmota.github.io/docs) (for example Sonoff [Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or [Zigbee Bridge Pro](https://zigbee.blakadder.com/Sonoff_ZBBridge-P.html) or other [suported](https://tasmota.github.io/docs/Zigbee) hardware). 
 
-It is also possible to combine devices - tasmota device can be used to switch a zigbee device on/off.
+Devices running Tasmota are also suported (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.).
+
+It is possible to combine Tasmota devices - a switch device can turn a Zigbee lamp on and then the dimmer can be changed using Zigbee commands. The lightbulb should be configred to automatically turn on when power is applied. 
+
+The plugin uses MQTT commands to control the configured devices. MQTT broker is required.
 
 # Installation
 
-* Flash your device with Tasmota firmware
+* Flash your device(s) with Tasmota
 * Install homebridge `npm install -g homebridge`
 * Install the plugin `npm install -g homebridge-tasmota-zbbridge`
 * Alternatively use the great [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to install and configure
@@ -31,7 +34,7 @@ It is also possible to combine devices - tasmota device can be used to switch a 
     "name": "ZbBridge",
     "zbBridgeDevices": [
         {
-            "addr": "0x8e8e",
+            "addr": "0x8E8E",
             "type": "light1",
             "name": "Hue Lamp",
             "powerTopic": "shelly-kitchen",
@@ -55,7 +58,15 @@ It is also possible to combine devices - tasmota device can be used to switch a 
         {
             "addr": "0xAD0B",
             "type": "switch",
-            "name": "Kitchen Ligths"
+            "name": "Kitchen Outlet"
+        },
+        {
+            "addr": "0x43D0",
+            "type": "sensor",
+            "name": "Garage Door",
+            "sensorService": "ContactSensor",
+            "sensorCharacteristic": "ContactSensorState",
+            "sensorValuePath": "Contact"
         }
     ],
     "tasmotaDevices": [
@@ -85,16 +96,24 @@ It is also possible to combine devices - tasmota device can be used to switch a 
 }
 ```
 
-`mqttTopic`- Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)
+`mqttTopic`- Identifying topic of your Zigbee bridge device (i.e. tasmota_ABCDEF)
 
-`zbBridgeDevices` - Zigbee devices connected to the Sonoff Zigbee Bridge
+`zbBridgeDevices` - Zigbee devices connected to the Zigbee bridge device
 
 * `addr` - Device short address and optional endpoint (for example Tuya 2ch switch). Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
-* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `switch`) see descriptions in `config.schema.json`. Alternatively use generic `light` and add features as needed: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support.
-Generic sennsors are suported by defining the type as follows: `sensor_<Cluster>_<ReadCommand>_<Service>_<Characteristic>_<ValuePath>`
+* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name if endpoint is not used.
-* `powerTopic` - (optional) Use another tasmota device to controll the power
-* `powerType` - (optional) Tasmota switch to use, default: `POWER`
+* Advanced settings
+  * `powerTopic` - (optional) Use another tasmota device to controll the power (configure it's identifying topic)
+  * `powerType` - (optional) Tasmota switch topic used to turn on/off the zigbee device, (default: `POWER`)
+  * `sensorService` - (optional) Sensor service name as defined [here](https://developers.homebridge.io/#/service) (default: `ContactSensor`)
+  * `sensorCharacteristic` - (optional) Service characteristic name (default: `ContactSensorState`)
+  * `sensorValuePath` - (optional) Path of the sensor value in the SENSOR message (default: `Contact`). 
+  
+    For example `CONTACT_NOT_DETECTED` will be reported when following message is received:
+    ```
+    {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"Garage Door","Contact":1,"Endpoint":1,"LinkQuality":66}}}
+    ```
 
 `tasmotaDevices` - Tasmota flashed devices
 

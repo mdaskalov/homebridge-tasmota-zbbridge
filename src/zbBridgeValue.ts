@@ -16,19 +16,20 @@ export class ZbBridgeValue {
 
   constructor(private logger: Logger, private label: string, initial: CharacteristicValue) {
     this.value = this.setValue = initial;
-    this.setTs = Date.now()-UPDATE_TIMEOUT;
+    this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
   }
 
   timeouted(ts: number): boolean {
-    return (Date.now() > (ts + UPDATE_TIMEOUT)) ;
+    return (Date.now() > (ts + UPDATE_TIMEOUT));
   }
 
   update(to: CharacteristicValue): boolean {
     const now = Date.now();
-    this.log('to: %s, value: %s, updateTs: %s, setTs: %s',
+    this.log('update to: %s, value: %s, setValue: %s, updateTs: %s, setTs: %s',
       to,
       this.value,
+      this.setValue,
       ZbBridgeAccessory.formatTs(this.updateTs),
       ZbBridgeAccessory.formatTs(this.setTs),
     );
