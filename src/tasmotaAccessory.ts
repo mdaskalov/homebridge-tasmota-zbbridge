@@ -16,10 +16,10 @@ enum DeviceType {
 }
 
 export type TasmotaDevice = {
-  topic: string,
-  type: string,
-  name: string
-}
+  topic: string;
+  type: string;
+  name: string;
+};
 
 export class TasmotaAccessory {
   private type: DeviceType;
@@ -113,27 +113,30 @@ export class TasmotaAccessory {
   }
 
   updateStatus(response) {
-    const deviceName = this.getObjectByPath(response, 'Status.DeviceName');
-    if (deviceName) {
-      this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Tasmota')
-        .setCharacteristic(this.platform.Characteristic.Model, deviceName);
-      this.platform.log.debug('%s (%s) Manufacturer: Tasmota, Model: %s',
-        this.accessory.context.device.name,
-        this.accessory.context.device.topic,
-        deviceName,
-      );
-    }
+    const service = this.accessory.getService(this.platform.Service.AccessoryInformation);
+    if (service !== undefined) {
+      const deviceName = this.getObjectByPath(response, 'Status.DeviceName');
+      if (deviceName) {
+        service
+          .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Tasmota')
+          .setCharacteristic(this.platform.Characteristic.Model, deviceName);
+        this.platform.log.debug('%s (%s) Manufacturer: Tasmota, Model: %s',
+          this.accessory.context.device.name,
+          this.accessory.context.device.topic,
+          deviceName,
+        );
+      }
 
-    const serialNumber = this.getObjectByPath(response, 'StatusNET.Mac');
-    if (response.StatusNET && response.StatusNET.Mac) {
-      this.platform.log.debug('%s (%s) Mac: %s',
-        this.accessory.context.device.name,
-        this.accessory.context.device.topic,
-        response.StatusNET.Mac,
-      );
-      this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
+      const serialNumber = this.getObjectByPath(response, 'StatusNET.Mac');
+      if (serialNumber !== undefined) {
+        service
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
+        this.platform.log.debug('%s (%s) Mac: %s',
+          this.accessory.context.device.name,
+          this.accessory.context.device.topic,
+          serialNumber,
+        );
+      }
     }
 
     if (this.type === DeviceType.HSBLight && response.POWER) {
