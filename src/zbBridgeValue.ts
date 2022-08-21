@@ -1,7 +1,6 @@
 import {
   PlatformAccessory,
   CharacteristicValue,
-  Logger,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
@@ -20,7 +19,7 @@ export class ZbBridgeValue {
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
     private label: string,
-    initial: CharacteristicValue
+    initial: CharacteristicValue,
   ) {
     this.value = this.setValue = initial;
     this.setTs = Date.now() - UPDATE_TIMEOUT;
@@ -51,7 +50,7 @@ export class ZbBridgeValue {
       oldValue,
       updateTs,
       setTs,
-      (ignored ? ' (ignored)' : '')
+      (ignored ? ' (ignored)' : ''),
     );
     return ignored;
   }
