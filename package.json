@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Tasmota ZbBridge",
   "name": "homebridge-tasmota-zbbridge",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Control Zigbee Devices Using Tasmota ZbBridge",
   "license": "Apache-2.0",
   "repository": {
