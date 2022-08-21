@@ -110,9 +110,9 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
   * `sensorCharacteristic` - (optional) Service characteristic name (default: `ContactSensorState`)
   * `sensorValuePath` - (optional) Path of the sensor value in the SENSOR message (default: `Contact`). 
   
-    For example `CONTACT_NOT_DETECTED` will be reported when following message is received:
+    For example `CONTACT_DETECTED` will be reported when following message is received:
     ```
-    {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"Garage Door","Contact":1,"Endpoint":1,"LinkQuality":66}}}
+    {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"ContactSensorExample","Contact":0,"Endpoint":1,"LinkQuality":66}}}
     ```
 
 `tasmotaDevices` - Tasmota flashed devices
