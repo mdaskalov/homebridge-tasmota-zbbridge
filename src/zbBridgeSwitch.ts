@@ -50,15 +50,20 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic === undefined) {
       if (msg.Reachable !== undefined) {
         this.reachable = (msg.Reachable === 'true');
-        statusText = ` Reachable: ${this.reachable ? 'Yes' : 'No'}`;
+        statusText += ` Reachable: ${this.reachable ? 'Yes' : 'No'}`;
       }
 
       if (msg.Power !== undefined) {
         const power = (msg.Power === 1);
-        const ignored = this.power.update(power);
+        let ignored = this.power.update(power);
+        if (!this.reachable) {
+          ignored = false;
+          this.reachable = true;
+          statusText += ' Reachable: Yes';
+        }
         if (!ignored) {
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
-          statusText = ` Power: ${this.power ? 'On' : 'Off'}`;
+          statusText += ` Power: ${this.power ? 'On' : 'Off'}`;
         }
       }
     }

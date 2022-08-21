@@ -2,12 +2,12 @@
 
 export class Color {
 
-  private _brightness: number
-  private _hue: number
-  private _saturation: number
-  private _colorX: number
-  private _colorY: number
-  private _ct: number
+  private _brightness: number;
+  private _hue: number;
+  private _saturation: number;
+  private _colorX: number;
+  private _colorY: number;
+  private _ct: number;
 
   constructor() {
     this._brightness = 100;

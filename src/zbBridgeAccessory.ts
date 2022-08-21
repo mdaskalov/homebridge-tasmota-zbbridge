@@ -6,15 +6,15 @@ import {
 import { TasmotaZbBridgePlatform } from './platform';
 
 export type ZbBridgeDevice = {
-  addr: string,
-  type: string,
-  name: string,
-  powerTopic?: string,
-  powerType?: string,
-  sensorService?: string,
-  sensorCharacteristic?: string,
-  sensorValuePath?: string
-}
+  addr: string;
+  type: string;
+  name: string;
+  powerTopic?: string;
+  powerType?: string;
+  sensorService?: string;
+  sensorCharacteristic?: string;
+  sensorValuePath?: string;
+};
 
 export abstract class ZbBridgeAccessory {
   protected service: Service;
@@ -65,9 +65,11 @@ export abstract class ZbBridgeAccessory {
       return 'undefined';
     }
     const d = new Date(dt);
-    const dformat = [d.getHours().toString().padStart(2, '0'),
-    d.getMinutes().toString().padStart(2, '0'),
-    d.getSeconds().toString().padStart(2, '0')].join(':') + '.' + d.getMilliseconds().toString();
+    const dformat = [
+      d.getHours().toString().padStart(2, '0'),
+      d.getMinutes().toString().padStart(2, '0'),
+      d.getSeconds().toString().padStart(2, '0'),
+    ].join(':') + '.' + d.getMilliseconds().toString();
     return dformat;
   }
 
@@ -78,14 +80,17 @@ export abstract class ZbBridgeAccessory {
   statusUpdate(message) {
     if (!this.updatedAccessoryInfo && message.Manufacturer && message.ModelId) {
       this.updatedAccessoryInfo = true;
-      this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
-        .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
-        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
-      this.log('Manufacturer: %s, Model: %s',
-        message.Manufacturer,
-        message.ModelId,
-      );
+      const service = this.accessory.getService(this.platform.Service.AccessoryInformation);
+      if (service !== undefined) {
+        service
+          .setCharacteristic(this.platform.Characteristic.Manufacturer, message.Manufacturer)
+          .setCharacteristic(this.platform.Characteristic.Model, message.ModelId)
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
+        this.log('Manufacturer: %s, Model: %s',
+          message.Manufacturer,
+          message.ModelId,
+        );
+      }
     }
     const statusText = this.onStatusUpdate(message);
     if (statusText !== '') {

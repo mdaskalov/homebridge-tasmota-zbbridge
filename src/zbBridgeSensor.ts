@@ -21,7 +21,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
 
   getServiceName() {
     const serviceName = (this.accessory.context.device.sensorService || 'undefined');
-    const service = this.platform.Service[serviceName!];
+    const service = this.platform.Service[serviceName];
     if (service === undefined) {
       this.platform.log.warn('Warning: Unknown service: %s, using ContactSensor instead!', serviceName);
       return 'ContactSensor';
@@ -31,14 +31,16 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
 
   registerHandlers() {
     const characteristicName = this.accessory.context.device.sensorCharacteristic;
-    this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[characteristicName!]);
-    if (this.characteristic === undefined) {
-      this.platform.log.warn('Warning: Unknown characteristic: %s, using ContactSensorState instead!', characteristicName);
-      this.characteristic = this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+    if (characteristicName !== undefined) {
+      this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[characteristicName]);
+      if (this.characteristic === undefined) {
+        this.platform.log.warn('Warning: Unknown characteristic: %s, using ContactSensorState instead!', characteristicName);
+        this.characteristic = this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState);
+      }
+      // readonly characteristic
+      this.characteristic
+        .onGet(this.getValue.bind(this));
     }
-    // readonly characteristic
-    this.characteristic
-      .onGet(this.getValue.bind(this));
   }
 
   onStatusUpdate(msg) {

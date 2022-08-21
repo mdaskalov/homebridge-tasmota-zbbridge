@@ -97,7 +97,7 @@ export class MQTTClient {
     if (msg !== undefined) {
       const handler = this.deviceHandlers.find(h => {
         const addrMatch = (h.addr === Number(msg.Device));
-        const endpointMatch = (h.endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
+        const endpointMatch = (h.endpoint === undefined) || (msg.Endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
         return addrMatch && endpointMatch;
       });
       if (handler) {
