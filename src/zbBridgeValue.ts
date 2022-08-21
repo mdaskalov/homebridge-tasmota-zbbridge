@@ -10,8 +10,8 @@ import { TasmotaZbBridgePlatform } from './platform';
 const UPDATE_TIMEOUT = 2000;
 
 export class ZbBridgeValue {
-  private value: CharacteristicValue
-  private setValue: CharacteristicValue
+  private value: CharacteristicValue;
+  private setValue: CharacteristicValue;
   private setTs: number;
   private updateTs: number;
 

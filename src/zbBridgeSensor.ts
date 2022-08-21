@@ -34,7 +34,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[characteristicName!]);
     if (this.characteristic === undefined) {
       this.platform.log.warn('Warning: Unknown characteristic: %s, using ContactSensorState instead!', characteristicName);
-      this.characteristic = this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      this.characteristic = this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState);
     }
     // readonly characteristic
     this.characteristic

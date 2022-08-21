@@ -65,9 +65,11 @@ export abstract class ZbBridgeAccessory {
       return 'undefined';
     }
     const d = new Date(dt);
-    const dformat = [d.getHours().toString().padStart(2, '0'),
-    d.getMinutes().toString().padStart(2, '0'),
-    d.getSeconds().toString().padStart(2, '0')].join(':') + '.' + d.getMilliseconds().toString();
+    const dformat = [
+      d.getHours().toString().padStart(2, '0'),
+      d.getMinutes().toString().padStart(2, '0'),
+      d.getSeconds().toString().padStart(2, '0'),
+    ].join(':') + '.' + d.getMilliseconds().toString();
     return dformat;
   }
 

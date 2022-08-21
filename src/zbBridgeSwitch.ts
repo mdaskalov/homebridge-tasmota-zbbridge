@@ -55,11 +55,11 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
 
       if (msg.Power !== undefined) {
         const power = (msg.Power === 1);
-        var ignored = this.power.update(power);
+        let ignored = this.power.update(power);
         if (!this.reachable) {
           ignored = false;
           this.reachable = true;
-          statusText += ' Reachable: Yes'
+          statusText += ' Reachable: Yes';
         }
         if (!ignored) {
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
