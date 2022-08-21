@@ -28,12 +28,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    this.dimmer = new ZbBridgeValue(this.platform.log, 'dimmer', 100);
-    this.ct = new ZbBridgeValue(this.platform.log, 'ct', 370);
-    this.hue = new ZbBridgeValue(this.platform.log, 'hue', 20);
-    this.saturation = new ZbBridgeValue(this.platform.log, 'saturation', 100);
-    this.colorX = new ZbBridgeValue(this.platform.log, 'colorX', 30265);
-    this.colorY = new ZbBridgeValue(this.platform.log, 'colorY', 24947);
+    this.dimmer = new ZbBridgeValue(platform, accessory, 'dimmer', 100);
+    this.ct = new ZbBridgeValue(platform, accessory, 'ct', 370);
+    this.hue = new ZbBridgeValue(platform, accessory, 'hue', 20);
+    this.saturation = new ZbBridgeValue(platform, accessory, 'saturation', 100);
+    this.colorX = new ZbBridgeValue(platform, accessory, 'colorX', 30265);
+    this.colorY = new ZbBridgeValue(platform, accessory, 'colorY', 24947);
   }
 
   getServiceName() {

@@ -1,9 +1,10 @@
 import {
+  PlatformAccessory,
   CharacteristicValue,
-  Logger,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { TasmotaZbBridgePlatform } from './platform';
 
 
 const UPDATE_TIMEOUT = 2000;
@@ -14,7 +15,12 @@ export class ZbBridgeValue {
   private setTs: number;
   private updateTs: number;
 
-  constructor(private logger: Logger, private label: string, initial: CharacteristicValue) {
+  constructor(
+    readonly platform: TasmotaZbBridgePlatform,
+    readonly accessory: PlatformAccessory,
+    private label: string,
+    initial: CharacteristicValue,
+  ) {
     this.value = this.setValue = initial;
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
@@ -26,13 +32,9 @@ export class ZbBridgeValue {
 
   update(to: CharacteristicValue): boolean {
     const now = Date.now();
-    this.log('update to: %s, value: %s, setValue: %s, updateTs: %s, setTs: %s',
-      to,
-      this.value,
-      this.setValue,
-      ZbBridgeAccessory.formatTs(this.updateTs),
-      ZbBridgeAccessory.formatTs(this.setTs),
-    );
+    const oldValue = this.value;
+    const updateTs = ZbBridgeAccessory.formatTs(this.updateTs);
+    const setTs = ZbBridgeAccessory.formatTs(this.setTs);
     let ignored = (to === this.value) || (this.setTs > this.updateTs && !this.timeouted(this.setTs));
     if (to === this.setValue) {
       this.value = to;
@@ -43,8 +45,13 @@ export class ZbBridgeValue {
       this.updateTs = now;
       this.value = to;
     }
-
-    this.log('ignored: %s', ignored);
+    this.log('update to: %s, old: %s, updateTs: %s, setTs: %s%s',
+      to,
+      oldValue,
+      updateTs,
+      setTs,
+      (ignored ? ' (ignored)' : ''),
+    );
     return ignored;
   }
 
@@ -66,8 +73,7 @@ export class ZbBridgeValue {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(message: string, ...parameters: any[]): void {
-    this.logger.debug('Value (%s) ' + message,
-      this.label,
+    this.platform.log.debug(this.accessory.context.device.name + ':' + this.label + ' ' + message,
       ...parameters,
     );
   }

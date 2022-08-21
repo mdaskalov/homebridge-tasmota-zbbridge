@@ -17,7 +17,8 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    this.power = new ZbBridgeValue(this.platform.log, 'switch', false);
+    this.power = new ZbBridgeValue(platform, accessory, 'power', false);
+
     this.reachable = true;
 
     // Subscribe for the power topic updates
@@ -47,8 +48,9 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   onStatusUpdate(msg): string {
     let statusText = '';
     if (this.powerTopic === undefined) {
-      if (msg.Reachable === false) {
-        this.reachable = false;
+      if (msg.Reachable !== undefined) {
+        this.reachable = (msg.Reachable === 'true');
+        statusText = ` Reachable: ${this.reachable ? 'Yes' : 'No'}`;
       }
 
       if (msg.Power !== undefined) {
@@ -56,7 +58,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         const ignored = this.power.update(power);
         if (!ignored) {
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
-          statusText = ` Power: ${power ? 'On' : 'Off'}`;
+          statusText = ` Power: ${this.power ? 'On' : 'Off'}`;
         }
       }
     }
@@ -80,8 +82,8 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
         this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return power;
   }
