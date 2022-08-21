@@ -56,7 +56,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.supportXY = true;
     }
 
-    this.log('configureLightFeatures: type: %s :-%s',
+    this.log('configureLightFeatures (type: %s):%s',
       this.type,
       (this.supportDimmer ? ' B' : '') +
       (this.supportCT ? ' CT' : '') +
@@ -109,10 +109,10 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   //ColorMode: ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": 8}
   //Color:     ZbSend {"Device": "0xE12D", "Cluster": 768, "Read": [3, 4]}
 
-  //all:    Backlog ZbSend { "device": "0x6769", "cluster": 0, "read": [4,5] };
-  //                ZbSend { "device": "0x6769", "cluster": 6, "read": 0 };
-  //                ZbSend { "device": "0x6769", "cluster": 8, "read": 0 };
-  //                ZbSend { "device": "0x6769", "cluster": 768, "read": [0, 1, 3, 4, 7, 8] }
+  //all:    Backlog ZbSend { "Device": "0x6769", "Cluster": 0, "Read": [4,5] };
+  //                ZbSend { "Device": "0x6769", "Cluster": 6, "Read": 0 };
+  //                ZbSend { "Device": "0x6769", "Cluster": 8, "Read": 0 };
+  //                ZbSend { "Device": "0x6769", "Cluster": 768, "Read": [0, 1, 3, 4, 7, 8] }
 
   updateDimmer(msg) {
     let statusText = '';
@@ -237,7 +237,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const dimmer = value as number;
     this.color.brightness = dimmer;
     this.dimmer.set(dimmer);
-    this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
+    this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Dimmer: this.mapValue(dimmer, 100, 254) } });
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
@@ -253,7 +253,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     const ct = value as number;
     this.color.ct = ct;
     this.ct.set(ct);
-    this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { CT: ct } });
+    this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { CT: ct } });
   }
 
   async getColorTemperature(): Promise<CharacteristicValue> {
@@ -270,11 +270,11 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     this.color.hue = hue;
     if (this.supportHS) {
       this.hue.set(hue);
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Hue: this.mapValue(hue, 360, 254) } });
+      this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Hue: this.mapValue(hue, 360, 254) } });
     } else if (this.supportXY) {
       this.colorX.set(this.color.colorX);
       this.colorY.set(this.color.colorY);
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
+      this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 
@@ -292,11 +292,11 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     this.color.saturation = saturation;
     if (this.supportHS) {
       this.saturation.set(saturation);
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Sat: this.mapValue(saturation, 100, 254) } });
+      this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Sat: this.mapValue(saturation, 100, 254) } });
     } else if (this.supportXY) {
       this.colorX.set(this.color.colorX);
       this.colorY.set(this.color.colorY);
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { color: `${this.color.colorX},${this.color.colorY}` } });
+      this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Color: `${this.color.colorX},${this.color.colorY}` } });
     }
   }
 

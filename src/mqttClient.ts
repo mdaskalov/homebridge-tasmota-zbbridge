@@ -49,7 +49,7 @@ export class MQTTClient {
     });
 
     this.client.on('message', (topic, message) => {
-      if (topic.startsWith('tele/'+this.topic)) {
+      if (topic.startsWith('tele/' + this.topic)) {
         try {
           const msg = JSON.parse(message.toString());
           this.onDeviceMessage(msg);
@@ -71,8 +71,8 @@ export class MQTTClient {
     });
 
     // zbBridge device messages
-    this.client.subscribe('tele/'+this.topic+'/SENSOR');
-    this.client.subscribe('tele/'+this.topic+'/+/SENSOR');
+    this.client.subscribe('tele/' + this.topic + '/SENSOR');
+    this.client.subscribe('tele/' + this.topic + '/+/SENSOR');
   }
 
   findDevice(obj) {
@@ -107,7 +107,7 @@ export class MQTTClient {
   }
 
   subscribeDevice(addr: number, endpoint: number | undefined, callback: DeviceCallback) {
-    this.deviceHandlers.push({ addr, endpoint, callback});
+    this.deviceHandlers.push({ addr, endpoint, callback });
   }
 
   matchTopic(handler: TopicHandler, topic: string) {
@@ -152,7 +152,7 @@ export class MQTTClient {
 
   publish(topic: string, message: string) {
     this.client.publish(topic, message);
-    this.log.debug('MQTT: Published: %s :- %s', topic, message);
+    this.log.debug('MQTT: Published: %s %s', topic, message);
   }
 
   submit(topic: string, message: string, responseTopic = topic, timeOut = 2000): Promise<string> {

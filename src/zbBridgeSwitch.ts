@@ -71,7 +71,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic !== undefined) {
       this.platform.mqttClient.publish('cmnd/' + this.powerTopic, power ? 'ON' : 'OFF');
     } else {
-      this.zbSend({ device: this.addr, endpoint: this.endpoint, send: { Power: (power ? 'On' : 'Off') } });
+      this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Send: { Power: (power ? 'On' : 'Off') } });
     }
   }
 
@@ -81,7 +81,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
-        this.zbSend({ device: this.addr, endpoint: this.endpoint, cluster: 6, read: 0 });
+        this.zbSend({ Device: this.addr, Endpoint: this.endpoint, Cluster: 6, Read: 0 });
       }
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
