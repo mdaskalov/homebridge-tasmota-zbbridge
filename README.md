@@ -140,7 +140,7 @@ Type following commands in the tasmota console to bind a switch to a light:
 1. Add the light to group 10
 
 ```
-ZbSend {"device":"IKEA_Light","Send":{"AddGroup":10}}
+ZbSend {"Device":"IKEA_Light","Send":{"AddGroup":10}}
 ```
 
 2. Bind the remote to group 10. Note: you need to press a button on the remote right before sending this command to make sure it's not in sleep mode
@@ -160,7 +160,7 @@ You can also bind devices as usual using the link button. Then you have to find 
 1. Get all device groups:
 
 ```
-ZbSend {"device":"IKEA_Light","Send":{"GetAllGroups":true}}
+ZbSend {"Device":"IKEA_Light","Send":{"GetAllGroups":true}}
 tele/zbbridge/SENSOR = {"ZbReceived":{"0x303F":{"Device":"0x303F","Name":"IKEA_Light","0004<02":"FF01AFE0","GetGroupCapacity":255,"GetGroupCount":1,"GetGroup":[57519],"Endpoint":1,"LinkQuality":108}}}
 ```
 

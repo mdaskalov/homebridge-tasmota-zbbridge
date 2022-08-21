@@ -152,7 +152,7 @@ export class MQTTClient {
 
   publish(topic: string, message: string) {
     this.client.publish(topic, message);
-    this.log.debug('MQTT: Published: %s :- %s', topic, message);
+    this.log.debug('MQTT: Published: %s %s', topic, message);
   }
 
   submit(topic: string, message: string, responseTopic = topic, timeOut = 2000): Promise<string> {

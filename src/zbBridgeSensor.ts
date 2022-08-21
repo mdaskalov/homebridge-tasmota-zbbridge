@@ -54,10 +54,10 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     return statusText;
   }
 
-  //Motion      ZbSend { "device": "0x01F3", "cluster": "0x0006", "read": "0x42" }
-  //Contact     ZbSend { "device": "0xF03B", "cluster": "0x0500", "read": "0xFFF2" }
-  //Humidity    ZbSend { "device": "0x19D0", "cluster": "0x0405", "read": 0 }
-  //Temperature ZbSend { "device": "0x19D0", "cluster": "0x0402", "read": 0 }
+  //Motion      ZbSend { "Device": "0x01F3", "Cluster": "0x0006", "Read": "0x42" }
+  //Contact     ZbSend { "Device": "0xF03B", "Cluster": "0x0500", "Read": "0xFFF2" }
+  //Humidity    ZbSend { "Device": "0x19D0", "Cluster": "0x0405", "Read": 0 }
+  //Temperature ZbSend { "Device": "0x19D0", "Cluster": "0x0402", "Read": 0 }
   //{"ZbReceived":{"0x01F3":{"Device":"0x01F3","Name":"MotionSensor","BatteryVoltage":2.7,
   //                                 "BatteryPercentage":17,"Endpoint":1,"LinkQuality":79}}}
 
