@@ -1,54 +1,54 @@
 import {
+  Characteristic,
+  PlatformAccessory,
   CharacteristicValue,
 } from 'homebridge';
 
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { TasmotaZbBridgePlatform } from './platform';
 
 export class ZbBridgeSensor extends ZbBridgeAccessory {
-  private value?: CharacteristicValue;
-  private cluster?: number;
-  private attribute?: number;
-  private serviceName?: string;
-  private characteristicName?: string;
-  private valuePath?: string;
+  private value: CharacteristicValue;
+  private characteristic?: Characteristic;
+
+  constructor(
+    readonly platform: TasmotaZbBridgePlatform,
+    readonly accessory: PlatformAccessory,
+  ) {
+    super(platform, accessory);
+    this.value = 0;
+  }
 
   getServiceName() {
-    //TODO: throw exceptions on invalid data
-    const part = this.type.split('_');
-    this.cluster = Number(part[1]);
-    this.attribute = Number(part[2]);
-    this.serviceName = part[3];
-    this.characteristicName = part[4];
-    this.valuePath = part[5];
-
-    this.log('getService:%s%s%s%s%s',
-      this.cluster !== undefined ? ' Cluster: ' + this.cluster : '',
-      this.attribute !== undefined ? ' Attribute: ' + this.attribute : '',
-      this.serviceName !== undefined ? ' ServiceName: ' + this.serviceName : '',
-      this.characteristicName !== undefined ? ' CharacteristicName: ' + this.characteristicName : '',
-      this.valuePath !== undefined ? ' valuePath: ' + this.valuePath : '',
-    );
-    return this.serviceName;
+    const serviceName = (this.accessory.context.device.sensorService || 'undefined');
+    const service = this.platform.Service[serviceName!];
+    if (service === undefined) {
+      this.platform.log.warn('Warning: Unknown service: %s, using ContactSensor instead!', serviceName);
+      return 'ContactSensor';
+    }
+    return serviceName;
   }
 
   registerHandlers() {
-    if (this.characteristicName) {
-      const characteristic = this.platform.Characteristic[this.characteristicName];
-      this.service.getCharacteristic(characteristic)
-        .onGet(this.getValue.bind(this));
+    const characteristicName = this.accessory.context.device.sensorCharacteristic;
+    this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[characteristicName!]);
+    if (this.characteristic === undefined) {
+      this.platform.log.warn('Warning: Unknown characteristic: %s, using ContactSensorState instead!', characteristicName);
+      this.characteristic = this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
     }
+    // readonly characteristic
+    this.characteristic
+      .onGet(this.getValue.bind(this));
   }
 
   onStatusUpdate(msg) {
     let statusText = '';
-    this.log('message: ' + JSON.stringify(msg));
-    if (this.valuePath && this.characteristicName) {
-      const characteristic = this.platform.Characteristic[this.characteristicName];
-      const value = this.getObjectByPath(msg, this.valuePath);
-      if (characteristic && value !== undefined) {
-        statusText += `sensor Value: ${value}`;
+    if (this.characteristic !== undefined && this.accessory.context.device.sensorValuePath !== undefined) {
+      const value = this.getObjectByPath(msg, this.accessory.context.device.sensorValuePath);
+      if ((value !== undefined) && (value !== this.value)) {
         this.value = value;
-        this.service.getCharacteristic(characteristic).updateValue(value);
+        this.characteristic.updateValue(value);
+        statusText += ` Value: ${value}`;
       }
     }
     return statusText;
@@ -62,13 +62,10 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
   //                                 "BatteryPercentage":17,"Endpoint":1,"LinkQuality":79}}}
 
   async getValue(): Promise<CharacteristicValue> {
-    //TODO: should find out how to get currennt value
-    //this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
-    if (this.value !== undefined) {
-      return this.value;
-    }
-    this.zbInfo();
-    throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    // TODO: current value is unavailable when device is in sleep mode
+    // this.mqttSend({ device: this.addr, endpoint: this.endpoint, cluster: this.cluster, read: this.attribute });
+    // throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    return this.value;
   }
 
 }
