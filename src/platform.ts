@@ -79,8 +79,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           this.createZbBridgeAccessory(accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
-        this.log.info('Adding %s zbBridge accessory: %s (%s) - %s',
-          existingAccessory ? 'cached' : 'new', device.name, device.addr, device.type);
+        this.log.info('%s zbBridge accessory: %s (%s) - %s',
+          existingAccessory ? 'Restoring' : 'Adding', device.name, device.addr, device.type);
       }
     }
     if (Array.isArray(this.config.tasmotaDevices)) {
@@ -97,8 +97,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           new TasmotaAccessory(this, accessory);
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
-        this.log.info('Adding %s tasmota accessory: %s (%s) - %s',
-          existingAccessory ? 'cached' : 'new', device.name, device.topic, device.type);
+        this.log.info('%s tasmota accessory: %s (%s) - %s',
+          existingAccessory ? 'Restoring' : 'Adding', device.name, device.topic, device.type);
       }
     }
   }
@@ -117,7 +117,14 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           foundTasmotaDevice = (found !== undefined);
         }
         if (!foundZbBridgeDevice && !foundTasmotaDevice) {
-          this.log.info('Removing unused accessory from cache: %s', accessory.displayName);
+          const device = accessory.context.device;
+          if ((<ZbBridgeDevice>device).addr) {
+            this.log.info('Removing zbBridge accessory: %s (%s) - %s', device.name, device.addr, device.type);
+          } else if ((<TasmotaDevice>device).topic) {
+            this.log.info('Removing tasmota accessory: %s (%s) - %s', device.name, device.topic, device.type);
+          } else {
+            this.log.info('Removing accessory: %s', accessory.displayName);
+          }
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         }
       }
