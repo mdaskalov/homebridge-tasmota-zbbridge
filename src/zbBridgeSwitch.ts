@@ -50,7 +50,6 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     if (this.powerTopic === undefined) {
       if (msg.Reachable !== undefined) {
         this.reachable = (msg.Reachable === 'true');
-        statusText += ` Reachable: ${this.reachable ? 'Yes' : 'No'}`;
       }
 
       if (msg.Power !== undefined) {
@@ -59,13 +58,13 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         if (!this.reachable) {
           ignored = false;
           this.reachable = true;
-          statusText += ' Reachable: Yes';
         }
         if (!ignored) {
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
           statusText += ` Power: ${this.power ? 'On' : 'Off'}`;
         }
       }
+      statusText += ` Reachable: ${this.reachable ? 'Yes' : 'No'}`;
     }
     return statusText;
   }
