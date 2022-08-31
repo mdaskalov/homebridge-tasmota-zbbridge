@@ -16,6 +16,7 @@ type DeviceCallback =
 
 type DeviceHandler = {
   addr: number;
+  shortAddr: number;
   endpoint: number | undefined;
   callback: DeviceCallback;
 };
@@ -92,11 +93,24 @@ export class MQTTClient {
     }
   }
 
+  addrMatch(h: DeviceHandler, msg) {
+    const addr = Number(msg.IEEEAddr);
+    const shortAddr = Number(msg.Device);
+
+    if (h.addr === addr) {
+      if (shortAddr) {
+        h.shortAddr = shortAddr;
+      }
+      return true;
+    }
+    return (h.shortAddr === shortAddr);
+  }
+
   onDeviceMessage(message) {
     const msg = this.findDevice(message);
     if (msg !== undefined) {
       const handler = this.deviceHandlers.find(h => {
-        const addrMatch = (h.addr === Number(msg.Device));
+        const addrMatch = this.addrMatch(h, msg);
         const endpointMatch = (h.endpoint === undefined) || (msg.Endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
         return addrMatch && endpointMatch;
       });
@@ -107,7 +121,7 @@ export class MQTTClient {
   }
 
   subscribeDevice(addr: number, endpoint: number | undefined, callback: DeviceCallback) {
-    this.deviceHandlers.push({ addr, endpoint, callback });
+    this.deviceHandlers.push({ addr, shortAddr: addr, endpoint, callback });
   }
 
   matchTopic(handler: TopicHandler, topic: string) {
