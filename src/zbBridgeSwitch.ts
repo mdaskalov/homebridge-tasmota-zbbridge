@@ -62,7 +62,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
         }
         if (!ignored) {
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(power);
-          statusText += ` Power: ${this.power ? 'On' : 'Off'}`;
+          statusText += ` Power: ${power ? 'On' : 'Off'}`;
         }
       }
     }
