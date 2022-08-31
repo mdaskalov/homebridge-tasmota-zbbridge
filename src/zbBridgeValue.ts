@@ -35,19 +35,19 @@ export class ZbBridgeValue {
     const oldValue = this.value;
     const updateTs = ZbBridgeAccessory.formatTs(this.updateTs);
     const setTs = ZbBridgeAccessory.formatTs(this.setTs);
-    let ignored = (to === this.value) || (this.setTs > this.updateTs && !this.timeouted(this.setTs));
-    if (to === this.setValue) {
+    let ignored = (to === oldValue) || ((this.setTs > this.updateTs) && !this.timeouted(this.setTs));
+    if (!ignored) {
+      this.value = to;
+      this.updateTs = now;
+    } else if (to === this.setValue) {
       this.value = to;
       this.updateTs = now;
       ignored = true;
     }
-    if (!ignored) {
-      this.updateTs = now;
-      this.value = to;
-    }
-    this.log('update to: %s, old: %s, updateTs: %s, setTs: %s%s',
+    this.log('update to: %s, old: %s, set: %s, updateTs: %s, setTs: %s%s',
       to,
       oldValue,
+      this.setValue,
       updateTs,
       setTs,
       (ignored ? ' (ignored)' : ''),
