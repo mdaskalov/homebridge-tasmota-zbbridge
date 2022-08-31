@@ -27,43 +27,43 @@
           "type": "object",
           "properties": {
             "addr": {
-              "title": "Short Address",
+              "title": "Device Addr",
               "type": "string",
-              "placeholder": "Address",
-              "pattern": "^0x[A-Fa-f0-9]{4}(:[1-9]{1}[0-9]{0,2})?$",
+              "placeholder": "ShortAddr or IEEEAddr",
+              "pattern": "^0x([A-Fa-f0-9]{4}|[A-Fa-f0-9]{16})(:[1-9]{1}[0-9]{0,2})?$",
               "required": true
             },
             "type": {
               "title": "Type",
               "type": "string",
-              "oneOf": [{
-                "title": "Simple On/Off Light",
-                "enum": ["light0"]
-              }, {
-                "title": "White Light with Dimmer",
-                "enum": ["light1"]
-              }, {
-                "title": "White Light with Dimmer and Cold/Warm White",
-                "enum": ["light2"]
-              }, {
-                "title": "RGB Light",
-                "enum": ["light3"]
-              }, {
-                "title": "RGBW Light",
-                "enum": ["light4"]
-              }, {
-                "title": "RGBCW Light, RGB and Cold/Warm White",
-                "enum": ["light5"]
-              }, {
-                "title": "RGB (With XY color and CT)",
-                "enum": ["light_XY_B_CT"]
-              }, {
-                "title": "On/Off Switch",
-                "enum": ["switch"]
-              }, {
-                "title": "Sensor",
-                "enum": ["sensor"]
-              }],
+              "oneOf": [ {
+                  "title": "Simple On/Off Light",
+                  "enum": [ "light0" ]
+                }, {
+                  "title": "White Light with Dimmer",
+                  "enum": [ "light1" ]
+                }, {
+                  "title": "White Light with Dimmer and Cold/Warm White",
+                  "enum": [ "light2" ]
+                }, {
+                  "title": "RGB Light",
+                  "enum": [ "light3" ]
+                }, {
+                  "title": "RGBW Light",
+                  "enum": [ "light4" ]
+                }, {
+                  "title": "RGBCW Light, RGB and Cold/Warm White",
+                  "enum": [ "light5" ]
+                }, {
+                  "title": "RGB (With XY color and CT)",
+                  "enum": [ "light_XY_B_CT" ]
+                }, {
+                  "title": "On/Off Switch",
+                  "enum": [ "switch" ]
+                }, {
+                  "title": "Sensor",
+                  "enum": [ "sensor" ]
+                } ],
               "required": true
             },
             "name": {
@@ -80,102 +80,102 @@
             "powerType": {
               "title": "Type",
               "type": "string",
-              "oneOf": [{
-                "title": "Switch",
-                "enum": ["POWER"]
-              }, {
-                "title": "Switch 1",
-                "enum": ["POWER1"]
-              }, {
-                "title": "Switch 2",
-                "enum": ["POWER2"]
-              }, {
-                "title": "Switch 3",
-                "enum": ["POWER3"]
-              }, {
-                "title": "Switch 4",
-                "enum": ["POWER4"]
-              }]
+              "oneOf": [ {
+                  "title": "Switch",
+                  "enum": [ "POWER" ]
+                }, {
+                  "title": "Switch 1",
+                  "enum": [ "POWER1" ]
+                }, {
+                  "title": "Switch 2",
+                  "enum": [ "POWER2" ]
+                }, {
+                  "title": "Switch 3",
+                  "enum": [ "POWER3" ]
+                }, {
+                  "title": "Switch 4",
+                  "enum": [ "POWER4" ]
+                } ]
             },
             "sensorService": {
               "title": "Sensor Service",
               "type": "string",
               "oneOf": [
-                { "title": "AccessCode", "enum": ["AccessCode"] },
-                { "title": "AccessControl", "enum": ["AccessControl"] },
-                { "title": "AccessoryInformation", "enum": ["AccessoryInformation"] },
-                { "title": "AccessoryMetrics", "enum": ["AccessoryMetrics"] },
-                { "title": "AccessoryRuntimeInformation", "enum": ["AccessoryRuntimeInformation"] },
-                { "title": "AirPurifier", "enum": ["AirPurifier"] },
-                { "title": "AirQualitySensor", "enum": ["AirQualitySensor"] },
-                { "title": "AssetUpdate", "enum": ["AssetUpdate"] },
-                { "title": "Assistant", "enum": ["Assistant"] },
-                { "title": "AudioStreamManagement", "enum": ["AudioStreamManagement"] },
-                { "title": "Battery", "enum": ["Battery"] },
-                { "title": "BridgeConfiguration", "enum": ["BridgeConfiguration"] },
-                { "title": "BridgingState", "enum": ["BridgingState"] },
-                { "title": "CameraControl", "enum": ["CameraControl"] },
-                { "title": "CameraOperatingMode", "enum": ["CameraOperatingMode"] },
-                { "title": "CameraRecordingManagement", "enum": ["CameraRecordingManagement"] },
-                { "title": "CameraRTPStreamManagement", "enum": ["CameraRTPStreamManagement"] },
-                { "title": "CarbonDioxideSensor", "enum": ["CarbonDioxideSensor"] },
-                { "title": "CarbonMonoxideSensor", "enum": ["CarbonMonoxideSensor"] },
-                { "title": "CloudRelay", "enum": ["CloudRelay"] },
-                { "title": "ContactSensor", "enum": ["ContactSensor"] },
-                { "title": "DataStreamTransportManagement", "enum": ["DataStreamTransportManagement"] },
-                { "title": "Diagnostics", "enum": ["Diagnostics"] },
-                { "title": "Door", "enum": ["Door"] },
-                { "title": "Doorbell", "enum": ["Doorbell"] },
-                { "title": "Fan", "enum": ["Fan"] },
-                { "title": "Fanv2", "enum": ["Fanv2"] },
-                { "title": "Faucet", "enum": ["Faucet"] },
-                { "title": "FilterMaintenance", "enum": ["FilterMaintenance"] },
-                { "title": "GarageDoorOpener", "enum": ["GarageDoorOpener"] },
-                { "title": "HeaterCooler", "enum": ["HeaterCooler"] },
-                { "title": "HumidifierDehumidifier", "enum": ["HumidifierDehumidifier"] },
-                { "title": "HumiditySensor", "enum": ["HumiditySensor"] },
-                { "title": "InputSource", "enum": ["InputSource"] },
-                { "title": "IrrigationSystem", "enum": ["IrrigationSystem"] },
-                { "title": "LeakSensor", "enum": ["LeakSensor"] },
-                { "title": "Lightbulb", "enum": ["Lightbulb"] },
-                { "title": "LightSensor", "enum": ["LightSensor"] },
-                { "title": "LockManagement", "enum": ["LockManagement"] },
-                { "title": "LockMechanism", "enum": ["LockMechanism"] },
-                { "title": "Microphone", "enum": ["Microphone"] },
-                { "title": "MotionSensor", "enum": ["MotionSensor"] },
-                { "title": "NFCAccess", "enum": ["NFCAccess"] },
-                { "title": "OccupancySensor", "enum": ["OccupancySensor"] },
-                { "title": "Outlet", "enum": ["Outlet"] },
-                { "title": "Pairing", "enum": ["Pairing"] },
-                { "title": "PowerManagement", "enum": ["PowerManagement"] },
-                { "title": "ProtocolInformation", "enum": ["ProtocolInformation"] },
-                { "title": "SecuritySystem", "enum": ["SecuritySystem"] },
-                { "title": "ServiceLabel", "enum": ["ServiceLabel"] },
-                { "title": "Siri", "enum": ["Siri"] },
-                { "title": "SiriEndpoint", "enum": ["SiriEndpoint"] },
-                { "title": "Slats", "enum": ["Slats"] },
-                { "title": "SmartSpeaker", "enum": ["SmartSpeaker"] },
-                { "title": "SmokeSensor", "enum": ["SmokeSensor"] },
-                { "title": "Speaker", "enum": ["Speaker"] },
-                { "title": "StatefulProgrammableSwitch", "enum": ["StatefulProgrammableSwitch"] },
-                { "title": "StatelessProgrammableSwitch", "enum": ["StatelessProgrammableSwitch"] },
-                { "title": "Switch", "enum": ["Switch"] },
-                { "title": "TargetControl", "enum": ["TargetControl"] },
-                { "title": "TargetControlManagement", "enum": ["TargetControlManagement"] },
-                { "title": "Television", "enum": ["Television"] },
-                { "title": "TelevisionSpeaker", "enum": ["TelevisionSpeaker"] },
-                { "title": "TemperatureSensor", "enum": ["TemperatureSensor"] },
-                { "title": "Thermostat", "enum": ["Thermostat"] },
-                { "title": "ThreadTransport", "enum": ["ThreadTransport"] },
-                { "title": "TimeInformation", "enum": ["TimeInformation"] },
-                { "title": "TransferTransportManagement", "enum": ["TransferTransportManagement"] },
-                { "title": "Tunnel", "enum": ["Tunnel"] },
-                { "title": "Valve", "enum": ["Valve"] },
-                { "title": "WiFiRouter", "enum": ["WiFiRouter"] },
-                { "title": "WiFiSatellite", "enum": ["WiFiSatellite"] },
-                { "title": "WiFiTransport", "enum": ["WiFiTransport"] },
-                { "title": "Window", "enum": ["Window"] },
-                { "title": "WindowCovering", "enum": ["WindowCovering"] }
+                { "title": "AccessCode", "enum": [ "AccessCode" ] },
+                { "title": "AccessControl", "enum": [ "AccessControl" ] },
+                { "title": "AccessoryInformation", "enum": [ "AccessoryInformation" ] },
+                { "title": "AccessoryMetrics", "enum": [ "AccessoryMetrics" ] },
+                { "title": "AccessoryRuntimeInformation", "enum": [ "AccessoryRuntimeInformation" ] },
+                { "title": "AirPurifier", "enum": [ "AirPurifier" ] },
+                { "title": "AirQualitySensor", "enum": [ "AirQualitySensor" ] },
+                { "title": "AssetUpdate", "enum": [ "AssetUpdate" ] },
+                { "title": "Assistant", "enum": [ "Assistant" ] },
+                { "title": "AudioStreamManagement", "enum": [ "AudioStreamManagement" ] },
+                { "title": "Battery", "enum": [ "Battery" ] },
+                { "title": "BridgeConfiguration", "enum": [ "BridgeConfiguration" ] },
+                { "title": "BridgingState", "enum": [ "BridgingState" ] },
+                { "title": "CameraControl", "enum": [ "CameraControl" ] },
+                { "title": "CameraOperatingMode", "enum": [ "CameraOperatingMode" ] },
+                { "title": "CameraRecordingManagement", "enum": [ "CameraRecordingManagement" ] },
+                { "title": "CameraRTPStreamManagement", "enum": [ "CameraRTPStreamManagement" ] },
+                { "title": "CarbonDioxideSensor", "enum": [ "CarbonDioxideSensor" ] },
+                { "title": "CarbonMonoxideSensor", "enum": [ "CarbonMonoxideSensor" ] },
+                { "title": "CloudRelay", "enum": [ "CloudRelay" ] },
+                { "title": "ContactSensor", "enum": [ "ContactSensor" ] },
+                { "title": "DataStreamTransportManagement", "enum": [ "DataStreamTransportManagement" ] },
+                { "title": "Diagnostics", "enum": [ "Diagnostics" ] },
+                { "title": "Door", "enum": [ "Door" ] },
+                { "title": "Doorbell", "enum": [ "Doorbell" ] },
+                { "title": "Fan", "enum": [ "Fan" ] },
+                { "title": "Fanv2", "enum": [ "Fanv2" ] },
+                { "title": "Faucet", "enum": [ "Faucet" ] },
+                { "title": "FilterMaintenance", "enum": [ "FilterMaintenance" ] },
+                { "title": "GarageDoorOpener", "enum": [ "GarageDoorOpener" ] },
+                { "title": "HeaterCooler", "enum": [ "HeaterCooler" ] },
+                { "title": "HumidifierDehumidifier", "enum": [ "HumidifierDehumidifier" ] },
+                { "title": "HumiditySensor", "enum": [ "HumiditySensor" ] },
+                { "title": "InputSource", "enum": [ "InputSource" ] },
+                { "title": "IrrigationSystem", "enum": [ "IrrigationSystem" ] },
+                { "title": "LeakSensor", "enum": [ "LeakSensor" ] },
+                { "title": "Lightbulb", "enum": [ "Lightbulb" ] },
+                { "title": "LightSensor", "enum": [ "LightSensor" ] },
+                { "title": "LockManagement", "enum": [ "LockManagement" ] },
+                { "title": "LockMechanism", "enum": [ "LockMechanism" ] },
+                { "title": "Microphone", "enum": [ "Microphone" ] },
+                { "title": "MotionSensor", "enum": [ "MotionSensor" ] },
+                { "title": "NFCAccess", "enum": [ "NFCAccess" ] },
+                { "title": "OccupancySensor", "enum": [ "OccupancySensor" ] },
+                { "title": "Outlet", "enum": [ "Outlet" ] },
+                { "title": "Pairing", "enum": [ "Pairing" ] },
+                { "title": "PowerManagement", "enum": [ "PowerManagement" ] },
+                { "title": "ProtocolInformation", "enum": [ "ProtocolInformation" ] },
+                { "title": "SecuritySystem", "enum": [ "SecuritySystem" ] },
+                { "title": "ServiceLabel", "enum": [ "ServiceLabel" ] },
+                { "title": "Siri", "enum": [ "Siri" ] },
+                { "title": "SiriEndpoint", "enum": [ "SiriEndpoint" ] },
+                { "title": "Slats", "enum": [ "Slats" ] },
+                { "title": "SmartSpeaker", "enum": [ "SmartSpeaker" ] },
+                { "title": "SmokeSensor", "enum": [ "SmokeSensor" ] },
+                { "title": "Speaker", "enum": [ "Speaker" ] },
+                { "title": "StatefulProgrammableSwitch", "enum": [ "StatefulProgrammableSwitch" ] },
+                { "title": "StatelessProgrammableSwitch", "enum": [ "StatelessProgrammableSwitch" ] },
+                { "title": "Switch", "enum": [ "Switch" ] },
+                { "title": "TargetControl", "enum": [ "TargetControl" ] },
+                { "title": "TargetControlManagement", "enum": [ "TargetControlManagement" ] },
+                { "title": "Television", "enum": [ "Television" ] },
+                { "title": "TelevisionSpeaker", "enum": [ "TelevisionSpeaker" ] },
+                { "title": "TemperatureSensor", "enum": [ "TemperatureSensor" ] },
+                { "title": "Thermostat", "enum": [ "Thermostat" ] },
+                { "title": "ThreadTransport", "enum": [ "ThreadTransport" ] },
+                { "title": "TimeInformation", "enum": [ "TimeInformation" ] },
+                { "title": "TransferTransportManagement", "enum": [ "TransferTransportManagement" ] },
+                { "title": "Tunnel", "enum": [ "Tunnel" ] },
+                { "title": "Valve", "enum": [ "Valve" ] },
+                { "title": "WiFiRouter", "enum": [ "WiFiRouter" ] },
+                { "title": "WiFiSatellite", "enum": [ "WiFiSatellite" ] },
+                { "title": "WiFiTransport", "enum": [ "WiFiTransport" ] },
+                { "title": "Window", "enum": [ "Window" ] },
+                { "title": "WindowCovering", "enum": [ "WindowCovering" ] }
               ]
             },
             "sensorCharacteristic": {
@@ -208,52 +208,52 @@
             "type": {
               "title": "Type",
               "type": "string",
-              "oneOf": [{
-                "title": "Switch",
-                "enum": ["POWER"]
-              }, {
-                "title": "Switch 1",
-                "enum": ["POWER1"]
-              }, {
-                "title": "Switch 2",
-                "enum": ["POWER2"]
-              }, {
-                "title": "Switch 3",
-                "enum": ["POWER3"]
-              }, {
-                "title": "Switch 4",
-                "enum": ["POWER4"]
-              }, {
-                "title": "RGB Lightbulb",
-                "enum": ["HSBColor"]
-              }, {
-                "title": "Analog Temperature",
-                "enum": ["StatusSNS.ANALOG.Temperature"]
-              }, {
-                "title": "AM2301 Temperature",
-                "enum": ["StatusSNS.AM2301.Temperature"]
-              }, {
-                "title": "AM2301 Humidity",
-                "enum": ["StatusSNS.AM2301.Humidity"]
-              }, {
-                "title": "BMP280 Temperature",
-                "enum": ["StatusSNS.BMP280.Temperature"]
-              }, {
-                "title": "DHT11 Temperature",
-                "enum": ["StatusSNS.DHT11.Temperature"]
-              }, {
-                "title": "DHT11 Humidity",
-                "enum": ["StatusSNS.DHT11.Humidity"]
-              }, {
-                "title": "DS18B20 Temperature",
-                "enum": ["StatusSNS.DS18B20.Temperature"]
-              }, {
-                "title": "HTU21 Temperature",
-                "enum": ["StatusSNS.HTU21.Temperature"]
-              }, {
-                "title": "HTU21 Humidity",
-                "enum": ["StatusSNS.HTU21.Humidity"]
-              }],
+              "oneOf": [ {
+                  "title": "Switch",
+                  "enum": [ "POWER" ]
+                }, {
+                  "title": "Switch 1",
+                  "enum": [ "POWER1" ]
+                }, {
+                  "title": "Switch 2",
+                  "enum": [ "POWER2" ]
+                }, {
+                  "title": "Switch 3",
+                  "enum": [ "POWER3" ]
+                }, {
+                  "title": "Switch 4",
+                  "enum": [ "POWER4" ]
+                }, {
+                  "title": "RGB Lightbulb",
+                  "enum": [ "HSBColor" ]
+                }, {
+                  "title": "Analog Temperature",
+                  "enum": [ "StatusSNS.ANALOG.Temperature" ]
+                }, {
+                  "title": "AM2301 Temperature",
+                  "enum": [ "StatusSNS.AM2301.Temperature" ]
+                }, {
+                  "title": "AM2301 Humidity",
+                  "enum": [ "StatusSNS.AM2301.Humidity" ]
+                }, {
+                  "title": "BMP280 Temperature",
+                  "enum": [ "StatusSNS.BMP280.Temperature" ]
+                }, {
+                  "title": "DHT11 Temperature",
+                  "enum": [ "StatusSNS.DHT11.Temperature" ]
+                }, {
+                  "title": "DHT11 Humidity",
+                  "enum": [ "StatusSNS.DHT11.Humidity" ]
+                }, {
+                  "title": "DS18B20 Temperature",
+                  "enum": [ "StatusSNS.DS18B20.Temperature" ]
+                }, {
+                  "title": "HTU21 Temperature",
+                  "enum": [ "StatusSNS.HTU21.Temperature" ]
+                }, {
+                  "title": "HTU21 Humidity",
+                  "enum": [ "StatusSNS.HTU21.Humidity" ]
+                } ],
               "required": true
             },
             "name": {
@@ -285,7 +285,7 @@
       }
     }
   },
-  "layout": [{
+  "layout": [ {
       "key": "name"
     },
     {
@@ -294,156 +294,156 @@
     {
       "key": "zbBridgeDevices",
       "buttonText": "Add Device",
-      "default": [],
-      "items": [{
-        "type": "div",
-        "displayFlex": false,
-        "items": [{
-          "type": "flex",
-          "flex-flow": "row wrap",
-          "items": [{
+      "default": [ ],
+      "items": [ {
+          "type": "div",
+          "displayFlex": false,
+          "items": [ {
               "type": "flex",
-              "flex": "1 1 40px",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "zbBridgeDevices[].addr"
-              }]
-            },
-            {
-              "type": "flex",
-              "flex": "1 1 150px",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "zbBridgeDevices[].type"
-              }]
-            },
-            {
-              "type": "flex",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "zbBridgeDevices[].name"
-              }]
-            }
-          ]
-        }, {
-          "type": "fieldset",
-          "title": "Advanced",
-          "expandable": true,
-          "expanded": false,
-          "items": [{
-            "type": "help",
-            "helpvalue": "Use separate tasmota device to control the power on/off function of the device"
-          }, {
-            "type": "div",
-            "displayFlex": true,
-            "items": [{
-              "type": "flex",
-              "flex-flow": "row",
-              "items": [{
-                "type": "flex",
-                "flex-flow": "column",
-                "items": [{
-                  "nodescription": true,
-                  "notitle": true,
-                  "key": "zbBridgeDevices[].powerTopic"
-                }]
-              }, {
-                "type": "flex",
-                "flex-flow": "column",
-                "items": [{
-                  "nodescription": true,
-                  "notitle": true,
-                  "key": "zbBridgeDevices[].powerType"
-                }]
-              }]
-            }]
-          }, {
-            "type": "help",
-            "helpvalue": "Sensor device configuration, see <a href='https://developers.homebridge.io/#/service'>here</a> for detailed explanation"
-          },{
-            "type": "div",
-            "displayFlex": true,
-            "items": [{
-              "type": "flex",
-              "flex-flow": "row",
-              "items": [{
-                "type": "flex",
-                "flex-flow": "column",
-                "items": [{
-                  "nodescription": true,
-                  "notitle": true,
-                  "key": "zbBridgeDevices[].sensorService"
-                }]
-              }, {
-                "type": "flex",
-                "flex-flow": "column",
-                "items": [{
-                  "nodescription": true,
-                  "notitle": true,
-                  "key": "zbBridgeDevices[].sensorCharacteristic"
-                }]
-              }, {
-                "type": "flex",
-                "flex-flow": "column",
-                "items": [{
-                  "nodescription": true,
-                  "notitle": true,
-                  "key": "zbBridgeDevices[].sensorValuePath"
-                }]
-              }]
-            }]
-          }]
-        }]
-      }]
+              "flex-flow": "row wrap",
+              "items": [ {
+                  "type": "flex",
+                  "flex": "1 1 150px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zbBridgeDevices[].addr"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex": "1 1 150px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zbBridgeDevices[].type"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zbBridgeDevices[].name"
+                    } ]
+                }
+              ]
+            }, {
+              "type": "fieldset",
+              "title": "Advanced",
+              "expandable": true,
+              "expanded": false,
+              "items": [ {
+                  "type": "help",
+                  "helpvalue": "Use separate tasmota device to control the power on/off function of the device"
+                }, {
+                  "type": "div",
+                  "displayFlex": true,
+                  "items": [ {
+                      "type": "flex",
+                      "flex-flow": "row",
+                      "items": [ {
+                          "type": "flex",
+                          "flex-flow": "column",
+                          "items": [ {
+                              "nodescription": true,
+                              "notitle": true,
+                              "key": "zbBridgeDevices[].powerTopic"
+                            } ]
+                        }, {
+                          "type": "flex",
+                          "flex-flow": "column",
+                          "items": [ {
+                              "nodescription": true,
+                              "notitle": true,
+                              "key": "zbBridgeDevices[].powerType"
+                            } ]
+                        } ]
+                    } ]
+                }, {
+                  "type": "help",
+                  "helpvalue": "Sensor device configuration, see <a href='https://developers.homebridge.io/#/service'>here</a> for detailed explanation"
+                }, {
+                  "type": "div",
+                  "displayFlex": true,
+                  "items": [ {
+                      "type": "flex",
+                      "flex-flow": "row",
+                      "items": [ {
+                          "type": "flex",
+                          "flex-flow": "column",
+                          "items": [ {
+                              "nodescription": true,
+                              "notitle": true,
+                              "key": "zbBridgeDevices[].sensorService"
+                            } ]
+                        }, {
+                          "type": "flex",
+                          "flex-flow": "column",
+                          "items": [ {
+                              "nodescription": true,
+                              "notitle": true,
+                              "key": "zbBridgeDevices[].sensorCharacteristic"
+                            } ]
+                        }, {
+                          "type": "flex",
+                          "flex-flow": "column",
+                          "items": [ {
+                              "nodescription": true,
+                              "notitle": true,
+                              "key": "zbBridgeDevices[].sensorValuePath"
+                            } ]
+                        } ]
+                    } ]
+                } ]
+            } ]
+        } ]
     },
     {
       "key": "tasmotaDevices",
       "buttonText": "Add Device",
-      "default": [],
-      "items": [{
-        "type": "div",
-        "displayFlex": false,
-        "items": [{
-          "type": "flex",
-          "flex-flow": "row wrap",
-          "items": [{
+      "default": [ ],
+      "items": [ {
+          "type": "div",
+          "displayFlex": false,
+          "items": [ {
               "type": "flex",
-              "flex": "1 1 90px",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "tasmotaDevices[].topic"
-              }]
-            },
-            {
-              "type": "flex",
-              "flex": "1 1 150px",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "tasmotaDevices[].type"
-              }]
-            },
-            {
-              "type": "flex",
-              "flex-flow": "column",
-              "items": [{
-                "nodescription": true,
-                "notitle": true,
-                "key": "tasmotaDevices[].name"
-              }]
-            }
-          ]
-        }]
-      }]
+              "flex-flow": "row wrap",
+              "items": [ {
+                  "type": "flex",
+                  "flex": "1 1 90px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "tasmotaDevices[].topic"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex": "1 1 150px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "tasmotaDevices[].type"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "tasmotaDevices[].name"
+                    } ]
+                }
+              ]
+            } ]
+        } ]
     },
     {
       "type": "fieldset",
@@ -455,19 +455,19 @@
         {
           "type": "div",
           "displayFlex": false,
-          "items": [{
-            "type": "flex",
-            "flex-flow": "row wrap",
-            "items": [{
+          "items": [ {
               "type": "flex",
-              "flex-flow": "column",
-              "items": ["mqttUsername"]
-            }, {
-              "type": "flex",
-              "flex-flow": "column",
-              "items": ["mqttPassword"]
-            }]
-          }]
+              "flex-flow": "row wrap",
+              "items": [ {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ "mqttUsername" ]
+                }, {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ "mqttPassword" ]
+                } ]
+            } ]
         }
       ]
     }
