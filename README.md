@@ -5,6 +5,7 @@
 
 </p>
 
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://img.shields.io/npm/dt/homebridge-tasmota-zbbridge.svg)](https://www.npmjs.com/package/homebridge-tasmota-zbbridge)
 [![npm](https://img.shields.io/npm/v/homebridge-tasmota-zbbridge.svg)](https://www.npmjs.com/package/homebridge-tasmota-zbbridge)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/mdaskalov/homebridge-tasmota-zbbridge.svg)](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/pulls)
@@ -41,7 +42,7 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
             "powerType": "POWER2"
         },
         {
-            "addr": "0x6769",
+            "addr": "0x001788011234567F",
             "type": "light3",
             "name": "Go"
         },
