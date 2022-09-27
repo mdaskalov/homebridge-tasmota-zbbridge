@@ -7,6 +7,7 @@ import { ZbBridgeDevice } from './zbBridgeAccessory';
 import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { ZbBridgeSensor } from './zbBridgeSensor';
+import { ZbBridgeThermostat } from './zbBridgeThermostat';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -52,14 +53,13 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     const type = accessory.context.device.type;
     if (type === undefined) {
       return;
-    }
-    if (type.startsWith('sensor')) {
+    } else if (type.startsWith('sensor')) {
       new ZbBridgeSensor(this, accessory);
-    }
-    if (type.startsWith('light')) {
+    } else if (type.startsWith('light')) {
       new ZbBridgeLightbulb(this, accessory);
-    }
-    if (type === 'switch') {
+    } else if (type === 'thermostat') {
+      new ZbBridgeThermostat(this, accessory);
+    } else if (type === 'switch') {
       new ZbBridgeSwitch(this, accessory);
     }
   }
