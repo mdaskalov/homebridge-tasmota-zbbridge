@@ -189,5 +189,17 @@ export class MQTTClient {
       this.publish(topic, message);
     });
   }
+
+  zbInfo(addr: string): void {
+    const topic = 'cmnd/' + this.topic + '/zbinfo';
+    this.publish(topic, addr);
+  }
+
+  zbSend(command): void {
+    const topic = 'cmnd/' + this.topic + '/zbsend';
+    const message = JSON.stringify(command);
+    this.publish(topic, message);
+  }
+
 }
 
