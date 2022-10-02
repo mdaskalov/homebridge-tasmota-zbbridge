@@ -109,13 +109,15 @@ export class MQTTClient {
   onDeviceMessage(message) {
     const msg = this.findDevice(message);
     if (msg !== undefined) {
-      const handler = this.deviceHandlers.find(h => {
+      const handlers = this.deviceHandlers.filter(h => {
         const addrMatch = this.addrMatch(h, msg);
         const endpointMatch = (h.endpoint === undefined) || (msg.Endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
         return addrMatch && endpointMatch;
       });
-      if (handler) {
-        handler.callback(msg);
+      if (Array.isArray(handlers)) {
+        for (const handler of handlers) {
+          handler.callback(msg);
+        }
       }
     }
   }
