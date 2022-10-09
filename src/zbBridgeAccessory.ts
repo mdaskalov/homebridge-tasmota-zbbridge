@@ -1,6 +1,6 @@
 import {
-  Service,
   PlatformAccessory,
+  Service,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -22,7 +22,7 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected endpoint: number | undefined;
   protected type: string;
-  private updatedAccessoryInfo = false;
+  protected updatedAccessoryInfo = false;
 
   constructor(
     protected readonly platform: TasmotaZbBridgePlatform,
@@ -44,23 +44,26 @@ export abstract class ZbBridgeAccessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    // Subscribe for device updates
-    this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
-      this.statusUpdate(msg);
-    });
+    // Skip for zigbee2mqtt accessory
+    if (this.type !== 'z2m') {
+      // Subscribe for device updates
+      this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
+        this.statusUpdate(msg);
+      });
 
-    // udpate name only if no endpoint is defined
-    if (this.endpoint === undefined) {
-      this.platform.mqttClient.publish(
-        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-        this.addr + ',' + accessory.context.device.name,
-      );
+      // udpate name only if no endpoint is defined
+      if (this.endpoint === undefined) {
+        this.platform.mqttClient.publish(
+          'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+          this.addr + ',' + accessory.context.device.name,
+        );
+      }
+
+      this.registerHandlers();
+
+      // // Query device info
+      this.zbInfo();
     }
-
-    this.registerHandlers();
-
-    // // Query device info
-    this.zbInfo();
   }
 
   static formatTs(dt?: number): string {

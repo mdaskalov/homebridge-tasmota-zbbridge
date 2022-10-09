@@ -7,14 +7,16 @@ import { ZbBridgeDevice } from './zbBridgeAccessory';
 import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { ZbBridgeSensor } from './zbBridgeSensor';
+import { ZbBridgeZ2M, Z2MDevice } from './zbBridgeZ2M';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
   public readonly mqttClient = new MQTTClient(this.log, this.config);
-
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+  // zigbee2mqtt devices
+  public z2mDevices: Z2MDevice[] = [];
 
   constructor(
     public readonly log: Logger,
@@ -26,7 +28,19 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       this.cleanupCachedDevices();
-      this.discoverDevices();
+      const configuredZ2MDevice = config.zbBridgeDevices?.find(d => d.type = 'z2m');
+      if (configuredZ2MDevice !== undefined) {
+        this.mqttClient.subscribeTopic('zigbee2mqtt/bridge/devices', message => {
+          const devices: Z2MDevice[] = JSON.parse(message);
+          if (Array.isArray(config.zbBridgeDevices)) {
+            this.z2mDevices = JSON.parse(message);
+            this.log.info('Found %s configured zigbee2mqtt devices', devices.length);
+            this.discoverDevices();
+          }
+        });
+      } else {
+        this.discoverDevices();
+      }
     });
   }
 
@@ -52,15 +66,26 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     const type = accessory.context.device.type;
     if (type === undefined) {
       return;
-    }
-    if (type.startsWith('sensor')) {
-      new ZbBridgeSensor(this, accessory);
-    }
-    if (type.startsWith('light')) {
-      new ZbBridgeLightbulb(this, accessory);
-    }
-    if (type === 'switch') {
-      new ZbBridgeSwitch(this, accessory);
+    } else if (type.startsWith('sensor')) {
+      let serviceName = (accessory.context.device.sensorService || 'undefined');
+      const service = this.Service[serviceName];
+      if (service === undefined) {
+        this.log.warn('Warning: Unknown service: %s, using ContactSensor instead!', serviceName);
+        serviceName = 'ContactSensor';
+      }
+      new ZbBridgeSensor(this, accessory, serviceName);
+    } else if (type.startsWith('light')) {
+      new ZbBridgeLightbulb(this, accessory, 'Lightbulb');
+    } else if (type === 'switch') {
+      new ZbBridgeSwitch(this, accessory, 'Switch');
+    } else if (type === 'z2m') {
+      const device = this.z2mDevices.find(d => d.ieee_address === accessory.context.device.addr);
+      if (device !== undefined) {
+        const serviceName = ZbBridgeZ2M.getServiceName(device);
+        if (serviceName !== undefined) {
+          new ZbBridgeZ2M(this, accessory, serviceName);
+        }
+      }
     }
   }
 

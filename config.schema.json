@@ -63,6 +63,9 @@
                 }, {
                   "title": "Sensor",
                   "enum": [ "sensor" ]
+                }, {
+                  "title": "Zigbee2MQTT Device",
+                  "enum": [ "z2m" ]
                 } ],
               "required": true
             },
