@@ -30,12 +30,13 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       this.cleanupCachedDevices();
       const configuredZ2MDevice = config.zbBridgeDevices?.find(d => d.type = 'z2m');
       if (configuredZ2MDevice !== undefined) {
-        this.mqttClient.subscribeTopic('zigbee2mqtt/bridge/devices', message => {
+        const handlerID = this.mqttClient.subscribeTopic('zigbee2mqtt/bridge/devices', message => {
           const devices: Z2MDevice[] = JSON.parse(message);
           if (Array.isArray(config.zbBridgeDevices)) {
             this.z2mDevices = JSON.parse(message);
             this.log.info('Found %s configured zigbee2mqtt devices', devices.length);
             this.discoverDevices();
+            this.mqttClient.unsubscribe(handlerID);
           }
         });
       } else {
