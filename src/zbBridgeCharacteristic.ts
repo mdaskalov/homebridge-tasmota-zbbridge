@@ -16,7 +16,7 @@ export class ZbBridgeCharacteristic {
   private setTs: number;
   private updateTs: number;
 
-  public willGet?: (value: CharacteristicValue, needsUpdate: boolean) => CharacteristicValue | undefined;
+  public willGet?: (value: CharacteristicValue) => CharacteristicValue | undefined;
   public willSet?: (value: CharacteristicValue) => void;
 
   constructor(
@@ -74,11 +74,14 @@ export class ZbBridgeCharacteristic {
 
     let value: CharacteristicValue | undefined = notUpdated ? this.setValue : this.value;
 
-    if (this.willGet !== undefined) {
-      value = this.willGet(value, needsUpdate);
+    if (needsUpdate && this.willGet !== undefined) {
+      value = this.willGet(value);
     }
     if (value === undefined) {
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    }
+    if (value !== this.value) {
+      this.value = value;
     }
     return value;
   }
