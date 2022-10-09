@@ -285,6 +285,11 @@
         "placeholder": "Broker passwort if passwort protected",
         "type": "string",
         "format": "password"
+      },
+      "z2mBaseTopic": {
+        "title": "Zigbee2MQTT base topic",
+        "placeholder": "zigbee2mqtt",
+        "type": "string"
       }
     }
   },
@@ -456,22 +461,19 @@
       "items": [
         "mqttBroker",
         {
-          "type": "div",
-          "displayFlex": false,
+          "type": "flex",
+          "flex-flow": "row wrap",
           "items": [ {
               "type": "flex",
-              "flex-flow": "row wrap",
-              "items": [ {
-                  "type": "flex",
-                  "flex-flow": "column",
-                  "items": [ "mqttUsername" ]
-                }, {
-                  "type": "flex",
-                  "flex-flow": "column",
-                  "items": [ "mqttPassword" ]
-                } ]
+              "flex-flow": "column",
+              "items": [ "mqttUsername" ]
+            }, {
+              "type": "flex",
+              "flex-flow": "column",
+              "items": [ "mqttPassword" ]
             } ]
-        }
+        },
+        "z2mBaseTopic"
       ]
     }
   ]

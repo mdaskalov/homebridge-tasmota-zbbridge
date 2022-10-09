@@ -101,19 +101,20 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
       }
 
       // subscribe to device status updates
-      this.platform.mqttClient.subscribeTopic('zigbee2mqtt/' + device.friendly_name, message => {
-        const msg = JSON.parse(message);
-        //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
-        if (msg.state !== undefined) {
-          this.characteristics['state']?.update(msg.state === 'ON');
-        }
-        if (msg.brightness !== undefined) {
-          this.characteristics['brightness']?.update(ZbBridgeCharacteristic.mapMaxValue(msg.brightness, 254, 100));
-        }
-        if (msg.color_temp !== undefined) {
-          this.characteristics['color_temp']?.update(msg.color_temp);
-        }
-      });
+      this.platform.mqttClient.subscribeTopic(
+        this.platform.config.z2mBaseTopic + '/' + device.friendly_name, message => {
+          const msg = JSON.parse(message);
+          //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
+          if (msg.state !== undefined) {
+            this.characteristics['state']?.update(msg.state === 'ON');
+          }
+          if (msg.brightness !== undefined) {
+            this.characteristics['brightness']?.update(ZbBridgeCharacteristic.mapMaxValue(msg.brightness, 254, 100));
+          }
+          if (msg.color_temp !== undefined) {
+            this.characteristics['color_temp']?.update(msg.color_temp);
+          }
+        });
       //Subscribe for the power topic updates
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
@@ -176,14 +177,14 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
   get(feature: string) {
     this.log('get %s', feature);
     this.platform.mqttClient.publish(
-      `zigbee2mqtt/${this.deviceFriendlyName}/get`,
+      `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/get`,
       `{"${feature}":""}`,
     );
   }
 
   set(feature: string, value: CharacteristicValue) {
     this.platform.mqttClient.publish(
-      `zigbee2mqtt/${this.deviceFriendlyName}/set`,
+      `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/set`,
       `{"${feature}": "${value}"}`,
     );
   }
@@ -194,7 +195,7 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
     return;
   }
 
-  onStatusUpdate(msg): string {
+  onStatusUpdate(): string {
     return '';
   }
 
