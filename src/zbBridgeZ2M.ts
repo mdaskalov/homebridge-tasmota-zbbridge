@@ -93,40 +93,38 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
       if (features.includes('state')) {
         this.registerStateHandler();
       }
-      // if (features.includes('brightness')) {
-      //   this.registerBrightnessHandler();
-      // }
-      // if (features.includes('color_temp')) {
-      //   this.registerColorTempHandler();
-      // }
+      if (features.includes('brightness')) {
+        this.registerBrightnessHandler();
+      }
+      if (features.includes('color_temp')) {
+        this.registerColorTempHandler();
+      }
 
       // subscribe to device status updates
       this.platform.mqttClient.subscribeTopic('zigbee2mqtt/' + device.friendly_name, message => {
         const msg = JSON.parse(message);
         //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
-        this.log('Updated state');
         if (msg.state !== undefined) {
           this.characteristics['state']?.update(msg.state === 'ON');
         }
         if (msg.brightness !== undefined) {
           this.characteristics['brightness']?.update(ZbBridgeCharacteristic.mapMaxValue(msg.brightness, 254, 100));
         }
-        if (msg.coplor_temp !== undefined) {
-          this.characteristics['coplor_temp']?.update(msg.coplor_temp);
+        if (msg.color_temp !== undefined) {
+          this.characteristics['color_temp']?.update(msg.color_temp);
         }
       });
       //Subscribe for the power topic updates
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
-          this.log('power state changed: %s', message);
-
+          //this.log('power state changed: %s', message);
           this.characteristics['state']?.update((message === 'ON'));
         });
-        // request initial update
+        // request initial state
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       }
       // request initial state
-      //this.get('state');
+      this.get('state');
     }
   }
 
@@ -136,7 +134,6 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
-        this.log('willGet');
         this.get('state');
       }
       return undefined;
@@ -152,29 +149,29 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
     this.characteristics['state'] = state;
   }
 
-  // registerBrightnessHandler() {
-  //   const brightness = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
-  //   brightness.willGet = () => {
-  //     this.get('brightness');
-  //     return undefined;
-  //   };
-  //   brightness.willSet = value => {
-  //     this.set('brightness', ZbBridgeCharacteristic.mapMaxValue(value as number, 100, 254));
-  //   };
-  //   this.characteristics['brightness'] = brightness;
-  // }
+  registerBrightnessHandler() {
+    const brightness = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
+    brightness.willGet = () => {
+      this.get('brightness');
+      return undefined;
+    };
+    brightness.willSet = value => {
+      this.set('brightness', ZbBridgeCharacteristic.mapMaxValue(value as number, 100, 254));
+    };
+    this.characteristics['brightness'] = brightness;
+  }
 
-  // registerColorTempHandler() {
-  //   const colorTemp = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
-  //   colorTemp.willGet = () => {
-  //     this.get('color_temp');
-  //     return undefined;
-  //   };
-  //   colorTemp.willSet = value => {
-  //     this.set('color_temp', value);
-  //   };
-  //   this.characteristics['color_temp'] = colorTemp;
-  // }
+  registerColorTempHandler() {
+    const colorTemp = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
+    colorTemp.willGet = () => {
+      this.get('color_temp');
+      return undefined;
+    };
+    colorTemp.willSet = value => {
+      this.set('color_temp', value);
+    };
+    this.characteristics['color_temp'] = colorTemp;
+  }
 
   get(feature: string) {
     this.log('get %s', feature);
