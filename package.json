@@ -27,7 +27,8 @@
     "homebridge-plugin",
     "tasmota",
     "zigbee",
-    "zbbridge"
+    "zbbridge",
+    "zigbee2mqtt"
   ],
   "dependencies": {
     "mqtt": "^4.3.7"
