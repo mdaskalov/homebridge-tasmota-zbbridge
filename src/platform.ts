@@ -1,4 +1,4 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic, UnknownContext } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { TasmotaDevice, TasmotaAccessory } from './tasmotaAccessory';
@@ -90,24 +90,27 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
+  restoreAccessory(uuid: string, name: string): { restored: boolean; accessory: PlatformAccessory<UnknownContext> } {
+    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+    if (existingAccessory) {
+      this.api.updatePlatformAccessories([existingAccessory]);
+      return { restored: true, accessory: existingAccessory };
+    } else {
+      const accessory = new this.api.platformAccessory(name, uuid);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      return { restored: false, accessory };
+    }
+  }
+
   discoverDevices() {
     if (Array.isArray(this.config.zbBridgeDevices)) {
       for (const device of this.config.zbBridgeDevices) {
-        if (device.addr && device.type && device.name) {
-          const uuid = this.zbBridgeDeviceUUID(device);
-          const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-          if (existingAccessory) {
-            existingAccessory.context.device = device;
-            this.api.updatePlatformAccessories([existingAccessory]);
-            this.createZbBridgeAccessory(existingAccessory);
-          } else {
-            const accessory = new this.api.platformAccessory(device.name, uuid);
-            accessory.context.device = device;
-            this.createZbBridgeAccessory(accessory);
-            this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          }
+        if ((<ZbBridgeDevice>device).addr && (<ZbBridgeDevice>device).type && (<ZbBridgeDevice>device).name) {
+          const { restored, accessory } = this.restoreAccessory(this.zbBridgeDeviceUUID(device), device.name);
+          accessory.context.device = device;
+          this.createZbBridgeAccessory(accessory);
           this.log.info('%s zbBridge accessory: %s (%s) - %s',
-            existingAccessory ? 'Restoring' : 'Adding', device.name, device.addr, device.type);
+            restored ? 'Restoring' : 'Adding', device.name, device.addr, device.type);
         } else {
           this.log.error('Ignored zbBridge device configuration: ', JSON.stringify(device));
           continue;
@@ -116,21 +119,12 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
     if (Array.isArray(this.config.tasmotaDevices)) {
       for (const device of this.config.tasmotaDevices) {
-        if (device.topic && device.type && device.name) {
-          const uuid = this.tasmotaDeviceUUID(device);
-          const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-          if (existingAccessory) {
-            existingAccessory.context.device = device;
-            this.api.updatePlatformAccessories([existingAccessory]);
-            new TasmotaAccessory(this, existingAccessory);
-          } else {
-            const accessory = new this.api.platformAccessory(device.name, uuid);
-            accessory.context.device = device;
-            new TasmotaAccessory(this, accessory);
-            this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          }
+        if ((<TasmotaDevice>device).topic && (<TasmotaDevice>device).type && (<TasmotaDevice>device).name) {
+          const { restored, accessory } = this.restoreAccessory(this.tasmotaDeviceUUID(device), device.name);
+          accessory.context.device = device;
+          new TasmotaAccessory(this, accessory);
           this.log.info('%s tasmota accessory: %s (%s) - %s',
-            existingAccessory ? 'Restoring' : 'Adding', device.name, device.topic, device.type);
+            restored ? 'Restoring' : 'Adding', device.name, device.topic, device.type);
         } else {
           this.log.error('Ignored Tasmota device configuration: ', JSON.stringify(device));
           continue;
