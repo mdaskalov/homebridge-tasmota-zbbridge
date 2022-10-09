@@ -24,7 +24,11 @@ export abstract class ZbBridgeAccessory {
   protected type: string;
   private updatedAccessoryInfo = false;
 
-  constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
+  constructor(
+    protected readonly platform: TasmotaZbBridgePlatform,
+    protected readonly accessory: PlatformAccessory,
+    protected readonly serviceName: string,
+  ) {
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
     }
@@ -33,7 +37,6 @@ export abstract class ZbBridgeAccessory {
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
 
-    const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
       throw new Error('Unknown service: ' + serviceName);
@@ -109,8 +112,7 @@ export abstract class ZbBridgeAccessory {
     this.platform.mqttClient.publish(topic, message);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log(message: string, ...parameters: any[]): void {
+  log(message: string, ...parameters: unknown[]): void {
     this.platform.log.debug('%s (%s) ' + message,
       this.accessory.context.device.name, this.addr,
       ...parameters,
@@ -130,8 +132,6 @@ export abstract class ZbBridgeAccessory {
   //   }
   //   return undefined;
   // }
-
-  abstract getServiceName(): string;
 
   abstract registerHandlers(): void;
 

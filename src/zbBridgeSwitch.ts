@@ -15,8 +15,9 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
+    readonly serviceName: string,
   ) {
-    super(platform, accessory);
+    super(platform, accessory, serviceName);
     this.power = new ZbBridgeValue(platform, accessory, 'power', false);
 
     this.reachable = true;
@@ -33,10 +34,6 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
       });
     }
 
-  }
-
-  getServiceName() {
-    return 'Switch';
   }
 
   registerHandlers() {
