@@ -13,7 +13,7 @@
 
 # Homebridge Tasmota ZbBridge
 
-This plugin can controll devices connected to a Zigbee bridge running [Tasmota](https://tasmota.github.io/docs) (for example Sonoff [Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or [Zigbee Bridge Pro](https://zigbee.blakadder.com/Sonoff_ZBBridge-P.html) or other [suported](https://tasmota.github.io/docs/Zigbee) hardware).
+This plugin can controll devices connected to a Zigbee bridge running [Tasmota](https://tasmota.github.io/docs) software (for example Sonoff [Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or [Zigbee Bridge Pro](https://zigbee.blakadder.com/Sonoff_ZBBridge-P.html) or other [suported](https://tasmota.github.io/docs/Zigbee) hardware) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) devices.
 
 Devices running Tasmota are also suported (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.).
 
@@ -68,7 +68,12 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
             "sensorService": "ContactSensor",
             "sensorCharacteristic": "ContactSensorState",
             "sensorValuePath": "Contact"
-        }
+        },
+        {
+            "addr": "0x002788011234567F",
+            "type": "z2m",
+            "name": "Light Bulb"
+        },
     ],
     "tasmotaDevices": [
         {
@@ -102,7 +107,7 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
 `zbBridgeDevices` - Zigbee devices connected to the Zigbee bridge device
 
 * `addr` - Device hardware or short address and optional endpoint (for example Tuya 2ch switch). The hardware address (64 bits) is unique per device and factory assigned so once configured it will still work even if the device have to be paired again. Example: Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
-* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
+* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`, `z2m`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name if endpoint is not used.
 * Advanced settings
   * `powerTopic` - (optional) Use another tasmota device to controll the power (configure it's identifying topic)
@@ -127,6 +132,13 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
 `mqttUsername` - MQTT Broker username if passwort protected
 
 `mqttPassword` - MQTT Broker passwort if passwort protected
+
+`z2mBaseTopic` - Zigbee2MQTT base topic (default: zigbee2mqtt)
+
+# Zigbee2MQTT
+
+It is also possible to controll devices using Zigbee2MQTT gateway. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. Currently only `Switch` and `Lightbulb` accessories are supported. 
+Configure the hardware (64 bits) address and select `z2m` as type. Supported features are queried directly from Zigbe2MQTT and configured automatically.
 
 # Binding
 

@@ -26,18 +26,15 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
+    readonly serviceName: string,
   ) {
-    super(platform, accessory);
+    super(platform, accessory, serviceName);
     this.dimmer = new ZbBridgeValue(platform, accessory, 'dimmer', 100);
     this.ct = new ZbBridgeValue(platform, accessory, 'ct', 370);
     this.hue = new ZbBridgeValue(platform, accessory, 'hue', 20);
     this.saturation = new ZbBridgeValue(platform, accessory, 'saturation', 100);
     this.colorX = new ZbBridgeValue(platform, accessory, 'colorX', 30265);
     this.colorY = new ZbBridgeValue(platform, accessory, 'colorY', 24947);
-  }
-
-  getServiceName() {
-    return 'Lightbulb';
   }
 
   configureLightFeatures() {

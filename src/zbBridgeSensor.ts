@@ -14,19 +14,10 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
+    readonly serviceName: string,
   ) {
-    super(platform, accessory);
+    super(platform, accessory, serviceName);
     this.value = 0;
-  }
-
-  getServiceName() {
-    const serviceName = (this.accessory.context.device.sensorService || 'undefined');
-    const service = this.platform.Service[serviceName];
-    if (service === undefined) {
-      this.platform.log.warn('Warning: Unknown service: %s, using ContactSensor instead!', serviceName);
-      return 'ContactSensor';
-    }
-    return serviceName;
   }
 
   registerHandlers() {

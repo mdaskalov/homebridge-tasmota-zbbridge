@@ -1,6 +1,6 @@
 import {
-  Service,
   PlatformAccessory,
+  Service,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -22,9 +22,13 @@ export abstract class ZbBridgeAccessory {
   protected addr: string;
   protected endpoint: number | undefined;
   protected type: string;
-  private updatedAccessoryInfo = false;
+  protected updatedAccessoryInfo = false;
 
-  constructor(protected readonly platform: TasmotaZbBridgePlatform, protected readonly accessory: PlatformAccessory) {
+  constructor(
+    protected readonly platform: TasmotaZbBridgePlatform,
+    protected readonly accessory: PlatformAccessory,
+    protected readonly serviceName: string,
+  ) {
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
     }
@@ -33,7 +37,6 @@ export abstract class ZbBridgeAccessory {
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
 
-    const serviceName = this.getServiceName();
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
       throw new Error('Unknown service: ' + serviceName);
@@ -41,23 +44,26 @@ export abstract class ZbBridgeAccessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    // Subscribe for device updates
-    this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
-      this.statusUpdate(msg);
-    });
+    // Skip for zigbee2mqtt accessory
+    if (this.type !== 'z2m') {
+      // Subscribe for device updates
+      this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
+        this.statusUpdate(msg);
+      });
 
-    // udpate name only if no endpoint is defined
-    if (this.endpoint === undefined) {
-      this.platform.mqttClient.publish(
-        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-        this.addr + ',' + accessory.context.device.name,
-      );
+      // udpate name only if no endpoint is defined
+      if (this.endpoint === undefined) {
+        this.platform.mqttClient.publish(
+          'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+          this.addr + ',' + accessory.context.device.name,
+        );
+      }
+
+      this.registerHandlers();
+
+      // // Query device info
+      this.zbInfo();
     }
-
-    this.registerHandlers();
-
-    // // Query device info
-    this.zbInfo();
   }
 
   static formatTs(dt?: number): string {
@@ -109,8 +115,7 @@ export abstract class ZbBridgeAccessory {
     this.platform.mqttClient.publish(topic, message);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log(message: string, ...parameters: any[]): void {
+  log(message: string, ...parameters: unknown[]): void {
     this.platform.log.debug('%s (%s) ' + message,
       this.accessory.context.device.name, this.addr,
       ...parameters,
@@ -130,8 +135,6 @@ export abstract class ZbBridgeAccessory {
   //   }
   //   return undefined;
   // }
-
-  abstract getServiceName(): string;
 
   abstract registerHandlers(): void;
 
