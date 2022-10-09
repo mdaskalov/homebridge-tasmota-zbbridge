@@ -36,16 +36,13 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       if (configuredZ2MDevice !== undefined) {
         const handlerID = this.mqttClient.subscribeTopic(config.z2mBaseTopic + '/bridge/devices', message => {
           const devices: Z2MDevice[] = JSON.parse(message);
-          if (Array.isArray(config.zbBridgeDevices)) {
-            this.z2mDevices = JSON.parse(message);
-            this.log.info('Found %s configured zigbee2mqtt devices', devices.length);
-            this.discoverDevices();
-            this.mqttClient.unsubscribe(handlerID);
-          }
+          this.z2mDevices = devices;
+          this.mqttClient.unsubscribe(handlerID);
+          this.log.info('Found %s zigbee2mqtt devices', devices.length);
+          this.discoverDevices(true);
         });
-      } else {
-        this.discoverDevices();
       }
+      this.discoverDevices(false);
     });
   }
 
@@ -106,10 +103,13 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  discoverDevices() {
+  discoverDevices(discoverZ2M: boolean) {
     if (Array.isArray(this.config.zbBridgeDevices)) {
       for (const device of this.config.zbBridgeDevices) {
         if ((<ZbBridgeDevice>device).addr && (<ZbBridgeDevice>device).type && (<ZbBridgeDevice>device).name) {
+          if (discoverZ2M !== (device.type === 'z2m')) {
+            continue;
+          }
           const { restored, accessory } = this.restoreAccessory(this.zbBridgeDeviceUUID(device), device.name);
           accessory.context.device = device;
           this.createZbBridgeAccessory(accessory);
@@ -121,7 +121,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         }
       }
     }
-    if (Array.isArray(this.config.tasmotaDevices)) {
+    if (Array.isArray(this.config.tasmotaDevices) && !discoverZ2M) {
       for (const device of this.config.tasmotaDevices) {
         if ((<TasmotaDevice>device).topic && (<TasmotaDevice>device).type && (<TasmotaDevice>device).name) {
           const { restored, accessory } = this.restoreAccessory(this.tasmotaDeviceUUID(device), device.name);
