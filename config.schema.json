@@ -63,9 +63,6 @@
                 }, {
                   "title": "Sensor",
                   "enum": [ "sensor" ]
-                }, {
-                  "title": "Zigbee2MQTT Device",
-                  "enum": [ "z2m" ]
                 } ],
               "required": true
             },
@@ -190,6 +187,55 @@
               "title": "Sensor Value Path",
               "placeholder": "Value Path",
               "type": "string"
+            }
+          }
+        }
+      },
+      "z2mDevices": {
+        "title": "Zigbee2MQTT Devices",
+        "expandable": true,
+        "expanded": false,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "addr": {
+              "title": "Device Addr",
+              "type": "string",
+              "placeholder": "IEEEAddr",
+              "pattern": "^0x[A-Fa-f0-9]{16}$",
+              "required": true
+            },
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "placeholder": "HomeKit name",
+              "required": true
+            },
+            "powerTopic": {
+              "title": "Power Topic",
+              "placeholder": "Power Topic",
+              "type": "string"
+            },
+            "powerType": {
+              "title": "Type",
+              "type": "string",
+              "oneOf": [ {
+                  "title": "Switch",
+                  "enum": [ "POWER" ]
+                }, {
+                  "title": "Switch 1",
+                  "enum": [ "POWER1" ]
+                }, {
+                  "title": "Switch 2",
+                  "enum": [ "POWER2" ]
+                }, {
+                  "title": "Switch 3",
+                  "enum": [ "POWER3" ]
+                }, {
+                  "title": "Switch 4",
+                  "enum": [ "POWER4" ]
+                } ]
             }
           }
         }
@@ -405,6 +451,62 @@
                               "key": "zbBridgeDevices[].sensorValuePath"
                             } ]
                         } ]
+                    } ]
+                } ]
+            } ]
+        } ]
+    },
+    {
+      "key": "z2mDevices",
+      "buttonText": "Add Device",
+      "default": [ ],
+      "items": [ {
+          "type": "div",
+          "nodescription": true,
+          "displayFlex": false,
+          "items": [ {
+              "type": "flex",
+              "nodescription": true,
+              "flex-flow": "row wrap",
+              "items": [ {
+                  "type": "flex",
+                  "flex": "1 1 150px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "z2mDevices[].addr"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "z2mDevices[].name"
+                    } ]
+                }
+              ]
+            }, {
+              "type": "flex",
+              "nodescription": true,
+              "flex-flow": "row",
+              "items": [ {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "z2mDevices[].powerTopic"
+                    } ]
+                }, {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "z2mDevices[].powerType"
                     } ]
                 } ]
             } ]
