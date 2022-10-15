@@ -103,7 +103,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-
   restoreAccessory(uuid: string, name: string): { restored: boolean; accessory: PlatformAccessory<UnknownContext> } {
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     if (existingAccessory) {
