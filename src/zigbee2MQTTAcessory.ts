@@ -1,12 +1,22 @@
 import {
   PlatformAccessory,
   CharacteristicValue,
+  Service,
 } from 'homebridge';
 
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
 import { ZbBridgeCharacteristic } from './zbBridgeCharacteristic';
 
+export type ZbBridgeDevice = {
+  addr: string;
+  type: string;
+  name: string;
+  powerTopic?: string;
+  powerType?: string;
+  sensorService?: string;
+  sensorCharacteristic?: string;
+  sensorValuePath?: string;
+};
 
 export type Z2MExposeFeature = {
   name: string;
@@ -58,18 +68,36 @@ export type Z2MDevice = {
   supported: boolean;
 };
 
-export class ZbBridgeZ2M extends ZbBridgeAccessory {
+export type Zigbee2MQTTDevice = {
+  addr: string;
+  name: string;
+  powerTopic?: string;
+  powerType?: string;
+};
+
+export class Zigbee2MQTTAcessory {
+  private service: Service;
+  private powerTopic?: string;
+  private addr: string;
   private deviceFriendlyName = 'Unknown';
   private characteristics: { [key: string]: ZbBridgeCharacteristic } = {};
-  private reachable: boolean;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
     readonly serviceName: string,
   ) {
-    super(platform, accessory, serviceName);
-    this.reachable = true;
+    if (this.accessory.context.device.powerTopic !== undefined) {
+      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
+    }
+    this.addr = this.accessory.context.device.addr;
+
+    const service = this.platform.Service[serviceName];
+    if (service === undefined) {
+      throw new Error('Unknown service: ' + serviceName);
+    }
+    this.service = this.accessory.getService(service) || this.accessory.addService(service);
+    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     const device = platform.z2mDevices.find(d => d.ieee_address === this.addr);
     if (device !== undefined) {
@@ -80,15 +108,17 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
         service
           .setCharacteristic(this.platform.Characteristic.Manufacturer, device.manufacturer)
           .setCharacteristic(this.platform.Characteristic.Model, device.model_id)
-          .setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id)
           .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
+        if (device.software_build_id) {
+          service.setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id);
+        }
         this.log('Manufacturer: %s, Model: %s',
           device.manufacturer,
           device.model_id,
         );
       }
 
-      const features = ZbBridgeZ2M.getFeatures(device);
+      const features = Zigbee2MQTTAcessory.getFeatures(device);
       this.log('Exposes: ' + JSON.stringify(features));
       if (features.includes('state')) {
         this.registerStateHandler();
@@ -99,20 +129,32 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
       if (features.includes('color_temp')) {
         this.registerColorTempHandler();
       }
+      if (features.includes('color_hs')) {
+        this.registerHueHandler();
+        this.registerSaturationHandler();
+      }
 
       // subscribe to device status updates
       this.platform.mqttClient.subscribeTopic(
         this.platform.config.z2mBaseTopic + '/' + device.friendly_name, message => {
           const msg = JSON.parse(message);
           //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
-          if (msg.state !== undefined) {
+          if (msg.state !== undefined && this.powerTopic === undefined) {
             this.characteristics['state']?.update(msg.state === 'ON');
           }
           if (msg.brightness !== undefined) {
             this.characteristics['brightness']?.update(ZbBridgeCharacteristic.mapMaxValue(msg.brightness, 254, 100));
           }
-          if (msg.color_temp !== undefined) {
+          if (msg.color_temp !== undefined && msg.color_mode === 'color_temp') {
             this.characteristics['color_temp']?.update(msg.color_temp);
+          }
+          if (msg.color !== undefined && msg.color_mode === 'hs') {
+            if (msg.color.hue) {
+              this.characteristics['hue']?.update(msg.color.hue);
+            }
+            if (msg.color.saturation) {
+              this.characteristics['saturation']?.update(msg.color.saturation);
+            }
           }
         });
       //Subscribe for the power topic updates
@@ -127,6 +169,13 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
       // request initial state
       this.get('state');
     }
+  }
+
+  log(message: string, ...parameters: unknown[]): void {
+    this.platform.log.debug('%s (%s) ' + message,
+      this.accessory.context.device.name, this.addr,
+      ...parameters,
+    );
   }
 
   registerStateHandler() {
@@ -174,29 +223,55 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
     this.characteristics['color_temp'] = colorTemp;
   }
 
+  registerHueHandler() {
+    const hue = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Hue', 20);
+    hue.willGet = () => {
+      this.get('color/hue');
+      return undefined;
+    };
+    hue.willSet = value => {
+      this.set('color/hue', value);
+    };
+    this.characteristics['hue'] = hue;
+  }
+
+  registerSaturationHandler() {
+    const saturation = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Saturation', 20);
+    saturation.willGet = () => {
+      this.get('color/saturation');
+      return undefined;
+    };
+    saturation.willSet = value => {
+      this.set('color/saturation', value);
+    };
+    this.characteristics['saturation'] = saturation;
+  }
+
+  getObjectByPath(obj: object, path: string): object | undefined {
+    return path.split('/').reduce((a, v) => a ? a[v] : undefined, obj);
+  }
+
+  setObjectByPath(obj: object, path: string, value: CharacteristicValue) {
+    const lastKey = path.substring(path.lastIndexOf('/') + 1);
+    path.split('/').reduce((a, v) => a[v] = v === lastKey ? value : a[v] ? a[v] : {}, obj);
+  }
+
   get(feature: string) {
-    this.log('get %s', feature);
+    const obj = {};
+    this.setObjectByPath(obj, feature, '');
     this.platform.mqttClient.publish(
       `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/get`,
-      `{"${feature}":""}`,
+      JSON.stringify(obj),
     );
   }
 
   set(feature: string, value: CharacteristicValue) {
+    const obj = {};
+    this.setObjectByPath(obj, feature, value);
     this.platform.mqttClient.publish(
       `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/set`,
-      `{"${feature}": "${value}"}`,
+      JSON.stringify(obj),
     );
-  }
-
-  // Abstract methods
-
-  registerHandlers() {
-    return;
-  }
-
-  onStatusUpdate(): string {
-    return '';
   }
 
   static getFeatures(device: Z2MDevice): string[] {
@@ -209,7 +284,7 @@ export class ZbBridgeZ2M extends ZbBridgeAccessory {
 
   static getServiceName(device: Z2MDevice): string | undefined {
     const lightbulbFeatures = ['brightness', 'color_temp', 'color_xy', 'color_hs'];
-    const features = ZbBridgeZ2M.getFeatures(device);
+    const features = Zigbee2MQTTAcessory.getFeatures(device);
     if (features !== undefined) {
       if (features.some(f => lightbulbFeatures.includes(f)) && features.includes('state')) {
         return 'Lightbulb';
