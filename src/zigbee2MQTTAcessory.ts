@@ -7,6 +7,11 @@ import {
 import { TasmotaZbBridgePlatform } from './platform';
 import { ZbBridgeCharacteristic } from './zbBridgeCharacteristic';
 
+const FEATURES = [
+  { service: 'Lightbulb', features: ['brightness', 'color_temp', 'color_xy', 'color_hs'] },
+  { service: 'Switch', features: ['state'] },
+];
+
 export type ZbBridgeDevice = {
   addr: string;
   type: string;
@@ -118,7 +123,7 @@ export class Zigbee2MQTTAcessory {
         );
       }
 
-      const features = Zigbee2MQTTAcessory.getFeatures(device);
+      const features = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
       this.log('Exposes: ' + JSON.stringify(features));
       if (features.includes('state')) {
         this.registerStateHandler();
@@ -274,22 +279,19 @@ export class Zigbee2MQTTAcessory {
     );
   }
 
-  static getFeatures(device: Z2MDevice): string[] {
+  static getExposedFeatures(device: Z2MDevice): Z2MExposeFeature[] {
     const exposes = device.definition.exposes.find(e => e.features);
     if (exposes !== undefined && exposes.features !== undefined) {
-      return exposes.features.map(f => f.name);
+      return exposes.features;
     }
     return [];
   }
 
   static getServiceName(device: Z2MDevice): string | undefined {
-    const lightbulbFeatures = ['brightness', 'color_temp', 'color_xy', 'color_hs'];
-    const features = Zigbee2MQTTAcessory.getFeatures(device);
-    if (features !== undefined) {
-      if (features.some(f => lightbulbFeatures.includes(f)) && features.includes('state')) {
-        return 'Lightbulb';
-      } else if (features.includes('state')) {
-        return 'Switch';
+    const exposedFeatures = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
+    for (const set of FEATURES) {
+      if (exposedFeatures.some(f => set.features.includes(f))) {
+        return set.service;
       }
     }
   }
