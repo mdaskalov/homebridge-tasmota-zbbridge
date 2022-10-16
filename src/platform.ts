@@ -115,9 +115,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   discoverZbBridgeDevices() {
-    this.log.info('discover zbBridgeDevices');
     for (const device of this.config.zbBridgeDevices) {
-      if ((<ZbBridgeDevice>device).addr && (<ZbBridgeDevice>device).type && (<ZbBridgeDevice>device).name) {
+      if ((<ZbBridgeDevice>device)?.addr && (<ZbBridgeDevice>device)?.type && (<ZbBridgeDevice>device)?.name) {
         const { restored, accessory } = this.restoreAccessory(this.zbBridgeDeviceUUID(device), device.name);
         accessory.context.device = device;
         this.createZbBridgeAccessory(accessory);
@@ -132,7 +131,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
   discoverZigbee2MQTTDevices() {
     for (const device of this.config.z2mDevices) {
-      if ((<Zigbee2MQTTDevice>device).addr && (<Zigbee2MQTTDevice>device).name) {
+      if ((<Zigbee2MQTTDevice>device)?.addr && (<Zigbee2MQTTDevice>device)?.name) {
         const z2mDevice = this.z2mDevices.find(d => d.ieee_address === device.addr);
         if (z2mDevice !== undefined) {
           const serviceName = Zigbee2MQTTAcessory.getServiceName(z2mDevice);
@@ -155,7 +154,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
 
   discoverTasmotaDevices() {
     for (const device of this.config.tasmotaDevices) {
-      if ((<TasmotaDevice>device).topic && (<TasmotaDevice>device).type && (<TasmotaDevice>device).name) {
+      if ((<TasmotaDevice>device)?.topic && (<TasmotaDevice>device)?.type && (<TasmotaDevice>device)?.name) {
         const { restored, accessory } = this.restoreAccessory(this.tasmotaDeviceUUID(device), device.name);
         accessory.context.device = device;
         new TasmotaAccessory(this, accessory);
@@ -188,11 +187,11 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         }
         if (!foundZbBridgeDevice && !foundZigbee2MQTTDevice && !foundTasmotaDevice) {
           const device = accessory.context.device;
-          if ((<ZbBridgeDevice>device).addr && (<ZbBridgeDevice>device).type) {
+          if ((<ZbBridgeDevice>device)?.addr && (<ZbBridgeDevice>device)?.type) {
             this.log.info('Removing ZbBridge accessory: %s (%s) - %s', device.name, device.addr, device.type);
-          } else if ((<Zigbee2MQTTDevice>device).addr) {
+          } else if ((<Zigbee2MQTTDevice>device)?.addr) {
             this.log.info('Removing Zigbee2MQTT accessory: %s (%s)', device.name, device.addr);
-          } else if ((<TasmotaDevice>device).topic) {
+          } else if ((<TasmotaDevice>device)?.topic) {
             this.log.info('Removing Tasmota accessory: %s (%s) - %s', device.name, device.topic, device.type);
           } else {
             this.log.info('Removing accessory: %s', accessory.displayName);
