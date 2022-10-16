@@ -63,13 +63,18 @@ export class MQTTClient {
       const callOnceHandlers = this.topicHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
       if (callOnceHandlers.length !== 0) {
         const msg = callOnceHandlers.some(h => h.messageDump) ? topic + ' ' + message : topic;
-        this.log.debug('MQTT message %s, onceHandlers: %s', msg, callOnceHandlers.length);
+        this.log.debug('MQTT Message %s, onceHandlers: %s', msg, callOnceHandlers.length);
         callOnceHandlers.forEach(h => h.callback(message.toString(), topic));
         this.topicHandlers = this.topicHandlers.filter(h => !callOnceHandlers.includes(h));
+        const handlersCount = this.topicHandlers.filter(h => this.matchTopic(h, topic)).length;
+        if (handlersCount === 0) {
+          this.client.unsubscribe(topic);
+          this.log.debug('MQTT: Unsubscribed %s', topic);
+        }
       } else {
         const hadnlers = this.topicHandlers.filter(h => this.matchTopic(h, topic));
         const msg = hadnlers.some(h => h.messageDump) ? topic + ' ' + message : topic;
-        this.log.debug('MQTT message %s, handlers: %s', msg, hadnlers.length);
+        this.log.debug('MQTT Message %s, handlers: %s', msg, hadnlers.length);
         hadnlers.forEach(h => h.callback(message.toString(), topic));
       }
     });
@@ -146,7 +151,7 @@ export class MQTTClient {
   subscribeTopic(topic: string, callback: TopicCallback, messageDump = true, callOnce = false): string {
     if (this.client) {
       const id = this.uniqueID();
-      this.log.debug('MQTT subscribe: %s, %s', topic, id);
+      this.log.debug('MQTT Subscribed: %s, %s', topic, id);
       this.topicHandlers.push({ id, topic, messageDump, callOnce, callback });
       const handlersCount = this.topicHandlers.filter(h => this.matchTopic(h, topic)).length;
       if (handlersCount === 1) {
