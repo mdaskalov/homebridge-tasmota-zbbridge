@@ -133,11 +133,19 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   discoverZigbee2MQTTDevices() {
     for (const device of this.config.z2mDevices) {
       if ((<Zigbee2MQTTDevice>device).addr && (<Zigbee2MQTTDevice>device).name) {
-        const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.name);
-        accessory.context.device = device;
-        this.createZigbee2MQTTAcessory(accessory);
-        this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
-          restored ? 'Restoring' : 'Adding', device.name, device.addr);
+        const z2mDevice = this.z2mDevices.find(d => d.ieee_address === device.addr);
+        if (z2mDevice !== undefined) {
+          const serviceName = Zigbee2MQTTAcessory.getServiceName(z2mDevice);
+          if (serviceName !== undefined) {
+            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.name);
+            accessory.context.device = device;
+            new Zigbee2MQTTAcessory(this, accessory, serviceName);
+            this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s) - %s',
+              restored ? 'Restoring' : 'Adding', device.name, device.addr, serviceName);
+          } else {
+            this.log.error('Ignored unsupported Zigbee2MQTT device %s (%s)', device.name, device.addr);
+          }
+        }
       } else {
         this.log.error('Ignored Zigbee2MQTT device configuration: ', JSON.stringify(device));
         continue;
