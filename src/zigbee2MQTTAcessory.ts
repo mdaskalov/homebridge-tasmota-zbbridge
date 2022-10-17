@@ -12,17 +12,6 @@ const FEATURES = [
   { service: 'Switch', features: ['state'] },
 ];
 
-export type ZbBridgeDevice = {
-  addr: string;
-  type: string;
-  name: string;
-  powerTopic?: string;
-  powerType?: string;
-  sensorService?: string;
-  sensorCharacteristic?: string;
-  sensorValuePath?: string;
-};
-
 export type Z2MExposeFeature = {
   name: string;
   endpoint?: string;
@@ -74,7 +63,7 @@ export type Z2MDevice = {
 };
 
 export type Zigbee2MQTTDevice = {
-  addr: string;
+  ieee_address: string;
   name: string;
   powerTopic?: string;
   powerType?: string;
@@ -83,7 +72,7 @@ export type Zigbee2MQTTDevice = {
 export class Zigbee2MQTTAcessory {
   private service: Service;
   private powerTopic?: string;
-  private addr: string;
+  private ieee_address: string;
   private deviceFriendlyName = 'Unknown';
   private characteristics: { [key: string]: Zigbee2MQTTCharacteristic } = {};
 
@@ -95,7 +84,7 @@ export class Zigbee2MQTTAcessory {
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
     }
-    this.addr = this.accessory.context.device.addr;
+    this.ieee_address = this.accessory.context.device.ieee_address;
 
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
@@ -104,7 +93,7 @@ export class Zigbee2MQTTAcessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    const device = platform.z2mDevices.find(d => d.ieee_address === this.addr);
+    const device = platform.zigbee2mqttDevices.find(d => d.ieee_address === this.ieee_address);
     if (device !== undefined) {
       //this.log('device: %s', JSON.stringify(device, null, '  '));
       this.deviceFriendlyName = device.friendly_name;
@@ -113,7 +102,7 @@ export class Zigbee2MQTTAcessory {
         service
           .setCharacteristic(this.platform.Characteristic.Manufacturer, device.manufacturer)
           .setCharacteristic(this.platform.Characteristic.Model, device.model_id)
-          .setCharacteristic(this.platform.Characteristic.SerialNumber, this.addr);
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, this.ieee_address);
         if (device.software_build_id) {
           service.setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id);
         }
@@ -141,7 +130,7 @@ export class Zigbee2MQTTAcessory {
 
       // subscribe to device status updates
       this.platform.mqttClient.subscribeTopic(
-        this.platform.config.z2mBaseTopic + '/' + device.friendly_name, message => {
+        this.platform.config.zigbee2mqttTopic + '/' + device.friendly_name, message => {
           const msg = JSON.parse(message);
           //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
           if (msg.state !== undefined && this.powerTopic === undefined) {
@@ -178,7 +167,7 @@ export class Zigbee2MQTTAcessory {
 
   log(message: string, ...parameters: unknown[]): void {
     this.platform.log.debug('%s (%s) ' + message,
-      this.accessory.context.device.name, this.addr,
+      this.accessory.context.device.name, this.ieee_address,
       ...parameters,
     );
   }
@@ -265,7 +254,7 @@ export class Zigbee2MQTTAcessory {
     const obj = {};
     this.setObjectByPath(obj, feature, '');
     this.platform.mqttClient.publish(
-      `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/get`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.deviceFriendlyName}/get`,
       JSON.stringify(obj),
     );
   }
@@ -274,7 +263,7 @@ export class Zigbee2MQTTAcessory {
     const obj = {};
     this.setObjectByPath(obj, feature, value);
     this.platform.mqttClient.publish(
-      `${this.platform.config.z2mBaseTopic}/${this.deviceFriendlyName}/set`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.deviceFriendlyName}/set`,
       JSON.stringify(obj),
     );
   }

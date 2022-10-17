@@ -13,10 +13,9 @@
         "default": "ZbBridge"
       },
       "mqttTopic": {
-        "title": "MQTT Topic",
+        "title": "Zigbee2Tasmota MQTT Topic",
         "type": "string",
-        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)",
-        "required": true
+        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)"
       },
       "zbBridgeDevices": {
         "title": "ZbBridge Devices",
@@ -191,7 +190,7 @@
           }
         }
       },
-      "z2mDevices": {
+      "zigbee2mqttDevices": {
         "title": "Zigbee2MQTT Devices",
         "expandable": true,
         "expanded": false,
@@ -199,7 +198,7 @@
         "items": {
           "type": "object",
           "properties": {
-            "addr": {
+            "ieee_address": {
               "title": "Device Addr",
               "type": "string",
               "placeholder": "IEEEAddr",
@@ -332,8 +331,8 @@
         "type": "string",
         "format": "password"
       },
-      "z2mBaseTopic": {
-        "title": "Zigbee2MQTT base topic",
+      "zigbee2mqttTopic": {
+        "title": "Zigbee2MQTT topic",
         "placeholder": "zigbee2mqtt",
         "type": "string"
       }
@@ -457,7 +456,7 @@
         } ]
     },
     {
-      "key": "z2mDevices",
+      "key": "zigbee2mqttDevices",
       "buttonText": "Add Device",
       "default": [ ],
       "items": [ {
@@ -475,7 +474,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "z2mDevices[].addr"
+                      "key": "zigbee2mqttDevices[].ieee_address"
                     } ]
                 },
                 {
@@ -484,7 +483,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "z2mDevices[].name"
+                      "key": "zigbee2mqttDevices[].name"
                     } ]
                 }
               ]
@@ -498,7 +497,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "z2mDevices[].powerTopic"
+                      "key": "zigbee2mqttDevices[].powerTopic"
                     } ]
                 }, {
                   "type": "flex",
@@ -506,7 +505,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "z2mDevices[].powerType"
+                      "key": "zigbee2mqttDevices[].powerType"
                     } ]
                 } ]
             } ]
@@ -575,7 +574,7 @@
               "items": [ "mqttPassword" ]
             } ]
         },
-        "z2mBaseTopic"
+        "zigbee2mqttTopic"
       ]
     }
   ]
