@@ -13,13 +13,11 @@
 
 # Homebridge Tasmota ZbBridge
 
-This plugin can controll devices connected to a Zigbee bridge running [Tasmota](https://tasmota.github.io/docs) software (for example Sonoff [Zigbee Bridge](https://zigbee.blakadder.com/Sonoff_ZBBridge.html) or [Zigbee Bridge Pro](https://zigbee.blakadder.com/Sonoff_ZBBridge-P.html) or other [suported](https://tasmota.github.io/docs/Zigbee) hardware) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) devices.
+This plugin can controll Zigbee or [Tasmota](https://tasmota.github.io/docs) devices connected to a MQTT broker. 
 
-Devices running Tasmota are also suported (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.).
+Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge. 
 
-It is possible to combine Tasmota devices - a switch device can turn a Zigbee lamp on and then the dimmer can be changed using Zigbee commands. The lightbulb should be configred to automatically turn on when power is applied.
-
-The plugin uses MQTT commands to control the configured devices. MQTT broker is required.
+By configuring a `powerTopic` it is possible to combine devices to a singe HomeKit appliance - Tasmota controlled switch can turn on a Zigbee lightbulb and then change the brightness or the collor over the Zigbee network (the lightbulb should be configured to turn on automatically when power is applied).
 
 # Installation
 
@@ -68,12 +66,13 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
             "sensorService": "ContactSensor",
             "sensorCharacteristic": "ContactSensorState",
             "sensorValuePath": "Contact"
-        },
+        }
+    ],
+    "zigbee2mqttDevices": [
         {
-            "addr": "0x002788011234567F",
-            "type": "z2m",
+            "ieee_address": "0x002788011234567F",
             "name": "Light Bulb"
-        },
+        }
     ],
     "tasmotaDevices": [
         {
@@ -98,16 +97,18 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
         }
     ],
     "mqttBroker": "raspi2",
+    "mqttTopic": "zigbee-pro",
+    "zigbee2mqttTopic": "zigbee2mqtt",
     "platform": "TasmotaZbBridge"
 }
 ```
 
-`mqttTopic`- Identifying topic of your Zigbee bridge device (i.e. tasmota_ABCDEF)
+`mqttTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge)
 
-`zbBridgeDevices` - Zigbee devices connected to the Zigbee bridge device
+`zbBridgeDevices` - Zigbee devices connected to the Zigbee2Tasmota gateway/bridge
 
 * `addr` - Device hardware or short address and optional endpoint (for example Tuya 2ch switch). The hardware address (64 bits) is unique per device and factory assigned so once configured it will still work even if the device have to be paired again. Example: Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
-* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`, `z2m`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
+* `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique. Will update ZbBridge Friendly Name if endpoint is not used.
 * Advanced settings
   * `powerTopic` - (optional) Use another tasmota device to controll the power (configure it's identifying topic)
@@ -120,6 +121,13 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
     ```
     {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"ContactSensorExample","Contact":0,"Endpoint":1,"LinkQuality":66}}}
     ```
+    
+`zigbee2mqttDevices` - Zigbee devices connected to Zigbee2MQTT gateway/bridge
+
+* `ieee_address`
+* `name` - Accessory name to be used in the Home applicaiton. Should be unique.
+* `powerTopic` - (optional) Use another tasmota device to controll the power (configure it's identifying topic)
+* `powerType` - (optional) Tasmota switch topic used to turn on/off the zigbee device, (default: `POWER`)
 
 `tasmotaDevices` - Tasmota flashed devices
 
@@ -133,22 +141,21 @@ The plugin uses MQTT commands to control the configured devices. MQTT broker is 
 
 `mqttPassword` - MQTT Broker passwort if passwort protected
 
-`z2mBaseTopic` - Zigbee2MQTT base topic (default: zigbee2mqtt)
+`zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt)
 
 # Zigbee2MQTT
 
-It is also possible to controll devices using Zigbee2MQTT gateway. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. Currently only `Switch` and `Lightbulb` accessories are supported. 
-Configure the hardware (64 bits) address and select `z2m` as type. Supported features are queried directly from Zigbe2MQTT and configured automatically.
+It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. Currently only `Switch` and `Lightbulb` accessories are supported. Supported features are queried directly from Zigbe2MQTT and configured automatically.
 
-# Binding
+# Binding with Zigbee2Tasmota
 
-You can add switches to HomeKit to control automations or bind them with other devices or groups for direct control.
+You can add switches or sensors to HomeKit to control automations or bind them with other devices or groups for direct control.
 
 Note: when a device is bound to a group you have to listen to the group messages for device status updates. By default EZSP will not report group messages unless you subscribe to the group.
 
-IKEA remotes only support 1 group and can be linked to a light only via group numbers (no direct binding).
+IKEA remotes (with old firmware) only support 1 group and can be linked to a light only via group numbers (no direct binding).
 
-Type following commands in the tasmota console to bind a switch to a light:
+Type following commands in the Tasmota console to bind a switch to a light:
 
 1. Add the light to group 10
 

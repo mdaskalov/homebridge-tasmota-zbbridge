@@ -10,7 +10,7 @@ import { ZbBridgeAccessory } from './zbBridgeAccessory';
 
 const UPDATE_TIMEOUT = 2000;
 
-export class ZbBridgeCharacteristic {
+export class Zigbee2MQTTCharacteristic {
   private value: CharacteristicValue;
   private setValue: CharacteristicValue;
   private setTs: number;

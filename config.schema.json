@@ -13,10 +13,9 @@
         "default": "ZbBridge"
       },
       "mqttTopic": {
-        "title": "MQTT Topic",
+        "title": "Zigbee2Tasmota MQTT Topic",
         "type": "string",
-        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)",
-        "required": true
+        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)"
       },
       "zbBridgeDevices": {
         "title": "ZbBridge Devices",
@@ -63,9 +62,6 @@
                 }, {
                   "title": "Sensor",
                   "enum": [ "sensor" ]
-                }, {
-                  "title": "Zigbee2MQTT Device",
-                  "enum": [ "z2m" ]
                 } ],
               "required": true
             },
@@ -194,6 +190,55 @@
           }
         }
       },
+      "zigbee2mqttDevices": {
+        "title": "Zigbee2MQTT Devices",
+        "expandable": true,
+        "expanded": false,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ieee_address": {
+              "title": "Device Addr",
+              "type": "string",
+              "placeholder": "IEEEAddr",
+              "pattern": "^0x[A-Fa-f0-9]{16}$",
+              "required": true
+            },
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "placeholder": "HomeKit name",
+              "required": true
+            },
+            "powerTopic": {
+              "title": "Power Topic",
+              "placeholder": "Power Topic",
+              "type": "string"
+            },
+            "powerType": {
+              "title": "Type",
+              "type": "string",
+              "oneOf": [ {
+                  "title": "Switch",
+                  "enum": [ "POWER" ]
+                }, {
+                  "title": "Switch 1",
+                  "enum": [ "POWER1" ]
+                }, {
+                  "title": "Switch 2",
+                  "enum": [ "POWER2" ]
+                }, {
+                  "title": "Switch 3",
+                  "enum": [ "POWER3" ]
+                }, {
+                  "title": "Switch 4",
+                  "enum": [ "POWER4" ]
+                } ]
+            }
+          }
+        }
+      },
       "tasmotaDevices": {
         "title": "Tasmota Devices",
         "expandable": true,
@@ -286,8 +331,8 @@
         "type": "string",
         "format": "password"
       },
-      "z2mBaseTopic": {
-        "title": "Zigbee2MQTT base topic",
+      "zigbee2mqttTopic": {
+        "title": "Zigbee2MQTT topic",
         "placeholder": "zigbee2mqtt",
         "type": "string"
       }
@@ -411,6 +456,62 @@
         } ]
     },
     {
+      "key": "zigbee2mqttDevices",
+      "buttonText": "Add Device",
+      "default": [ ],
+      "items": [ {
+          "type": "div",
+          "nodescription": true,
+          "displayFlex": false,
+          "items": [ {
+              "type": "flex",
+              "nodescription": true,
+              "flex-flow": "row wrap",
+              "items": [ {
+                  "type": "flex",
+                  "flex": "1 1 150px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zigbee2mqttDevices[].ieee_address"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zigbee2mqttDevices[].name"
+                    } ]
+                }
+              ]
+            }, {
+              "type": "flex",
+              "nodescription": true,
+              "flex-flow": "row",
+              "items": [ {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zigbee2mqttDevices[].powerTopic"
+                    } ]
+                }, {
+                  "type": "flex",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "zigbee2mqttDevices[].powerType"
+                    } ]
+                } ]
+            } ]
+        } ]
+    },
+    {
       "key": "tasmotaDevices",
       "buttonText": "Add Device",
       "default": [ ],
@@ -473,7 +574,7 @@
               "items": [ "mqttPassword" ]
             } ]
         },
-        "z2mBaseTopic"
+        "zigbee2mqttTopic"
       ]
     }
   ]
