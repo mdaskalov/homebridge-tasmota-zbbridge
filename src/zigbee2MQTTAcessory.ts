@@ -5,7 +5,7 @@ import {
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
-import { ZbBridgeCharacteristic } from './zbBridgeCharacteristic';
+import { Zigbee2MQTTCharacteristic } from './zigbee2MQTTCharacteristic';
 
 const FEATURES = [
   { service: 'Lightbulb', features: ['brightness', 'color_temp', 'color_xy', 'color_hs'] },
@@ -85,7 +85,7 @@ export class Zigbee2MQTTAcessory {
   private powerTopic?: string;
   private addr: string;
   private deviceFriendlyName = 'Unknown';
-  private characteristics: { [key: string]: ZbBridgeCharacteristic } = {};
+  private characteristics: { [key: string]: Zigbee2MQTTCharacteristic } = {};
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
@@ -148,7 +148,7 @@ export class Zigbee2MQTTAcessory {
             this.characteristics['state']?.update(msg.state === 'ON');
           }
           if (msg.brightness !== undefined) {
-            this.characteristics['brightness']?.update(ZbBridgeCharacteristic.mapMaxValue(msg.brightness, 254, 100));
+            this.characteristics['brightness']?.update(Zigbee2MQTTCharacteristic.mapMaxValue(msg.brightness, 254, 100));
           }
           if (msg.color_temp !== undefined && msg.color_mode === 'color_temp') {
             this.characteristics['color_temp']?.update(msg.color_temp);
@@ -184,7 +184,7 @@ export class Zigbee2MQTTAcessory {
   }
 
   registerStateHandler() {
-    const state = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'On', false);
+    const state = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'On', false);
     state.willGet = () => {
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
@@ -205,19 +205,19 @@ export class Zigbee2MQTTAcessory {
   }
 
   registerBrightnessHandler() {
-    const brightness = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
+    const brightness = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
     brightness.willGet = () => {
       this.get('brightness');
       return undefined;
     };
     brightness.willSet = value => {
-      this.set('brightness', ZbBridgeCharacteristic.mapMaxValue(value as number, 100, 254));
+      this.set('brightness', Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 100, 254));
     };
     this.characteristics['brightness'] = brightness;
   }
 
   registerColorTempHandler() {
-    const colorTemp = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
+    const colorTemp = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
     colorTemp.willGet = () => {
       this.get('color_temp');
       return undefined;
@@ -229,7 +229,7 @@ export class Zigbee2MQTTAcessory {
   }
 
   registerHueHandler() {
-    const hue = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Hue', 20);
+    const hue = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Hue', 20);
     hue.willGet = () => {
       this.get('color/hue');
       return undefined;
@@ -241,7 +241,7 @@ export class Zigbee2MQTTAcessory {
   }
 
   registerSaturationHandler() {
-    const saturation = new ZbBridgeCharacteristic(this.platform, this.accessory, this.service, 'Saturation', 20);
+    const saturation = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Saturation', 20);
     saturation.willGet = () => {
       this.get('color/saturation');
       return undefined;
