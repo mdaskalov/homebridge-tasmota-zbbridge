@@ -137,9 +137,9 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 
 `mqttBroker` - MQTT Broker hostname if not localhost
 
-`mqttUsername` - MQTT Broker username if passwort protected
+`mqttUsername` - MQTT Broker username if password protected
 
-`mqttPassword` - MQTT Broker passwort if passwort protected
+`mqttPassword` - MQTT Broker passwort if password protected
 
 `zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt)
 
