@@ -11,9 +11,9 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/mdaskalov/homebridge-tasmota-zbbridge.svg)](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/mdaskalov/homebridge-tasmota-zbbridge.svg)](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/issues)
 
-# Homebridge Tasmota ZbBridge
+# Homebridge Tasmota Zigbee Bridge
 
-This plugin can controll Zigbee or [Tasmota](https://tasmota.github.io/docs) devices connected to a MQTT broker. 
+This Homebridge plugin can controll [Tasmota](https://tasmota.github.io/docs) or Zigbee devices connected to a MQTT broker. 
 
 Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge. 
 
