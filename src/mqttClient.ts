@@ -22,6 +22,8 @@ type DeviceHandler = {
   callback: DeviceCallback;
 };
 
+export const DEFALT_TIMEOUT = 5000;
+
 export class MQTTClient {
 
   private topicHandlers: Array<TopicHandler> = [];
@@ -179,25 +181,26 @@ export class MQTTClient {
     this.log.debug('MQTT: Published: %s %s', topic, message);
   }
 
-  submit(topic: string, message: string, responseTopic = topic, timeOut = 2000): Promise<string> {
-    return new Promise((resolve: (message) => void, reject) => {
-      const startTS = Date.now();
-
-      const handlerId = this.subscribeTopic(responseTopic, msg => {
+  read(topic: string, timeout?: number, messageDump?: boolean): Promise<string> {
+    return new Promise((resolve: (message: string) => void, reject) => {
+      const start = Date.now();
+      const handlerId = this.subscribeTopic(topic, message => {
         clearTimeout(timer);
-        resolve(msg);
-      }, true);
-
+        resolve(message);
+      }, messageDump === undefined ? true : messageDump, true);
       const timer = setTimeout(() => {
-        this.log.error('MQTT: Submit: timeout after %sms %s',
-          Date.now() - startTS, message);
         if (handlerId !== undefined) {
           this.unsubscribe(handlerId);
         }
-        reject('MQTT: Submit timeout');
-      }, timeOut);
-      this.publish(topic, message);
+        const elapsed = Date.now() - start;
+        reject(`MQTT: Read timeout after ${elapsed}ms`);
+      }, timeout === undefined ? DEFALT_TIMEOUT : timeout);
     });
+  }
+
+  submit(topic: string, message: string, responseTopic = topic, timeout?: number, messageDump?: boolean): Promise<string> {
+    this.publish(topic, message);
+    return this.read(responseTopic, timeout, messageDump);
   }
 }
 
