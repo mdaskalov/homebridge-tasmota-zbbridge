@@ -169,7 +169,7 @@ export class Zigbee2MQTTAcessory {
 
   registerStateHandler() {
     const state = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'On', false);
-    state.willGet = () => {
+    state.onGet = () => {
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
       } else {
@@ -177,7 +177,7 @@ export class Zigbee2MQTTAcessory {
       }
       return undefined;
     };
-    state.willSet = value => {
+    state.onSet = value => {
       const state = value ? 'ON' : 'OFF';
       if (this.powerTopic !== undefined) {
         this.platform.mqttClient.publish('cmnd/' + this.powerTopic, state);
@@ -190,11 +190,11 @@ export class Zigbee2MQTTAcessory {
 
   registerBrightnessHandler() {
     const brightness = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
-    brightness.willGet = () => {
+    brightness.onGet = () => {
       this.get('brightness');
       return undefined;
     };
-    brightness.willSet = value => {
+    brightness.onSet = value => {
       this.set('brightness', Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 100, 254));
     };
     this.characteristics['brightness'] = brightness;
@@ -202,11 +202,11 @@ export class Zigbee2MQTTAcessory {
 
   registerColorTempHandler() {
     const colorTemp = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
-    colorTemp.willGet = () => {
+    colorTemp.onGet = () => {
       this.get('color_temp');
       return undefined;
     };
-    colorTemp.willSet = value => {
+    colorTemp.onSet = value => {
       this.set('color_temp', value);
     };
     this.characteristics['color_temp'] = colorTemp;
@@ -214,11 +214,11 @@ export class Zigbee2MQTTAcessory {
 
   registerHueHandler() {
     const hue = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Hue', 20);
-    hue.willGet = () => {
+    hue.onGet = () => {
       this.get('color/hue');
       return undefined;
     };
-    hue.willSet = value => {
+    hue.onSet = value => {
       this.set('color/hue', value);
     };
     this.characteristics['hue'] = hue;
@@ -226,11 +226,11 @@ export class Zigbee2MQTTAcessory {
 
   registerSaturationHandler() {
     const saturation = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Saturation', 20);
-    saturation.willGet = () => {
+    saturation.onGet = () => {
       this.get('color/saturation');
       return undefined;
     };
-    saturation.willSet = value => {
+    saturation.onSet = value => {
       this.set('color/saturation', value);
     };
     this.characteristics['saturation'] = saturation;

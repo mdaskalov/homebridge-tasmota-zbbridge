@@ -11,13 +11,13 @@ import { ZbBridgeAccessory } from './zbBridgeAccessory';
 const UPDATE_TIMEOUT = 2000;
 
 export class Zigbee2MQTTCharacteristic {
-  private value: CharacteristicValue;
+  public value: CharacteristicValue;
   private setValue: CharacteristicValue;
   private setTs: number;
   private updateTs: number;
 
-  public willGet?: (value: CharacteristicValue) => CharacteristicValue | undefined;
-  public willSet?: (value: CharacteristicValue) => void;
+  public onGet?: () => CharacteristicValue | undefined;
+  public onSet?: (value: CharacteristicValue) => void;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
@@ -32,8 +32,9 @@ export class Zigbee2MQTTCharacteristic {
     this.updateTs = Date.now();
 
     this.service.getCharacteristic(this.platform.Characteristic[this.characteristic])
-      .onGet(this.onGet.bind(this))
-      .onSet(this.onSet.bind(this));
+      .onGet(this.onGetValue.bind(this))
+      .onSet(this.onSetValue.bind(this));
+
   }
 
   private timeouted(ts: number): boolean {
@@ -65,7 +66,7 @@ export class Zigbee2MQTTCharacteristic {
     return ignored;
   }
 
-  private async onGet(): Promise<CharacteristicValue> {
+  private async onGetValue(): Promise<CharacteristicValue> {
     const updated = (this.updateTs >= this.setTs);
     const timeouted = this.timeouted(this.setTs);
 
@@ -74,8 +75,8 @@ export class Zigbee2MQTTCharacteristic {
 
     let value: CharacteristicValue | undefined = notUpdated ? this.setValue : this.value;
 
-    if (needsUpdate && this.willGet !== undefined) {
-      value = this.willGet(value);
+    if (needsUpdate && this.onGet !== undefined) {
+      value = this.onGet();
     }
     if (value === undefined) {
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
@@ -86,11 +87,11 @@ export class Zigbee2MQTTCharacteristic {
     return value;
   }
 
-  private async onSet(value: CharacteristicValue) {
+  private async onSetValue(value: CharacteristicValue) {
     this.setValue = value;
     this.setTs = Date.now();
-    if (this.willSet !== undefined) {
-      this.willSet(value);
+    if (this.onSet !== undefined) {
+      this.onSet(value);
     }
   }
 
