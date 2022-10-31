@@ -106,9 +106,8 @@ export class Zigbee2MQTTCharacteristic {
     return statusText;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log(message: string, ...parameters: any[]): void {
-    this.platform.log.debug(this.accessory.context.device.name + ':' + this.characteristic + ' ' + message,
+  log(message: string, ...parameters: unknown[]): void {
+    this.platform.log.debug(this.accessory.context.device.name + ':' + this.characteristicName + ' ' + message,
       ...parameters,
     );
   }
