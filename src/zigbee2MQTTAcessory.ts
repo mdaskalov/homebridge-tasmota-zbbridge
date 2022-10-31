@@ -79,90 +79,85 @@ export class Zigbee2MQTTAcessory {
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
-    readonly serviceName: string,
   ) {
     if (this.accessory.context.device.powerTopic !== undefined) {
       this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
     }
     this.ieee_address = this.accessory.context.device.ieee_address;
 
-    const service = this.platform.Service[serviceName];
-    if (service === undefined) {
-      throw new Error('Unknown service: ' + serviceName);
-    }
+    const service = this.accessory.context.service;
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    const device = platform.zigbee2mqttDevices.find(d => d.ieee_address === this.ieee_address);
-    if (device !== undefined) {
-      //this.log('device: %s', JSON.stringify(device, null, '  '));
-      this.deviceFriendlyName = device.friendly_name;
-      const service = this.accessory.getService(this.platform.Service.AccessoryInformation);
-      if (service !== undefined) {
-        service
-          .setCharacteristic(this.platform.Characteristic.Manufacturer, device.manufacturer)
-          .setCharacteristic(this.platform.Characteristic.Model, device.model_id)
-          .setCharacteristic(this.platform.Characteristic.SerialNumber, this.ieee_address);
-        if (device.software_build_id) {
-          service.setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id);
-        }
-        this.log('Manufacturer: %s, Model: %s',
-          device.manufacturer,
-          device.model_id,
-        );
+    const device = this.accessory.context.z2m_device;
+    //this.log('device: %s', JSON.stringify(device, null, '  '));
+    this.deviceFriendlyName = device.friendly_name;
+    const infoService = this.accessory.getService(this.platform.Service.AccessoryInformation);
+    if (infoService !== undefined) {
+      infoService
+        .setCharacteristic(this.platform.Characteristic.Manufacturer, device.manufacturer)
+        .setCharacteristic(this.platform.Characteristic.Model, device.model_id)
+        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.ieee_address);
+      if (device.software_build_id) {
+        infoService.setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id);
       }
-
-      const features = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
-      this.log('Exposes: ' + JSON.stringify(features));
-      if (features.includes('state')) {
-        this.registerStateHandler();
-      }
-      if (features.includes('brightness')) {
-        this.registerBrightnessHandler();
-      }
-      if (features.includes('color_temp')) {
-        this.registerColorTempHandler();
-      }
-      if (features.includes('color_hs')) {
-        this.registerHueHandler();
-        this.registerSaturationHandler();
-      }
-
-      // subscribe to device status updates
-      this.platform.mqttClient.subscribeTopic(
-        this.platform.config.zigbee2mqttTopic + '/' + device.friendly_name, message => {
-          const msg = JSON.parse(message);
-          //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
-          if (msg.state !== undefined && this.powerTopic === undefined) {
-            this.characteristics['state']?.update(msg.state === 'ON');
-          }
-          if (msg.brightness !== undefined) {
-            this.characteristics['brightness']?.update(Zigbee2MQTTCharacteristic.mapMaxValue(msg.brightness, 254, 100));
-          }
-          if (msg.color_temp !== undefined && msg.color_mode === 'color_temp') {
-            this.characteristics['color_temp']?.update(msg.color_temp);
-          }
-          if (msg.color !== undefined && msg.color_mode === 'hs') {
-            if (msg.color.hue) {
-              this.characteristics['hue']?.update(msg.color.hue);
-            }
-            if (msg.color.saturation) {
-              this.characteristics['saturation']?.update(msg.color.saturation);
-            }
-          }
-        });
-      //Subscribe for the power topic updates
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
-          //this.log('power state changed: %s', message);
-          this.characteristics['state']?.update((message === 'ON'));
-        });
-        // request initial state
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-      }
-      // request initial state
-      this.get('state');
+      this.log('Manufacturer: %s, Model: %s',
+        this.accessory.context.z2m_device.manufacturer,
+        this.accessory.context.z2m_device.model_id,
+      );
     }
+
+    //this.log('Exposes: %s', JSON.stringify(this.accessory.context.exposes, null, '  '));
+    const features = this.accessory.context.exposes.features.map(f => f.name);
+    this.log('Exposes features: %s', JSON.stringify(features));
+    if (features.includes('state')) {
+      this.registerStateHandler();
+    }
+    if (features.includes('brightness')) {
+      this.registerBrightnessHandler();
+    }
+    if (features.includes('color_temp')) {
+      this.registerColorTempHandler();
+    }
+    if (features.includes('color_hs')) {
+      this.registerHueHandler();
+      this.registerSaturationHandler();
+    }
+
+    // subscribe to device status updates
+    this.platform.mqttClient.subscribeTopic(
+      this.platform.config.zigbee2mqttTopic + '/' + device.friendly_name, message => {
+        const msg = JSON.parse(message);
+        //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
+        if (msg.state !== undefined && this.powerTopic === undefined) {
+          this.characteristics['state']?.update(msg.state === 'ON');
+        }
+        if (msg.brightness !== undefined) {
+          this.characteristics['brightness']?.update(Zigbee2MQTTCharacteristic.mapMaxValue(msg.brightness, 254, 100));
+        }
+        if (msg.color_temp !== undefined && msg.color_mode === 'color_temp') {
+          this.characteristics['color_temp']?.update(msg.color_temp);
+        }
+        if (msg.color !== undefined && msg.color_mode === 'hs') {
+          if (msg.color.hue) {
+            this.characteristics['hue']?.update(msg.color.hue);
+          }
+          if (msg.color.saturation) {
+            this.characteristics['saturation']?.update(msg.color.saturation);
+          }
+        }
+      });
+    //Subscribe for the power topic updates
+    if (this.powerTopic !== undefined) {
+      this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
+        //this.log('power state changed: %s', message);
+        this.characteristics['state']?.update((message === 'ON'));
+      });
+      // request initial state
+      this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
+    }
+    // request initial state
+    this.get('state');
   }
 
   log(message: string, ...parameters: unknown[]): void {
