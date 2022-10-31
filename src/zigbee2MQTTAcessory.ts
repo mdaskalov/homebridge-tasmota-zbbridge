@@ -268,21 +268,16 @@ export class Zigbee2MQTTAcessory {
     );
   }
 
-  static getExposedFeatures(device: Z2MDevice): Z2MExposeFeature[] {
-    const exposes = device.definition.exposes.find(e => e.features);
-    if (exposes !== undefined && exposes.features !== undefined) {
-      return exposes.features;
+  static getServiceName(device: Z2MDevice): { serviceName: string; exposes: Z2MExpose } {
+    const exposesLight = device.definition.exposes.find(f => f.type === 'light');
+    if (exposesLight !== undefined) {
+      return { serviceName: 'Lightbulb', exposes: exposesLight };
     }
-    return [];
-  }
-
-  static getServiceName(device: Z2MDevice): string | undefined {
-    const exposedFeatures = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
-    for (const set of FEATURES) {
-      if (exposedFeatures.some(f => set.features.includes(f))) {
-        return set.service;
-      }
+    const exposesSwitch = device.definition.exposes.find(f => f.type === 'switch');
+    if (exposesSwitch !== undefined) {
+      return { serviceName: 'Lightbulb', exposes: exposesSwitch };
     }
+    return { serviceName: 'Unknown', exposes: device.definition.exposes[0] };
   }
 
 }
