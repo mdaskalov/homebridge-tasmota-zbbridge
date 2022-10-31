@@ -140,7 +140,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
               this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s) - %s',
                 restored ? 'Restoring' : 'Adding', device.name, device.ieee_address, serviceName);
             } else {
-              this.log.error('Unsupported Zigbee2MQTT device: %s (%s)', z2m_device.definition.description, device.ieee_address);
+              this.log.error('Unsupported Zigbee2MQTT device: %s (%s)', device.name, device.ieee_address);
             }
           } else {
             this.log.error('Zigbee2MQTT device not found: %s', device.ieee_address);
