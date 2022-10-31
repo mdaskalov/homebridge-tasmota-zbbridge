@@ -84,16 +84,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  createZigbee2MQTTAcessory(accessory: PlatformAccessory) {
-    const device = this.zigbee2mqttDevices.find(d => d.ieee_address === accessory.context.device.addr);
-    if (device !== undefined) {
-      const serviceName = Zigbee2MQTTAcessory.getServiceName(device);
-      if (serviceName !== undefined) {
-        new Zigbee2MQTTAcessory(this, accessory, serviceName);
-      }
-    }
-  }
-
   restoreAccessory(uuid: string, name: string): { restored: boolean; accessory: PlatformAccessory<UnknownContext> } {
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     if (existingAccessory) {
