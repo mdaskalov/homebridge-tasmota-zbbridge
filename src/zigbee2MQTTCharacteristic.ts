@@ -23,7 +23,7 @@ export class Zigbee2MQTTCharacteristic {
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
     readonly service: Service,
-    readonly characteristic: string,
+    readonly characteristicName: string,
     readonly initial: CharacteristicValue,
   ) {
     this.value = initial;
@@ -31,7 +31,7 @@ export class Zigbee2MQTTCharacteristic {
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
 
-    this.service.getCharacteristic(this.platform.Characteristic[this.characteristic])
+    this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName])
       .onGet(this.onGetValue.bind(this))
       .onSet(this.onSetValue.bind(this));
 
@@ -100,8 +100,8 @@ export class Zigbee2MQTTCharacteristic {
     if (value !== undefined) {
       const updateIgnored = this.updateValue(value);
       if (!updateIgnored) {
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristic]).updateValue(value);
-        statusText += ` ${this.characteristic}: ${value}`;
+        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(value);
+        statusText += ` ${this.characteristicName}: ${value}`;
       }
     }
     return statusText;
