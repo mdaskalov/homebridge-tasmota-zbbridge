@@ -209,13 +209,22 @@ export class Zigbee2MQTTAcessory {
     const path = (propertyPath !== undefined ? propertyPath + '.' : '') + exposed.property;
     if ((exposed.access & 2) === 2) {
       characteristic.onGet = () => {
-        this.get(path);
+        if (path === 'state' && this.device.powerTopic !== undefined) {
+          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
+        } else {
+          this.get(path);
+        }
         return undefined;
       };
     }
     if ((exposed.access & 3) === 3) {
       characteristic.onSet = value => {
-        this.set(path, this.mapSetValue(exposed.property, value));
+        const mappedValue = this.mapSetValue(exposed.property, value);
+        if (path === 'state' && this.device.powerTopic !== undefined) {
+          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, mappedValue as string);
+        } else {
+          this.set(path, mappedValue);
+        }
       };
     }
     //this.log('characteristic: %s (%s)', characteristicName, path);
@@ -249,29 +258,6 @@ export class Zigbee2MQTTAcessory {
       ...parameters,
     );
   }
-
-  /*
-  registerStateHandler() {
-    const state = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'On', false);
-    state.onGet = () => {
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-      } else {
-        this.get('state');
-      }
-      return undefined;
-    };
-    state.onSet = value => {
-      const state = value ? 'ON' : 'OFF';
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, state);
-      } else {
-        this.set('state', state);
-      }
-    };
-    this.characteristics['state'] = state;
-  }
-  */
 
   getObjectByPath(obj: object, path: string): object | undefined {
     return path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
