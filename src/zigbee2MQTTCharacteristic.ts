@@ -24,10 +24,9 @@ export class Zigbee2MQTTCharacteristic {
     readonly accessory: PlatformAccessory,
     readonly service: Service,
     readonly characteristicName: string,
-    readonly initial: CharacteristicValue,
   ) {
-    this.value = initial;
-    this.setValue = initial;
+    this.value = 0;
+    this.setValue = 0;
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
 
