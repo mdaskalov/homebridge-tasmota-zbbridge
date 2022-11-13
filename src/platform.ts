@@ -7,7 +7,7 @@ import { ZbBridgeDevice } from './zbBridgeAccessory';
 import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { ZbBridgeSensor } from './zbBridgeSensor';
-import { Zigbee2MQTTAcessory, Z2MDevice, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
+import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -15,8 +15,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly mqttClient = new MQTTClient(this.log, this.config);
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  // zigbee2mqtt devices
-  public zigbee2mqttDevices: Z2MDevice[] = [];
 
   constructor(
     public readonly log: Logger,
@@ -55,9 +53,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   zigbee2MQTTDeviceUUID(device: Zigbee2MQTTDevice): string {
-    const identificator = device.ieee_address +
-      (device.powerTopic || '') +
-      (device.powerType || '');
+    const identificator = 'z2m' + device.ieee_address +
+      (device.powerTopic || '');
     return this.api.hap.uuid.generate(identificator);
   }
 
@@ -116,37 +113,30 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       this.config.zigbee2mqttTopic = 'zigbee2mqtt';
     }
     try {
-      const devicesTopic = this.config.zigbee2mqttTopic + '/bridge/devices';
-      const message = await this.mqttClient.read(devicesTopic, undefined, false);
-      const z2m_devices: Z2MDevice[] = JSON.parse(message);
+      const bridgeDevicesTopic = this.config.zigbee2mqttTopic + '/bridge/devices';
+      const message = await this.mqttClient.read(bridgeDevicesTopic, undefined, false);
+      const z2m_devices: Zigbee2MQTTDevice[] = JSON.parse(message);
       if (!Array.isArray(z2m_devices)) {
-        throw (`topic (${devicesTopic}) parse error`);
+        throw (`topic (${bridgeDevicesTopic}) parse error`);
       }
       this.log.info('Found %s Zigbee2MQTT devices', z2m_devices.length);
 
-      for (const device of this.config.zigbee2mqttDevices) {
-        if ((<Zigbee2MQTTDevice>device)?.ieee_address && (<Zigbee2MQTTDevice>device)?.name) {
-          const z2m_device = z2m_devices.find(d => d.ieee_address === device.ieee_address);
-          if (z2m_device !== undefined) {
-            const { serviceName, exposes } = Zigbee2MQTTAcessory.getServiceName(z2m_device);
-            const service = this.Service[serviceName];
-            if (service !== undefined) {
-              const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.name);
-              accessory.context.device = device;
-              accessory.context.z2m_device = z2m_device;
-              accessory.context.exposes = exposes;
-              accessory.context.service = service;
-              new Zigbee2MQTTAcessory(this, accessory);
-              this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s) - %s',
-                restored ? 'Restoring' : 'Adding', device.name, device.ieee_address, serviceName);
-            } else {
-              this.log.error('Unsupported Zigbee2MQTT device: %s (%s)', device.name, device.ieee_address);
+      for (const configured of this.config.zigbee2mqttDevices) {
+        if (configured.ieee_address && configured.name) {
+          const device = z2m_devices.find(d => d.ieee_address === configured.ieee_address);
+          if (device !== undefined) {
+            device.homekit_name = configured.name;
+            if (configured.powerTopic !== undefined) {
+              device.powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
             }
-          } else {
-            this.log.error('Zigbee2MQTT device not found: %s', device.ieee_address);
+            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), configured.name);
+            accessory.context.device = device;
+            new Zigbee2MQTTAcessory(this, accessory);
+            this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
+              restored ? 'Restoring' : 'Adding', configured.name, configured.ieee_address);
           }
         } else {
-          this.log.error('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(device));
+          this.log.error('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(configured));
         }
       }
     } catch (err) {
