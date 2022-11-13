@@ -3,6 +3,7 @@ import {
   PlatformAccessory,
   CharacteristicValue,
   HAPStatus,
+  CharacteristicProps,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -11,6 +12,7 @@ import { ZbBridgeAccessory } from './zbBridgeAccessory';
 const UPDATE_TIMEOUT = 2000;
 
 export class Zigbee2MQTTCharacteristic {
+  public props: CharacteristicProps;
   public value: CharacteristicValue;
   private setValue: CharacteristicValue;
   private setTs: number;
@@ -30,10 +32,18 @@ export class Zigbee2MQTTCharacteristic {
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
 
-    this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName])
-      .onGet(this.onGetValue.bind(this))
-      .onSet(this.onSetValue.bind(this));
-
+    const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
+    if (characteristic !== undefined) {
+      this.props = characteristic.props;
+      //this.log('characteristic props: %s', JSON.stringify(this.props));
+      //this.platform.api.hap.Perms.PAIRED_READ
+      //this.platform.api.hap.Perms.PAIRED_WRITE
+      characteristic
+        .onGet(this.onGetValue.bind(this))
+        .onSet(this.onSetValue.bind(this));
+    } else {
+      throw (`Unable to initialize characteristic: ${this.characteristicName}`);
+    }
   }
 
   private timeouted(ts: number): boolean {
@@ -83,6 +93,12 @@ export class Zigbee2MQTTCharacteristic {
     if (value !== this.value) {
       this.value = value;
     }
+    if (this.props.minValue && value < this.props.minValue) {
+      value = this.props.minValue;
+    }
+    if (this.props.maxValue && value > this.props.maxValue) {
+      value = this.props.maxValue;
+    }
     return value;
   }
 
@@ -107,7 +123,7 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   log(message: string, ...parameters: unknown[]): void {
-    this.platform.log.debug(this.accessory.context.device.name + ':' + this.characteristicName + ' ' + message,
+    this.platform.log.debug(this.accessory.context.device.homekit_name + ':' + this.characteristicName + ' ' + message,
       ...parameters,
     );
   }
