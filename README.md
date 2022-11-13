@@ -145,7 +145,9 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 
 # Zigbee2MQTT
 
-It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. Currently only `Switch` and `Lightbulb` accessories are supported. Supported features are queried directly from Zigbe2MQTT and configured automatically.
+It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. 
+
+Almost all accessory-types are supported but currently some characteristics are not mapped correctly (work in progress). Supported features are queried directly from Zigbe2MQTT and configured automatically. 
 
 # Binding with Zigbee2Tasmota
 

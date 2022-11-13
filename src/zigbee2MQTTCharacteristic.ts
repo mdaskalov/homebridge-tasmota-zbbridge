@@ -3,6 +3,7 @@ import {
   PlatformAccessory,
   CharacteristicValue,
   HAPStatus,
+  CharacteristicProps,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -11,29 +12,38 @@ import { ZbBridgeAccessory } from './zbBridgeAccessory';
 const UPDATE_TIMEOUT = 2000;
 
 export class Zigbee2MQTTCharacteristic {
-  private value: CharacteristicValue;
+  public props: CharacteristicProps;
+  public value: CharacteristicValue;
   private setValue: CharacteristicValue;
   private setTs: number;
   private updateTs: number;
 
-  public willGet?: (value: CharacteristicValue) => CharacteristicValue | undefined;
-  public willSet?: (value: CharacteristicValue) => void;
+  public onGet?: () => CharacteristicValue | undefined;
+  public onSet?: (value: CharacteristicValue) => void;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
     readonly service: Service,
-    readonly characteristic: string,
-    readonly initial: CharacteristicValue,
+    readonly characteristicName: string,
   ) {
-    this.value = initial;
-    this.setValue = initial;
+    this.value = 0;
+    this.setValue = 0;
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
 
-    this.service.getCharacteristic(this.platform.Characteristic[this.characteristic])
-      .onGet(this.onGet.bind(this))
-      .onSet(this.onSet.bind(this));
+    const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
+    if (characteristic !== undefined) {
+      this.props = characteristic.props;
+      //this.log('characteristic props: %s', JSON.stringify(this.props));
+      //this.platform.api.hap.Perms.PAIRED_READ
+      //this.platform.api.hap.Perms.PAIRED_WRITE
+      characteristic
+        .onGet(this.onGetValue.bind(this))
+        .onSet(this.onSetValue.bind(this));
+    } else {
+      throw (`Unable to initialize characteristic: ${this.characteristicName}`);
+    }
   }
 
   private timeouted(ts: number): boolean {
@@ -65,7 +75,7 @@ export class Zigbee2MQTTCharacteristic {
     return ignored;
   }
 
-  private async onGet(): Promise<CharacteristicValue> {
+  private async onGetValue(): Promise<CharacteristicValue> {
     const updated = (this.updateTs >= this.setTs);
     const timeouted = this.timeouted(this.setTs);
 
@@ -74,8 +84,8 @@ export class Zigbee2MQTTCharacteristic {
 
     let value: CharacteristicValue | undefined = notUpdated ? this.setValue : this.value;
 
-    if (needsUpdate && this.willGet !== undefined) {
-      value = this.willGet(value);
+    if (needsUpdate && this.onGet !== undefined) {
+      value = this.onGet();
     }
     if (value === undefined) {
       throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
@@ -83,14 +93,20 @@ export class Zigbee2MQTTCharacteristic {
     if (value !== this.value) {
       this.value = value;
     }
+    if (this.props.minValue && value < this.props.minValue) {
+      value = this.props.minValue;
+    }
+    if (this.props.maxValue && value > this.props.maxValue) {
+      value = this.props.maxValue;
+    }
     return value;
   }
 
-  private async onSet(value: CharacteristicValue) {
+  private async onSetValue(value: CharacteristicValue) {
     this.setValue = value;
     this.setTs = Date.now();
-    if (this.willSet !== undefined) {
-      this.willSet(value);
+    if (this.onSet !== undefined) {
+      this.onSet(value);
     }
   }
 
@@ -99,16 +115,15 @@ export class Zigbee2MQTTCharacteristic {
     if (value !== undefined) {
       const updateIgnored = this.updateValue(value);
       if (!updateIgnored) {
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristic]).updateValue(value);
-        statusText += ` ${this.characteristic}: ${value}`;
+        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(value);
+        statusText += ` ${this.characteristicName}: ${value}`;
       }
     }
     return statusText;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log(message: string, ...parameters: any[]): void {
-    this.platform.log.debug(this.accessory.context.device.name + ':' + this.characteristic + ' ' + message,
+  log(message: string, ...parameters: unknown[]): void {
+    this.platform.log.debug(this.accessory.context.device.homekit_name + ':' + this.characteristicName + ' ' + message,
       ...parameters,
     );
   }

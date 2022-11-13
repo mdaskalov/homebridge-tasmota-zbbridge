@@ -7,13 +7,69 @@ import {
 import { TasmotaZbBridgePlatform } from './platform';
 import { Zigbee2MQTTCharacteristic } from './zigbee2MQTTCharacteristic';
 
-const FEATURES = [
-  { service: 'Lightbulb', features: ['brightness', 'color_temp', 'color_xy', 'color_hs'] },
-  { service: 'Switch', features: ['state'] },
-];
+const EXPOSES = {
+  // Specific exposes
+  light: {
+    service: 'Lightbulb', features: {
+      state: 'On',
+      brightness: 'Brightness',
+      color_temp: 'ColorTemperature',
+      color_hs: { features: { hue: 'Hue', saturation: 'Saturation' } },
+    },
+  },
+  switch: {
+    service: 'Switch', features: {
+      state: 'On',
+    },
+  },
+  fan: {
+    service: 'Fan', features: {
+      state: 'On',
+      mode: 'RotationSpeed',
+    },
+  },
+  cover: {
+    service: 'WindowCovering', features: {
+      state: 'PositionState',
+      position: 'CurrentPosition',
+      tilt: 'CurrentHorizontalTiltAngle',
+    },
+  },
+  lock: {
+    service: 'LockMechanism', features: {
+      state: 'LockTargetState',
+      lock_state: 'LockCurrentState',
+    },
+  },
+  climate: {
+    service: 'Thermostat',
+    features: {
+      local_temperature: 'CurrentTemperature',
+      current_heating_setpoint: 'TargetTemperature',
+      occupied_heating_setpoint: 'TargetTemperature',
+      system_mode: 'TargetHeatingCoolingState',
+      running_state: 'CurrentHeatingCoolingState',
+    },
+  },
+  // Generic exposes
+  battery: { service: 'Battery', characteristic: 'BatteryLevel' },
+  battery_low: { service: 'Battery', characteristic: 'StatusLowBattery' },
+  temperature: { service: 'TemperatureSensor', characteristic: 'CurrentTemperature' },
+  humidity: { service: 'HumiditySensor', characteristic: 'CurrentRelativeHumidity' },
+  illuminance_lux: { service: 'LightSensor', characteristic: 'CurrentAmbientLightLevel' },
+  contact: { service: 'ContactSensor', characteristic: 'ContactSensorState' },
+  occupancy: { service: 'OccupancySensor', characteristic: 'OccupancyDetected' },
+  vibration: { service: 'MotionSensor', characteristic: 'MotionDetected' },
+  smoke: { service: 'SmokeSensor', characteristic: 'SmokeDetected' },
+  carbon_monoxide: { service: 'CarbonMonoxideSensor', characteristic: 'CarbonMonoxideDetected' },
+  water_leak: { service: 'LeakSensor', characteristic: 'LeakDetected' },
+  gas: { service: 'LeakSensor', characteristic: 'LeakDetected' },
+};
 
-export type Z2MExposeFeature = {
-  name: string;
+export type Z2MExpose = {
+  type?: string;
+  name?: string;
+  features?: Z2MExpose[];
   endpoint?: string;
   property: string;
   value_max?: number;
@@ -26,21 +82,6 @@ export type Z2MExposeFeature = {
   access: number;
 };
 
-export type Z2MExpose = {
-  type: string;
-  name?: string;
-  features?: Z2MExposeFeature[];
-  endpoint?: string;
-  values?: string[];
-  value_off?: string;
-  value_on?: string;
-  access: number;
-  property: string;
-  unit?: string;
-  value_min?: number;
-  value_max?: number;
-};
-
 export type Z2MDeviceDefinition = {
   description: string;
   exposes: Z2MExpose[];
@@ -50,7 +91,8 @@ export type Z2MDeviceDefinition = {
   vendor: string;
 };
 
-export type Z2MDevice = {
+export type Zigbee2MQTTDevice = {
+  // Zigbee2MQTT
   ieee_address: string;
   friendly_name: string;
   definition: Z2MDeviceDefinition;
@@ -60,229 +102,188 @@ export type Z2MDevice = {
   power_source: string;
   software_build_id: string;
   supported: boolean;
-};
-
-export type Zigbee2MQTTDevice = {
-  ieee_address: string;
-  name: string;
+  // accessory added
+  homekit_name: string;
   powerTopic?: string;
-  powerType?: string;
 };
 
 export class Zigbee2MQTTAcessory {
-  private service: Service;
-  private powerTopic?: string;
-  private ieee_address: string;
-  private deviceFriendlyName = 'Unknown';
-  private characteristics: { [key: string]: Zigbee2MQTTCharacteristic } = {};
+  private characteristics = {};
+  private device: Zigbee2MQTTDevice;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
-    readonly serviceName: string,
   ) {
-    if (this.accessory.context.device.powerTopic !== undefined) {
-      this.powerTopic = this.accessory.context.device.powerTopic + '/' + (this.accessory.context.device.powerType || 'POWER');
-    }
-    this.ieee_address = this.accessory.context.device.ieee_address;
-
-    const service = this.platform.Service[serviceName];
-    if (service === undefined) {
-      throw new Error('Unknown service: ' + serviceName);
-    }
-    this.service = this.accessory.getService(service) || this.accessory.addService(service);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-
-    const device = platform.zigbee2mqttDevices.find(d => d.ieee_address === this.ieee_address);
-    if (device !== undefined) {
-      //this.log('device: %s', JSON.stringify(device, null, '  '));
-      this.deviceFriendlyName = device.friendly_name;
-      const service = this.accessory.getService(this.platform.Service.AccessoryInformation);
-      if (service !== undefined) {
-        service
-          .setCharacteristic(this.platform.Characteristic.Manufacturer, device.manufacturer)
-          .setCharacteristic(this.platform.Characteristic.Model, device.model_id)
-          .setCharacteristic(this.platform.Characteristic.SerialNumber, this.ieee_address);
-        if (device.software_build_id) {
-          service.setCharacteristic(this.platform.Characteristic.FirmwareRevision, device.software_build_id);
+    this.device = this.accessory.context.device;
+    //this.log('device: %s', JSON.stringify(device));
+    for (const exposed of this.device.definition.exposes) {
+      if (exposed.type !== undefined && exposed.features !== undefined) {
+        const specificExpose = EXPOSES[exposed.type];
+        const service = this.createService(this.device.homekit_name, specificExpose.service);
+        for (const feature of exposed.features) {
+          const featureCharacteristic = specificExpose.features[feature.name];
+          if (featureCharacteristic !== undefined) {
+            if (feature.type === 'composite' && feature.features !== undefined) {
+              for (const compositeFeature of feature.features) {
+                const compositeCharacteristic = specificExpose.features[feature.name].features[compositeFeature.name];
+                this.createCharacteristic(service, compositeCharacteristic, compositeFeature, feature.property);
+              }
+            } else {
+              this.createCharacteristic(service, featureCharacteristic, feature);
+            }
+          }
         }
-        this.log('Manufacturer: %s, Model: %s',
-          device.manufacturer,
-          device.model_id,
-        );
+      } else if (exposed.name !== undefined) {
+        const genericExpose = EXPOSES[exposed.name];
+        if (genericExpose !== undefined) {
+          const service = this.createService(this.device.homekit_name, genericExpose.service);
+          this.createCharacteristic(service, genericExpose.characteristic, exposed);
+        }
       }
-
-      const features = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
-      this.log('Exposes: ' + JSON.stringify(features));
-      if (features.includes('state')) {
-        this.registerStateHandler();
-      }
-      if (features.includes('brightness')) {
-        this.registerBrightnessHandler();
-      }
-      if (features.includes('color_temp')) {
-        this.registerColorTempHandler();
-      }
-      if (features.includes('color_hs')) {
-        this.registerHueHandler();
-        this.registerSaturationHandler();
-      }
-
-      // subscribe to device status updates
-      this.platform.mqttClient.subscribeTopic(
-        this.platform.config.zigbee2mqttTopic + '/' + device.friendly_name, message => {
-          const msg = JSON.parse(message);
-          //this.log('state changed: %s', JSON.stringify(msg, null, '  '));
-          if (msg.state !== undefined && this.powerTopic === undefined) {
-            this.characteristics['state']?.update(msg.state === 'ON');
-          }
-          if (msg.brightness !== undefined) {
-            this.characteristics['brightness']?.update(Zigbee2MQTTCharacteristic.mapMaxValue(msg.brightness, 254, 100));
-          }
-          if (msg.color_temp !== undefined && msg.color_mode === 'color_temp') {
-            this.characteristics['color_temp']?.update(msg.color_temp);
-          }
-          if (msg.color !== undefined && msg.color_mode === 'hs') {
-            if (msg.color.hue) {
-              this.characteristics['hue']?.update(msg.color.hue);
-            }
-            if (msg.color.saturation) {
-              this.characteristics['saturation']?.update(msg.color.saturation);
-            }
-          }
-        });
-      //Subscribe for the power topic updates
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
-          //this.log('power state changed: %s', message);
-          this.characteristics['state']?.update((message === 'ON'));
-        });
-        // request initial state
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-      }
-      // request initial state
-      this.get('state');
     }
+
+    const infoService = this.accessory.getService(this.platform.Service.AccessoryInformation);
+    if (infoService !== undefined) {
+      const serialNumber = this.device.ieee_address.replace('0x', '').toUpperCase();
+      infoService
+        .setCharacteristic(this.platform.Characteristic.Manufacturer, this.device.manufacturer)
+        .setCharacteristic(this.platform.Characteristic.Model, this.device.model_id)
+        .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
+      if (this.device.software_build_id) {
+        infoService.setCharacteristic(this.platform.Characteristic.FirmwareRevision, this.device.software_build_id);
+      }
+      this.log('Manufacturer: %s, Model: %s',
+        this.device.manufacturer,
+        this.device.model_id,
+      );
+    }
+
+    // subscribe to device status updates
+    this.platform.mqttClient.subscribeTopic(
+      this.platform.config.zigbee2mqttTopic + '/' + this.device.friendly_name, message => {
+        this.iterateStateMessage(JSON.parse(message));
+      });
+    //Subscribe for the power topic updates
+    if (this.device.powerTopic !== undefined) {
+      this.platform.mqttClient.subscribeTopic('stat/' + this.device.powerTopic, message => {
+        this.log('power state changed: %s', message);
+        //this.characteristics['state']?.update((message === 'ON'));
+      });
+      // request initial state
+      this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
+    }
+    // request initial state
+    this.get('state');
+  }
+
+  iterateStateMessage(msg: object, path?: string) {
+    for (const [key, value] of Object.entries(msg)) {
+      if (typeof value === 'object') {
+        const ignore = (key === 'color' && msg['color_mode'] === 'color_temp');
+        if (!ignore) {
+          this.iterateStateMessage(value, key);
+        }
+      } else {
+        const fullPath = (path ? path + '.' : '') + key;
+        //this.log(`update for: ${fullPath}: ${value} color_mode: ${msg['color_mode']}`);
+        const characteristic = this.getObjectByPath(this.characteristics, fullPath);
+        const ignore = (key === 'color_temp' && msg['color_mode'] !== 'color_temp');
+        if (!ignore) {
+          (<Zigbee2MQTTCharacteristic>characteristic)?.update(this.mapGetValue(key, value));
+        }
+      }
+    }
+  }
+
+  createService(homekitName: string, serviceName: string): Service {
+    const serviceByName = this.platform.Service[serviceName];
+    const service = this.accessory.getService(serviceByName) || this.accessory.addService(serviceByName);
+    service.setCharacteristic(this.platform.Characteristic.Name, homekitName);
+    //this.log('service: %s', serviceName);
+    return service;
+  }
+
+  createCharacteristic(service: Service, characteristicName: string, exposed: Z2MExpose, propertyPath?: string) {
+    const characteristic = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, service, characteristicName);
+    const path = (propertyPath !== undefined ? propertyPath + '.' : '') + exposed.property;
+    if ((exposed.access & 2) === 2) {
+      characteristic.onGet = () => {
+        if (path === 'state' && this.device.powerTopic !== undefined) {
+          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
+        } else {
+          this.get(path);
+        }
+        return undefined;
+      };
+    }
+    if ((exposed.access & 3) === 3) {
+      characteristic.onSet = value => {
+        const mappedValue = this.mapSetValue(exposed.property, value);
+        if (path === 'state' && this.device.powerTopic !== undefined) {
+          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, mappedValue as string);
+        } else {
+          this.set(path, mappedValue);
+        }
+      };
+    }
+    //this.log('characteristic: %s (%s)', characteristicName, path);
+    //this.log('characteristic: %s (%s) exposed: %s', characteristicName, path, JSON.stringify(exposed));
+    this.setObjectByPath(this.characteristics, path, characteristic);
+  }
+
+  // homebridge -> Zigbee2MQTT
+  mapSetValue(property: string, value: CharacteristicValue): CharacteristicValue {
+    switch (property) {
+      case 'state': return (value ? 'ON' : 'OFF');
+      case 'brightness': return Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 100, 254);
+      case 'contact': return !value;
+    }
+    return value;
+  }
+
+  // Zigbee2MQTT -> homebridge
+  mapGetValue(property: string, value: CharacteristicValue): CharacteristicValue {
+    switch (property) {
+      case 'state': return (value === 'ON');
+      case 'brightness': return Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 254, 100);
+      case 'contact': return !value;
+    }
+    return value;
   }
 
   log(message: string, ...parameters: unknown[]): void {
     this.platform.log.debug('%s (%s) ' + message,
-      this.accessory.context.device.name, this.ieee_address,
+      this.device.homekit_name, this.device.ieee_address,
       ...parameters,
     );
   }
 
-  registerStateHandler() {
-    const state = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'On', false);
-    state.willGet = () => {
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, '');
-      } else {
-        this.get('state');
-      }
-      return undefined;
-    };
-    state.willSet = value => {
-      const state = value ? 'ON' : 'OFF';
-      if (this.powerTopic !== undefined) {
-        this.platform.mqttClient.publish('cmnd/' + this.powerTopic, state);
-      } else {
-        this.set('state', state);
-      }
-    };
-    this.characteristics['state'] = state;
-  }
-
-  registerBrightnessHandler() {
-    const brightness = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Brightness', 100);
-    brightness.willGet = () => {
-      this.get('brightness');
-      return undefined;
-    };
-    brightness.willSet = value => {
-      this.set('brightness', Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 100, 254));
-    };
-    this.characteristics['brightness'] = brightness;
-  }
-
-  registerColorTempHandler() {
-    const colorTemp = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'ColorTemperature', 370);
-    colorTemp.willGet = () => {
-      this.get('color_temp');
-      return undefined;
-    };
-    colorTemp.willSet = value => {
-      this.set('color_temp', value);
-    };
-    this.characteristics['color_temp'] = colorTemp;
-  }
-
-  registerHueHandler() {
-    const hue = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Hue', 20);
-    hue.willGet = () => {
-      this.get('color/hue');
-      return undefined;
-    };
-    hue.willSet = value => {
-      this.set('color/hue', value);
-    };
-    this.characteristics['hue'] = hue;
-  }
-
-  registerSaturationHandler() {
-    const saturation = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, this.service, 'Saturation', 20);
-    saturation.willGet = () => {
-      this.get('color/saturation');
-      return undefined;
-    };
-    saturation.willSet = value => {
-      this.set('color/saturation', value);
-    };
-    this.characteristics['saturation'] = saturation;
-  }
-
   getObjectByPath(obj: object, path: string): object | undefined {
-    return path.split('/').reduce((a, v) => a ? a[v] : undefined, obj);
+    return path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
   }
 
-  setObjectByPath(obj: object, path: string, value: CharacteristicValue) {
-    const lastKey = path.substring(path.lastIndexOf('/') + 1);
-    path.split('/').reduce((a, v) => a[v] = v === lastKey ? value : a[v] ? a[v] : {}, obj);
+  setObjectByPath(obj: object, path: string, value: object | CharacteristicValue) {
+    const lastKey = path.substring(path.lastIndexOf('.') + 1);
+    path.split('.').reduce((a, v) => a[v] = v === lastKey ? value : a[v] ? a[v] : {}, obj);
   }
 
-  get(feature: string) {
+  get(path: string) {
     const obj = {};
-    this.setObjectByPath(obj, feature, '');
+    this.setObjectByPath(obj, path, '');
     this.platform.mqttClient.publish(
-      `${this.platform.config.zigbee2mqttTopic}/${this.deviceFriendlyName}/get`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/get`,
       JSON.stringify(obj),
     );
   }
 
-  set(feature: string, value: CharacteristicValue) {
+  set(path: string, value: CharacteristicValue) {
     const obj = {};
-    this.setObjectByPath(obj, feature, value);
+    this.setObjectByPath(obj, path, value);
     this.platform.mqttClient.publish(
-      `${this.platform.config.zigbee2mqttTopic}/${this.deviceFriendlyName}/set`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/set`,
       JSON.stringify(obj),
     );
-  }
-
-  static getExposedFeatures(device: Z2MDevice): Z2MExposeFeature[] {
-    const exposes = device.definition.exposes.find(e => e.features);
-    if (exposes !== undefined && exposes.features !== undefined) {
-      return exposes.features;
-    }
-    return [];
-  }
-
-  static getServiceName(device: Z2MDevice): string | undefined {
-    const exposedFeatures = Zigbee2MQTTAcessory.getExposedFeatures(device).map(f => f.name);
-    for (const set of FEATURES) {
-      if (exposedFeatures.some(f => set.features.includes(f))) {
-        return set.service;
-      }
-    }
   }
 
 }

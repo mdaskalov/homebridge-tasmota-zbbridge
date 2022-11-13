@@ -7,7 +7,7 @@ import { ZbBridgeDevice } from './zbBridgeAccessory';
 import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { ZbBridgeSensor } from './zbBridgeSensor';
-import { Zigbee2MQTTAcessory, Z2MDevice, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
+import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -15,8 +15,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly mqttClient = new MQTTClient(this.log, this.config);
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  // zigbee2mqtt devices
-  public zigbee2mqttDevices: Z2MDevice[] = [];
 
   constructor(
     public readonly log: Logger,
@@ -29,15 +27,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback');
       this.cleanupCachedDevices();
       if (Array.isArray(this.config.zigbee2mqttDevices) && this.config.zigbee2mqttDevices.length > 0) {
-        if (config.zigbee2mqttTopic === undefined) {
-          config.zigbee2mqttTopic = 'zigbee2mqtt';
-        }
-        this.mqttClient.subscribeTopic(config.zigbee2mqttTopic + '/bridge/devices', message => {
-          const devices: Z2MDevice[] = JSON.parse(message);
-          this.zigbee2mqttDevices = devices;
-          this.log.info('Found %s zigbee2mqtt devices', devices.length);
-          this.discoverZigbee2MQTTDevices();
-        }, false, true);
+        this.discoverZigbee2MQTTDevices();
       }
       if (Array.isArray(this.config.zbBridgeDevices) && this.config.zbBridgeDevices.length > 0) {
         this.discoverZbBridgeDevices();
@@ -63,9 +53,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   zigbee2MQTTDeviceUUID(device: Zigbee2MQTTDevice): string {
-    const identificator = device.ieee_address +
-      (device.powerTopic || '') +
-      (device.powerType || '');
+    const identificator = 'z2m' + device.ieee_address +
+      (device.powerTopic || '');
     return this.api.hap.uuid.generate(identificator);
   }
 
@@ -89,16 +78,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       new ZbBridgeLightbulb(this, accessory, 'Lightbulb');
     } else if (type === 'switch') {
       new ZbBridgeSwitch(this, accessory, 'Switch');
-    }
-  }
-
-  createZigbee2MQTTAcessory(accessory: PlatformAccessory) {
-    const device = this.zigbee2mqttDevices.find(d => d.ieee_address === accessory.context.device.addr);
-    if (device !== undefined) {
-      const serviceName = Zigbee2MQTTAcessory.getServiceName(device);
-      if (serviceName !== undefined) {
-        new Zigbee2MQTTAcessory(this, accessory, serviceName);
-      }
     }
   }
 
@@ -129,26 +108,39 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  discoverZigbee2MQTTDevices() {
-    for (const device of this.config.zigbee2mqttDevices) {
-      if ((<Zigbee2MQTTDevice>device)?.ieee_address && (<Zigbee2MQTTDevice>device)?.name) {
-        const z2mDevice = this.zigbee2mqttDevices.find(d => d.ieee_address === device.ieee_address);
-        if (z2mDevice !== undefined) {
-          const serviceName = Zigbee2MQTTAcessory.getServiceName(z2mDevice);
-          if (serviceName !== undefined) {
-            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.name);
-            accessory.context.device = device;
-            new Zigbee2MQTTAcessory(this, accessory, serviceName);
-            this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s) - %s',
-              restored ? 'Restoring' : 'Adding', device.name, device.ieee_address, serviceName);
-          } else {
-            this.log.error('Ignored unsupported Zigbee2MQTT device %s (%s)', device.name, device.ieee_address);
-          }
-        }
-      } else {
-        this.log.error('Ignored Zigbee2MQTT device configuration: ', JSON.stringify(device));
-        continue;
+  async discoverZigbee2MQTTDevices() {
+    if (this.config.zigbee2mqttTopic === undefined) {
+      this.config.zigbee2mqttTopic = 'zigbee2mqtt';
+    }
+    try {
+      const bridgeDevicesTopic = this.config.zigbee2mqttTopic + '/bridge/devices';
+      const message = await this.mqttClient.read(bridgeDevicesTopic, undefined, false);
+      const z2m_devices: Zigbee2MQTTDevice[] = JSON.parse(message);
+      if (!Array.isArray(z2m_devices)) {
+        throw (`topic (${bridgeDevicesTopic}) parse error`);
       }
+      this.log.info('Found %s Zigbee2MQTT devices', z2m_devices.length);
+
+      for (const configured of this.config.zigbee2mqttDevices) {
+        if (configured.ieee_address && configured.name) {
+          const device = z2m_devices.find(d => d.ieee_address === configured.ieee_address);
+          if (device !== undefined) {
+            device.homekit_name = configured.name;
+            if (configured.powerTopic !== undefined) {
+              device.powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
+            }
+            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), configured.name);
+            accessory.context.device = device;
+            new Zigbee2MQTTAcessory(this, accessory);
+            this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
+              restored ? 'Restoring' : 'Adding', configured.name, configured.ieee_address);
+          }
+        } else {
+          this.log.error('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(configured));
+        }
+      }
+    } catch (err) {
+      this.log.error(`Zigbee2MQTT devices initialization failed: ${err}`);
     }
   }
 
