@@ -286,7 +286,7 @@ export class Zigbee2MQTTAcessory {
     const obj = {};
     this.setObjectByPath(obj, path, '');
     this.platform.mqttClient.publish(
-      `${this.platform.config.zigbee2mqttTopic}/${this.accessory.context.device.friendly_name}/get`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/get`,
       JSON.stringify(obj),
     );
   }
@@ -295,7 +295,7 @@ export class Zigbee2MQTTAcessory {
     const obj = {};
     this.setObjectByPath(obj, path, value);
     this.platform.mqttClient.publish(
-      `${this.platform.config.zigbee2mqttTopic}/${this.accessory.context.device.friendly_name}/set`,
+      `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/set`,
       JSON.stringify(obj),
     );
   }
