@@ -135,7 +135,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
             this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
               restored ? 'Restoring' : 'Adding', device.homekit_name, configured.ieee_address);
           } else {
-            this.log.warn('Zigbee2MQTT device %s (%s) not found!', configured.name, configured.ieee_address);
+            this.log.warn('Zigbee2MQTT device %s (%s) not found!', configured.name || 'Unknown', configured.ieee_address);
           }
         } else {
           this.log.warn('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(configured));
