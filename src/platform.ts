@@ -15,6 +15,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly mqttClient = new MQTTClient(this.log, this.config);
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+  private configuredUUIDs: string[] = [];
 
   constructor(
     public readonly log: Logger,
@@ -23,11 +24,10 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   ) {
     this.log.debug('Finished initializing platform:', this.config.name || 'ZbBridge');
 
-    this.api.on('didFinishLaunching', () => {
+    this.api.on('didFinishLaunching', async () => {
       log.debug('Executed didFinishLaunching callback');
-      this.cleanupCachedDevices();
       if (Array.isArray(this.config.zigbee2mqttDevices) && this.config.zigbee2mqttDevices.length > 0) {
-        this.discoverZigbee2MQTTDevices();
+        await this.discoverZigbee2MQTTDevices();
       }
       if (Array.isArray(this.config.zbBridgeDevices) && this.config.zbBridgeDevices.length > 0) {
         this.discoverZbBridgeDevices();
@@ -35,6 +35,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       if (Array.isArray(this.config.tasmotaDevices) && this.config.tasmotaDevices.length > 0) {
         this.discoverTasmotaDevices();
       }
+      this.cleanupCachedDevices();
     });
   }
 
@@ -82,6 +83,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   restoreAccessory(uuid: string, name: string): { restored: boolean; accessory: PlatformAccessory<UnknownContext> } {
+    this.configuredUUIDs.push(uuid);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     if (existingAccessory) {
       this.api.updatePlatformAccessories([existingAccessory]);
@@ -162,29 +164,16 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   cleanupCachedDevices() {
-    if (Array.isArray(this.accessories)) {
+    if (Array.isArray(this.accessories) && Array.isArray(this.configuredUUIDs)) {
+      this.log.info('Cleanup - configured %d, cached %d accessories.', this.configuredUUIDs.length, this.accessories.length);
       for (const accessory of this.accessories) {
-        let foundZbBridgeDevice = false;
-        let foundTasmotaDevice = false;
-        let foundZigbee2MQTTDevice = false;
-        if (Array.isArray(this.config.zbBridgeDevices)) {
-          const found = this.config.zbBridgeDevices.find(d => this.zbBridgeDeviceUUID(d) === accessory.UUID);
-          foundZbBridgeDevice = (found !== undefined);
-        }
-        if (Array.isArray(this.config.zigbee2mqttDevices)) {
-          const found = this.config.zigbee2mqttDevices.find(d => this.zigbee2MQTTDeviceUUID(d) === accessory.UUID);
-          foundZigbee2MQTTDevice = (found !== undefined);
-        }
-        if (Array.isArray(this.config.tasmotaDevices)) {
-          const found = this.config.tasmotaDevices.find(d => this.tasmotaDeviceUUID(d) === accessory.UUID);
-          foundTasmotaDevice = (found !== undefined);
-        }
-        if (!foundZbBridgeDevice && !foundZigbee2MQTTDevice && !foundTasmotaDevice) {
+        const found = this.configuredUUIDs.find(uuid => uuid === accessory.UUID);
+        if (!found) {
           const device = accessory.context.device;
           if ((<ZbBridgeDevice>device)?.addr && (<ZbBridgeDevice>device)?.type) {
             this.log.info('Removing ZbBridge accessory: %s (%s) - %s', device.name, device.addr, device.type);
           } else if ((<Zigbee2MQTTDevice>device)?.ieee_address) {
-            this.log.info('Removing Zigbee2MQTT accessory: %s (%s)', device.name, device.ieee_address);
+            this.log.info('Removing Zigbee2MQTT accessory: %s (%s)', device.homekit_name, device.ieee_address);
           } else if ((<TasmotaDevice>device)?.topic) {
             this.log.info('Removing Tasmota accessory: %s (%s) - %s', device.name, device.topic, device.type);
           } else {
