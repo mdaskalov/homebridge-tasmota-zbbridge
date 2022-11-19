@@ -122,21 +122,23 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       this.log.info('Found %s Zigbee2MQTT devices', z2m_devices.length);
 
       for (const configured of this.config.zigbee2mqttDevices) {
-        if (configured.ieee_address && configured.name) {
+        if (configured.ieee_address) {
           const device = z2m_devices.find(d => d.ieee_address === configured.ieee_address);
           if (device !== undefined) {
-            device.homekit_name = configured.name;
+            device.homekit_name = configured.name || device.friendly_name || configured.ieee_address;
             if (configured.powerTopic !== undefined) {
               device.powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
             }
-            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), configured.name);
+            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.homekit_name);
             accessory.context.device = device;
             new Zigbee2MQTTAcessory(this, accessory);
             this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
-              restored ? 'Restoring' : 'Adding', configured.name, configured.ieee_address);
+              restored ? 'Restoring' : 'Adding', device.homekit_name, configured.ieee_address);
+          } else {
+            this.log.warn('Zigbee2MQTT device %s (%s) not found!', configured.name, configured.ieee_address);
           }
         } else {
-          this.log.error('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(configured));
+          this.log.warn('Ignored invalid Zigbee2MQTT configuration: %s', JSON.stringify(configured));
         }
       }
     } catch (err) {

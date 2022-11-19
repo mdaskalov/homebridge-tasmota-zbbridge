@@ -208,8 +208,7 @@
             "name": {
               "title": "Name",
               "type": "string",
-              "placeholder": "HomeKit name",
-              "required": true
+              "placeholder": "HomeKit name"
             },
             "powerTopic": {
               "title": "Power Topic",
