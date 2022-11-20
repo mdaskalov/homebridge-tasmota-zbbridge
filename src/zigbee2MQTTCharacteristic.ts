@@ -4,6 +4,7 @@ import {
   CharacteristicValue,
   HAPStatus,
   CharacteristicProps,
+  Formats,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -27,14 +28,15 @@ export class Zigbee2MQTTCharacteristic {
     readonly service: Service,
     readonly characteristicName: string,
   ) {
-    this.value = 0;
-    this.setValue = 0;
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
 
     const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
     if (characteristic !== undefined) {
       this.props = characteristic.props;
+      this.value = this.initialValue(this.props);
+      this.setValue = this.value;
+
       //this.log('characteristic props: %s', JSON.stringify(this.props));
       //this.platform.api.hap.Perms.PAIRED_READ
       //this.platform.api.hap.Perms.PAIRED_WRITE
@@ -44,6 +46,20 @@ export class Zigbee2MQTTCharacteristic {
     } else {
       throw (`Unable to initialize characteristic: ${this.characteristicName}`);
     }
+  }
+
+  private initialValue(props: CharacteristicProps): CharacteristicValue {
+    switch (props.format) {
+      case Formats.BOOL: return false;
+      case Formats.INT:
+      case Formats.FLOAT:
+      case Formats.UINT8:
+      case Formats.UINT16:
+      case Formats.UINT32:
+      case Formats.UINT64:
+        return props.minValue !== undefined ? props.minValue : 0;
+    }
+    return '';
   }
 
   private timeouted(ts: number): boolean {
