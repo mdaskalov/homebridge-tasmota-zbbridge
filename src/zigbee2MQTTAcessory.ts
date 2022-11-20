@@ -207,7 +207,9 @@ export class Zigbee2MQTTAcessory {
   createCharacteristic(service: Service, characteristicName: string, exposed: Z2MExpose, propertyPath?: string) {
     const characteristic = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, service, characteristicName);
     const path = (propertyPath !== undefined ? propertyPath + '.' : '') + exposed.property;
-    if ((exposed.access & 2) === 2) {
+    const hasReadAccess = (exposed.access & 2) === 2;
+    const hasWriteAccess = (exposed.access & 3) === 3;
+    if (hasReadAccess) {
       characteristic.onGet = () => {
         if (path === 'state' && this.device.powerTopic !== undefined) {
           this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
@@ -217,7 +219,7 @@ export class Zigbee2MQTTAcessory {
         return undefined;
       };
     }
-    if ((exposed.access & 3) === 3) {
+    if (hasWriteAccess) {
       characteristic.onSet = value => {
         const mappedValue = this.mapSetValue(exposed.property, value);
         if (path === 'state' && this.device.powerTopic !== undefined) {
@@ -227,8 +229,8 @@ export class Zigbee2MQTTAcessory {
         }
       };
     }
-    //this.log('characteristic: %s (%s)', characteristicName, path);
-    //this.log('characteristic: %s (%s) exposed: %s', characteristicName, path, JSON.stringify(exposed));
+    const permissions = (hasReadAccess ? 'R' : '') + (hasWriteAccess ? 'W' : '');
+    this.log('Map: %s(%s) -> %s:%s(%s)', exposed.name, permissions, service.constructor.name, characteristicName, path);
     this.setObjectByPath(this.characteristics, path, characteristic);
   }
 
