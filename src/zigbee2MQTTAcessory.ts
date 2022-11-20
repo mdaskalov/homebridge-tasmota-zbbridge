@@ -8,42 +8,44 @@ import { TasmotaZbBridgePlatform } from './platform';
 import { Zigbee2MQTTCharacteristic } from './zigbee2MQTTCharacteristic';
 
 const EXPOSES = {
-  // Specific exposes
+  // Specific exposes (by exposed.type)
   light: {
-    service: 'Lightbulb', features: {
+    Lightbulb: {
       state: 'On',
       brightness: 'Brightness',
       color_temp: 'ColorTemperature',
-      color_hs: { features: { hue: 'Hue', saturation: 'Saturation' } },
+      color_hs: {
+        hue: 'Hue',
+        saturation: 'Saturation',
+      },
     },
   },
   switch: {
-    service: 'Switch', features: {
+    Switch: {
       state: 'On',
     },
   },
   fan: {
-    service: 'Fan', features: {
+    Fan: {
       state: 'On',
       mode: 'RotationSpeed',
     },
   },
   cover: {
-    service: 'WindowCovering', features: {
+    WindowCovering: {
       state: 'PositionState',
       position: 'CurrentPosition',
       tilt: 'CurrentHorizontalTiltAngle',
     },
   },
   lock: {
-    service: 'LockMechanism', features: {
+    LockMechanism: {
       state: 'LockTargetState',
       lock_state: 'LockCurrentState',
     },
   },
   climate: {
-    service: 'Thermostat',
-    features: {
+    Thermostat: {
       local_temperature: 'CurrentTemperature',
       current_heating_setpoint: 'TargetTemperature',
       occupied_heating_setpoint: 'TargetTemperature',
@@ -51,19 +53,19 @@ const EXPOSES = {
       running_state: 'CurrentHeatingCoolingState',
     },
   },
-  // Generic exposes
-  battery: { service: 'Battery', characteristic: 'BatteryLevel' },
-  battery_low: { service: 'Battery', characteristic: 'StatusLowBattery' },
-  temperature: { service: 'TemperatureSensor', characteristic: 'CurrentTemperature' },
-  humidity: { service: 'HumiditySensor', characteristic: 'CurrentRelativeHumidity' },
-  illuminance_lux: { service: 'LightSensor', characteristic: 'CurrentAmbientLightLevel' },
-  contact: { service: 'ContactSensor', characteristic: 'ContactSensorState' },
-  occupancy: { service: 'OccupancySensor', characteristic: 'OccupancyDetected' },
-  vibration: { service: 'MotionSensor', characteristic: 'MotionDetected' },
-  smoke: { service: 'SmokeSensor', characteristic: 'SmokeDetected' },
-  carbon_monoxide: { service: 'CarbonMonoxideSensor', characteristic: 'CarbonMonoxideDetected' },
-  water_leak: { service: 'LeakSensor', characteristic: 'LeakDetected' },
-  gas: { service: 'LeakSensor', characteristic: 'LeakDetected' },
+  // Generic exposes (by exposed.name)
+  battery: { Battery: 'BatteryLevel' },
+  battery_low: { Battery: 'StatusLowBattery' },
+  temperature: { TemperatureSensor: 'CurrentTemperature' },
+  humidity: { HumiditySensor: 'CurrentRelativeHumidity' },
+  illuminance_lux: { LightSensor: 'CurrentAmbientLightLevel' },
+  contact: { ContactSensor: 'ContactSensorState' },
+  occupancy: { OccupancySensor: 'OccupancyDetected' },
+  vibration: { MotionSensor: 'MotionDetected' },
+  smoke: { SmokeSensor: 'SmokeDetected' },
+  carbon_monoxide: { CarbonMonoxideSensor: 'CarbonMonoxideDetected' },
+  water_leak: { LeakSensor: 'LeakDetected' },
+  gas: { LeakSensor: 'LeakDetected' },
 };
 
 export type Z2MExpose = {
@@ -117,31 +119,6 @@ export class Zigbee2MQTTAcessory {
   ) {
     this.device = this.accessory.context.device;
     //this.log('device: %s', JSON.stringify(device));
-    for (const exposed of this.device.definition.exposes) {
-      if (exposed.type !== undefined && exposed.features !== undefined) {
-        const specificExpose = EXPOSES[exposed.type];
-        const service = this.createService(this.device.homekit_name, specificExpose.service);
-        for (const feature of exposed.features) {
-          const featureCharacteristic = specificExpose.features[feature.name];
-          if (featureCharacteristic !== undefined) {
-            if (feature.type === 'composite' && feature.features !== undefined) {
-              for (const compositeFeature of feature.features) {
-                const compositeCharacteristic = specificExpose.features[feature.name].features[compositeFeature.name];
-                this.createCharacteristic(service, compositeCharacteristic, compositeFeature, feature.property);
-              }
-            } else {
-              this.createCharacteristic(service, featureCharacteristic, feature);
-            }
-          }
-        }
-      } else if (exposed.name !== undefined) {
-        const genericExpose = EXPOSES[exposed.name];
-        if (genericExpose !== undefined) {
-          const service = this.createService(this.device.homekit_name, genericExpose.service);
-          this.createCharacteristic(service, genericExpose.characteristic, exposed);
-        }
-      }
-    }
 
     const infoService = this.accessory.getService(this.platform.Service.AccessoryInformation);
     if (infoService !== undefined) {
@@ -157,6 +134,14 @@ export class Zigbee2MQTTAcessory {
         this.device.manufacturer,
         this.device.model_id,
       );
+    }
+
+    for (const expose of this.device.definition.exposes) {
+      //this.log('exposed: %s', JSON.stringify(expose));
+      const mapped = this.mapExpose(expose, EXPOSES);
+      if (!mapped) {
+        this.log('Ignore: %s', expose.name || expose.property);
+      }
     }
 
     // subscribe to device status updates
@@ -175,6 +160,48 @@ export class Zigbee2MQTTAcessory {
     }
     // request initial state
     this.get('state');
+  }
+
+  mapExpose(expose: Z2MExpose, mapDefinition: object): boolean {
+    let mapped = false;
+    const definitionProperty = expose.name ? expose.name : expose.type;
+    if (definitionProperty !== undefined) {
+      const exposeMapDefinition = mapDefinition[definitionProperty];
+      if (exposeMapDefinition !== undefined) {
+        for (const [serviceName, characteristic] of Object.entries(exposeMapDefinition)) {
+          const service = this.createService(serviceName);
+          if (this.mapCharacteristic(service, characteristic, expose)) {
+            mapped = true;
+          }
+        }
+      }
+    }
+    return mapped;
+  }
+
+  mapCharacteristic(service: Service, characteristic: unknown, expose: Z2MExpose, propertyPath?: string): boolean {
+    let mapped = false;
+    if (typeof characteristic === 'string') {
+      this.createCharacteristic(service, characteristic, expose, propertyPath);
+      mapped = true;
+    } else if (characteristic !== null && typeof characteristic === 'object' && expose.features !== undefined) {
+      for (const feature of expose.features) {
+        if (feature.name !== undefined && characteristic[feature.name] !== undefined) {
+          if (feature.type === 'composite' && feature.features !== undefined) {
+            const path = (propertyPath !== undefined ? propertyPath + '.' : '') + feature.property;
+            if (this.mapCharacteristic(service, characteristic[feature.name], feature, path)) {
+              mapped = true;
+            }
+          } else {
+            this.createCharacteristic(service, characteristic[feature.name], feature, propertyPath);
+            mapped = true;
+          }
+        } else {
+          this.log('Ignore: %s', feature.name || feature.property);
+        }
+      }
+    }
+    return mapped;
   }
 
   iterateStateMessage(msg: object, path?: string) {
@@ -196,11 +223,11 @@ export class Zigbee2MQTTAcessory {
     }
   }
 
-  createService(homekitName: string, serviceName: string): Service {
+  createService(serviceName: string, customName?: string): Service {
     const serviceByName = this.platform.Service[serviceName];
     const service = this.accessory.getService(serviceByName) || this.accessory.addService(serviceByName);
+    const homekitName = this.device.homekit_name + (customName ? ':' + customName : '');
     service.setCharacteristic(this.platform.Characteristic.Name, homekitName);
-    //this.log('service: %s', serviceName);
     return service;
   }
 
