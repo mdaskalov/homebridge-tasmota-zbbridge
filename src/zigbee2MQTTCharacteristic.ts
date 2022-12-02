@@ -147,10 +147,6 @@ export class Zigbee2MQTTCharacteristic {
     );
   }
 
-  static mapMaxValue(value: number, in_max: number, out_max: number): number {
-    return Math.round(out_max * value / in_max);
-  }
-
   static mapValue(value: number, in_min: number, in_max: number, out_min: number, out_max: number): number {
     if (in_max === in_min) {
       return value;
