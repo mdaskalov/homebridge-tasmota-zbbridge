@@ -154,10 +154,10 @@ export class Zigbee2MQTTAcessory {
       } else {
         const fullPath = (path ? path + '.' : '') + key;
         //this.log(`update for: ${fullPath}: ${value} color_mode: ${msg['color_mode']}`);
-        const characteristic = this.getObjectByPath(this.characteristics, fullPath);
+        const characteristic = <Zigbee2MQTTCharacteristic>this.getObjectByPath(this.characteristics, fullPath);
         const ignore = (key === 'color_temp' && msg['color_mode'] !== 'color_temp');
-        if (!ignore) {
-          (<Zigbee2MQTTCharacteristic>characteristic)?.update(this.mapGetValue(key, value));
+        if (characteristic && !ignore) {
+          characteristic.update(value);
         }
       }
     }
@@ -172,7 +172,7 @@ export class Zigbee2MQTTAcessory {
   }
 
   createCharacteristic(service: Service, characteristicName: string, exposed: Z2MExpose, propertyPath?: string) {
-    const characteristic = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, service, characteristicName);
+    const characteristic = new Zigbee2MQTTCharacteristic(this.platform, this.accessory, service, characteristicName, exposed);
     const path = (propertyPath !== undefined ? propertyPath + '.' : '') + exposed.property;
     const hasReadAccess = (exposed.access & 2) === 2;
     const hasWriteAccess = (exposed.access & 3) === 3;
@@ -188,37 +188,16 @@ export class Zigbee2MQTTAcessory {
     }
     if (hasWriteAccess) {
       characteristic.onSet = value => {
-        const mappedValue = this.mapSetValue(exposed.property, value);
         if (path === 'state' && this.device.powerTopic !== undefined) {
-          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, mappedValue as string);
+          this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, value as string);
         } else {
-          this.set(path, mappedValue);
+          this.set(path, value);
         }
       };
     }
     const permissions = (hasReadAccess ? 'R' : '') + (hasWriteAccess ? 'W' : '');
     this.log('Map: %s(%s) -> %s:%s(%s)', exposed.name, permissions, service.constructor.name, characteristicName, path);
     this.setObjectByPath(this.characteristics, path, characteristic);
-  }
-
-  // homebridge -> Zigbee2MQTT
-  mapSetValue(property: string, value: CharacteristicValue): CharacteristicValue {
-    switch (property) {
-      case 'state': return (value ? 'ON' : 'OFF');
-      case 'brightness': return Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 100, 254);
-      case 'contact': return !value;
-    }
-    return value;
-  }
-
-  // Zigbee2MQTT -> homebridge
-  mapGetValue(property: string, value: CharacteristicValue): CharacteristicValue {
-    switch (property) {
-      case 'state': return (value === 'ON');
-      case 'brightness': return Zigbee2MQTTCharacteristic.mapMaxValue(value as number, 254, 100);
-      case 'contact': return !value;
-    }
-    return value;
   }
 
   log(message: string, ...parameters: unknown[]): void {
