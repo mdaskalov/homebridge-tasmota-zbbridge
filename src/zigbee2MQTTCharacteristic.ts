@@ -34,22 +34,24 @@ export class Zigbee2MQTTCharacteristic {
     const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
     if (characteristic !== undefined) {
       this.props = characteristic.props;
-      this.value = this.initialValue(this.props);
+      this.value = this.initValue();
       this.setValue = this.value;
-
       //this.log('characteristic props: %s', JSON.stringify(this.props));
-      //this.platform.api.hap.Perms.PAIRED_READ
-      //this.platform.api.hap.Perms.PAIRED_WRITE
-      characteristic
-        .onGet(this.onGetValue.bind(this))
-        .onSet(this.onSetValue.bind(this));
+      if (this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ)) {
+        characteristic
+          .onGet(this.onGetValue.bind(this));
+      }
+      if (this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_WRITE)) {
+        characteristic
+          .onSet(this.onSetValue.bind(this));
+      }
     } else {
       throw (`Unable to initialize characteristic: ${this.characteristicName}`);
     }
   }
 
-  private initialValue(props: CharacteristicProps): CharacteristicValue {
-    switch (props.format) {
+  private initValue(): CharacteristicValue {
+    switch (this.props.format) {
       case Formats.BOOL: return false;
       case Formats.INT:
       case Formats.FLOAT:
@@ -57,7 +59,7 @@ export class Zigbee2MQTTCharacteristic {
       case Formats.UINT16:
       case Formats.UINT32:
       case Formats.UINT64:
-        return props.minValue !== undefined ? props.minValue : 0;
+        return this.props.minValue !== undefined ? this.props.minValue : 0;
     }
     return '';
   }
