@@ -92,8 +92,7 @@ export class Zigbee2MQTTAcessory {
     //Subscribe for the power topic updates
     if (this.device.powerTopic !== undefined) {
       this.platform.mqttClient.subscribeTopic('stat/' + this.device.powerTopic, message => {
-        this.log('power state changed: %s', message);
-        //this.characteristics['state']?.update((message === 'ON'));
+        (<Zigbee2MQTTCharacteristic>this.characteristics['state'])?.update(message === 'ON');
       });
       // request initial state
       this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
