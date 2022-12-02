@@ -8,7 +8,7 @@ import {
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Z2MExpose } from './zigbee2MQTTAcessory';
 
 const UPDATE_TIMEOUT = 2000;
 
@@ -27,6 +27,7 @@ export class Zigbee2MQTTCharacteristic {
     readonly accessory: PlatformAccessory,
     readonly service: Service,
     readonly characteristicName: string,
+    readonly exposed: Z2MExpose,
   ) {
     this.setTs = Date.now() - UPDATE_TIMEOUT;
     this.updateTs = Date.now();
