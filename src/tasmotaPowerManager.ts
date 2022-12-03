@@ -57,7 +57,7 @@ export class TasmotaPowerManager {
   }
 
   setState(ieee_address: string, state: boolean): boolean {
-    const accessory = this.accessories.find(a => a.ieee_address = ieee_address);
+    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
     if (accessory !== undefined) {
       this.mqttClient.publish('cmnd/' + accessory.topic, state ? 'ON' : 'OFF');
       accessory.state = state;
