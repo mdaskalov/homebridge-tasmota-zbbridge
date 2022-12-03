@@ -42,7 +42,7 @@ export class TasmotaPowerManager {
   }
 
   addStateCallback(ieee_address: string, stateCallback: PowerStateCallback): boolean {
-    const accessory = this.accessories.find(a => a.ieee_address = ieee_address);
+    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
     if (accessory !== undefined) {
       accessory.stateCallback = stateCallback;
     }
@@ -50,7 +50,7 @@ export class TasmotaPowerManager {
   }
 
   getState(ieee_address: string): boolean | undefined {
-    const accessory = this.accessories.find(a => a.ieee_address = ieee_address);
+    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
     if (accessory !== undefined) {
       return accessory.state;
     }
