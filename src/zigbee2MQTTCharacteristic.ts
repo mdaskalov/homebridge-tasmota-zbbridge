@@ -92,7 +92,7 @@ export class Zigbee2MQTTCharacteristic {
 
   private async onSetValue(value: CharacteristicValue) {
     if (this.onSet !== undefined) {
-      const setValue = this.mapZ2MValue(value);
+      const setValue = this.mapValueToZ2M(value);
       if (setValue !== undefined) {
         this.onSet(setValue);
         this.setValue = setValue;
@@ -105,7 +105,7 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   update(value: CharacteristicValue | undefined) {
-    const updatedValue = this.mapHBValue(value);
+    const updatedValue = this.mapValueToHB(value);
     if (updatedValue !== undefined) {
       if (this.awaitGetUpdate) {
         this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(updatedValue);
@@ -132,7 +132,7 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   // homebridge -> Zigbee2MQTT
-  mapZ2MValue(value: CharacteristicValue): CharacteristicValue | undefined {
+  mapValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
     switch (this.exposed.type) {
       case 'binary':
         if (value as boolean === true) {
@@ -143,12 +143,12 @@ export class Zigbee2MQTTCharacteristic {
         }
         break;
       case 'numeric':
-        return isNaN(value as number) ? undefined : this.mapZ2MNumericValue(value);
+        return isNaN(value as number) ? undefined : this.mapNumericValueToZ2M(value);
     }
   }
 
   // Zigbee2MQTT -> homebridge
-  mapHBValue(value: CharacteristicValue | undefined): CharacteristicValue | undefined {
+  mapValueToHB(value: CharacteristicValue | undefined): CharacteristicValue | undefined {
     if (value !== undefined) {
       switch (this.exposed.type) {
         case 'binary':
@@ -166,7 +166,7 @@ export class Zigbee2MQTTCharacteristic {
           return (index === undefined ? 0 : index);
         }
         case 'numeric':
-          return isNaN(value as number) ? undefined : this.mapHBNumericValue(value);
+          return isNaN(value as number) ? undefined : this.mapNumericValueToHB(value);
       }
     }
   }
@@ -200,7 +200,7 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   // homebridge -> Zigbee2MQTT
-  mapZ2MNumericValue(value: CharacteristicValue): CharacteristicValue | undefined {
+  mapNumericValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
     if (this.props.minValue === undefined || this.props.maxValue === undefined) {
       return undefined;
     }
@@ -219,7 +219,7 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   // Zigbee2MQTT -> homebridge
-  mapHBNumericValue(value: CharacteristicValue): CharacteristicValue | undefined {
+  mapNumericValueToHB(value: CharacteristicValue): CharacteristicValue | undefined {
     if (this.exposed.value_min === undefined || this.exposed.value_max === undefined) {
       return undefined;
     }
