@@ -54,16 +54,17 @@ export class Zigbee2MQTTCharacteristic {
 
   private initValue(): CharacteristicValue {
     switch (this.props.format) {
-      case Formats.BOOL: return false;
-      case Formats.INT:
-      case Formats.FLOAT:
-      case Formats.UINT8:
-      case Formats.UINT16:
-      case Formats.UINT32:
-      case Formats.UINT64:
-        return this.props.minValue !== undefined ? this.props.minValue : 0;
+      case Formats.BOOL:
+        return false;
+      case Formats.STRING:
+      case Formats.DATA:
+      case Formats.TLV8:
+        return '';
+      default: {
+        const value = this.checkHBValue(0);
+        return value !== undefined ? value : 0;
+      }
     }
-    return '';
   }
 
   private timeouted(ts: number): boolean {
