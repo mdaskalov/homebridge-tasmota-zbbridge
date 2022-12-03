@@ -87,9 +87,6 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   private async onSetValue(value: CharacteristicValue) {
-    if (value === this.value) {
-      return;
-    }
     if (this.onSet !== undefined) {
       const mappedValue = this.mapValueToZ2M(value);
       if (mappedValue !== undefined) {
