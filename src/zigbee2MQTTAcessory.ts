@@ -182,11 +182,9 @@ export class Zigbee2MQTTAcessory {
     const hasWriteAccess = (exposed.access & 3) === 3;
     if (hasReadAccess) {
       characteristic.onGet = () => {
-        if (path === 'state') {
-          const state = this.platform.powerManager.getState(this.device.ieee_address);
-          if (state !== undefined) {
-            return state;
-          }
+        const state = this.platform.powerManager.getState(this.device.ieee_address);
+        if (state === false || (path === 'state' && state !== undefined)) {
+          return undefined;
         }
         this.get(path);
         return undefined;
@@ -194,10 +192,13 @@ export class Zigbee2MQTTAcessory {
     }
     if (hasWriteAccess) {
       characteristic.onSet = value => {
-        this.set(path, value);
         if (path === 'state') {
-          this.platform.powerManager.setState(this.device.ieee_address, value === 'ON');
+          const updated = this.platform.powerManager.setState(this.device.ieee_address, value === 'ON');
+          if (updated !== undefined) {
+            return;
+          }
         }
+        this.set(path, value);
       };
     }
     const permissions = (hasReadAccess ? 'R' : '') + (hasWriteAccess ? 'W' : '');
@@ -227,10 +228,8 @@ export class Zigbee2MQTTAcessory {
   }
 
   publish(cmd: string, payload: string) {
-    if (this.platform.powerManager.getState(this.device.ieee_address) !== false) {
-      const topic = `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/${cmd}`;
-      this.platform.mqttClient.publish(topic, payload);
-    }
+    const topic = `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/${cmd}`;
+    this.platform.mqttClient.publish(topic, payload);
   }
 
   get(path: string) {
