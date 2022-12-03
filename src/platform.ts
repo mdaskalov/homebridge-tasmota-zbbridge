@@ -8,11 +8,13 @@ import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
 import { ZbBridgeSwitch } from './zbBridgeSwitch';
 import { ZbBridgeSensor } from './zbBridgeSensor';
 import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
+import { TasmotaPowerManager } from './tasmotaPowerManager';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
   public readonly mqttClient = new MQTTClient(this.log, this.config);
+  public readonly powerManager = new TasmotaPowerManager(this.log, this.mqttClient);
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
   private configuredUUIDs: string[] = [];
@@ -53,9 +55,9 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     return this.api.hap.uuid.generate(identificator);
   }
 
-  zigbee2MQTTDeviceUUID(device: Zigbee2MQTTDevice): string {
-    const identificator = 'z2m' + device.ieee_address +
-      (device.powerTopic || '');
+  zigbee2MQTTDeviceUUID(ieee_address: string, topic?: string): string {
+    const identificator = 'z2m' + ieee_address +
+      (topic || '');
     return this.api.hap.uuid.generate(identificator);
   }
 
@@ -127,11 +129,14 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         if (configured.ieee_address) {
           const device = z2m_devices.find(d => d.ieee_address === configured.ieee_address);
           if (device !== undefined) {
+            let powerTopic = configured.powerTopic;
             device.homekit_name = configured.name || device.friendly_name || configured.ieee_address;
             if (configured.powerTopic !== undefined) {
-              device.powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
+              powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
+              this.powerManager.addAccessory(device.ieee_address, powerTopic, device.homekit_name);
             }
-            const { restored, accessory } = this.restoreAccessory(this.zigbee2MQTTDeviceUUID(device), device.homekit_name);
+            const uuid = this.zigbee2MQTTDeviceUUID(device.ieee_address, powerTopic);
+            const { restored, accessory } = this.restoreAccessory(uuid, device.homekit_name);
             accessory.context.device = device;
             new Zigbee2MQTTAcessory(this, accessory);
             this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
