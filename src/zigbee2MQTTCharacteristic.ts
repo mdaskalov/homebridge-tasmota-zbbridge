@@ -31,8 +31,8 @@ export class Zigbee2MQTTCharacteristic {
     readonly characteristicName: string,
     readonly exposed: Z2MExpose,
   ) {
-    this.getTs =0;
-    this.setTs =0;
+    this.getTs = 0;
+    this.setTs = 0;
     this.updateTs = 0;
 
     const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
