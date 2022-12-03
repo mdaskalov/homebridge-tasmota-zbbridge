@@ -97,8 +97,12 @@ export class Zigbee2MQTTAcessory {
       // request initial state
       this.platform.mqttClient.publish('cmnd/' + this.device.powerTopic, '');
     }
-    // request initial state
-    this.get('state');
+    // request initial state of all characteristics
+    const obj = this.getAllCharacteristics(this.characteristics);
+    this.platform.mqttClient.publish(
+      `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/get`,
+      JSON.stringify(obj),
+    );
   }
 
   mapExpose(expose: Z2MExpose, mapDefinition: object): boolean {
@@ -141,6 +145,16 @@ export class Zigbee2MQTTAcessory {
       }
     }
     return mapped;
+  }
+
+  getAllCharacteristics(src: object, path?: string): object {
+    const obj = {};
+    for (const [key, value] of Object.entries(src)) {
+      const fullPath = (path ? path + '.' : '') + key;
+      const valueIsCharacteristic = (value instanceof Zigbee2MQTTCharacteristic);
+      this.setObjectByPath(obj, fullPath, valueIsCharacteristic ? '' : this.getAllCharacteristics(value));
+    }
+    return obj;
   }
 
   iterateStateMessage(msg: object, path?: string) {
