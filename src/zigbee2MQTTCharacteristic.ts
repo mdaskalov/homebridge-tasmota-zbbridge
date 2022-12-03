@@ -16,11 +16,10 @@ const UPDATE_TIMEOUT = 2000;
 export class Zigbee2MQTTCharacteristic {
   public props: CharacteristicProps;
   public value: CharacteristicValue;
-  private setValue: CharacteristicValue;
   private getTs: number;
   private setTs: number;
-  private awaitGetUpdate = false;
-  private awaitSetUpdate = false;
+  private updateTs: number;
+  private awaitUpdate = false;
 
   public onGet?: () => CharacteristicValue | undefined;
   public onSet?: (value: CharacteristicValue) => void;
@@ -32,14 +31,14 @@ export class Zigbee2MQTTCharacteristic {
     readonly characteristicName: string,
     readonly exposed: Z2MExpose,
   ) {
-    this.setTs = Date.now() - UPDATE_TIMEOUT;
-    this.getTs = Date.now() - UPDATE_TIMEOUT;
+    this.getTs =0;
+    this.setTs =0;
+    this.updateTs = 0;
 
     const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
     if (characteristic !== undefined) {
       this.props = characteristic.props;
       this.value = this.initValue();
-      this.setValue = this.value;
       //this.log('characteristic props: %s', JSON.stringify(this.props));
       if (this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ)) {
         characteristic.onGet(this.onGetValue.bind(this));
@@ -72,32 +71,30 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   private async onGetValue(): Promise<CharacteristicValue> {
-    if (this.awaitGetUpdate && !this.timeouted(this.getTs)) {
+    if (!this.timeouted(this.updateTs) || !this.timeouted(this.setTs)) {
       return this.value;
     }
-    if (this.awaitSetUpdate && !this.timeouted(this.setTs)) {
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-    }
     if (this.onGet !== undefined) {
-      this.getTs = Date.now();
-      this.awaitGetUpdate = true;
-      const value = this.checkHBValue(this.onGet());
-      if (value === undefined) {
+      const mappedValue = this.mapValueToHB(this.onGet());
+      if (mappedValue === undefined) {
+        this.getTs = Date.now();
+        this.awaitUpdate = true;
         throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
-      this.value = value;
+      this.value = mappedValue;
     }
     return this.value;
   }
 
   private async onSetValue(value: CharacteristicValue) {
+    if (value === this.value) {
+      return;
+    }
     if (this.onSet !== undefined) {
-      const setValue = this.mapValueToZ2M(value);
-      if (setValue !== undefined) {
-        this.onSet(setValue);
-        this.setValue = setValue;
+      const mappedValue = this.mapValueToZ2M(value);
+      if (mappedValue !== undefined) {
+        this.onSet(mappedValue);
         this.setTs = Date.now();
-        this.awaitSetUpdate = true;
         return;
       }
     }
@@ -105,28 +102,25 @@ export class Zigbee2MQTTCharacteristic {
   }
 
   update(value: CharacteristicValue | undefined) {
-    const updatedValue = this.mapValueToHB(value);
-    if (updatedValue !== undefined) {
-      if (this.awaitGetUpdate) {
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(updatedValue);
-        this.awaitGetUpdate = false;
+    const mappedValue = this.mapValueToHB(value);
+    if (mappedValue !== undefined) {
+      if (this.awaitUpdate) {
+        //this.log('awaited update: %s, currentValue: %s', mappedValue, this.value);
+        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
+        this.updateTs = Date.now();
+        this.value = mappedValue;
+        this.awaitUpdate = false;
+        return;
       }
-
-      if (this.awaitSetUpdate) {
-        if (value === this.setValue) {
-          this.value = updatedValue; // confirmed
-          this.awaitSetUpdate = false;
-          return;
-        }
-        if (!this.timeouted(this.setTs)) {
-          return; // ignore
-        }
-        this.awaitSetUpdate = false;
+      if (!this.timeouted(this.updateTs) || !this.timeouted(this.setTs) || !this.timeouted(this.getTs)) {
+        //this.log('ignored: %s, currentValue: %s', mappedValue, this.value);
+        return; // ignore
       }
-      if (updatedValue !== this.value) {
-        //this.log('update: %s, old: %s', updatedValue, this.value);
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(updatedValue);
-        this.value = updatedValue;
+      if (mappedValue !== this.value) {
+        //this.log('update: %s, currentValue: %s', mappedValue, this.value);
+        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
+        this.updateTs = Date.now();
+        this.value = mappedValue;
       }
     }
   }
