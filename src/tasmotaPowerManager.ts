@@ -20,7 +20,7 @@ export class TasmotaPowerManager {
     readonly mqttClient: MQTTClient) {
   }
 
-  powerStateChanged(msg: string, topic: string) {
+  private powerStateChanged(msg: string, topic: string) {
     const affectedAccessories = this.accessories.filter(a => topic === 'stat/' + a.topic);
     for (const accessory of affectedAccessories) {
       const state = (msg === 'ON');
@@ -49,6 +49,12 @@ export class TasmotaPowerManager {
     return false;
   }
 
+  private findOtherAcessory(accessory: PoweredAccessory) {
+    const other = this.accessories.find(a =>
+      a.topic === accessory.topic && a.ieee_address !== accessory.ieee_address && a.state === true);
+    return (other !== undefined);
+  }
+
   getState(ieee_address: string): boolean | undefined {
     const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
     if (accessory !== undefined) {
@@ -60,9 +66,11 @@ export class TasmotaPowerManager {
   setState(ieee_address: string, state: boolean): boolean {
     const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
     if (accessory !== undefined) {
-      this.mqttClient.publish('cmnd/' + accessory.topic, state ? 'ON' : 'OFF');
       accessory.state = state;
-      return true;
+      if (!this.findOtherAcessory(accessory)) {
+        this.mqttClient.publish('cmnd/' + accessory.topic, state ? 'ON' : 'OFF');
+        return true;
+      }
     }
     return false;
   }
