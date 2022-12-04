@@ -208,8 +208,7 @@
             "name": {
               "title": "Name",
               "type": "string",
-              "placeholder": "HomeKit name",
-              "required": true
+              "placeholder": "HomeKit name"
             },
             "powerTopic": {
               "title": "Power Topic",
@@ -260,6 +259,9 @@
                   "title": "Switch",
                   "enum": [ "POWER" ]
                 }, {
+                  "title": "Light",
+                  "enum": [ "LIGHT" ]
+                }, {
                   "title": "Switch 1",
                   "enum": [ "POWER1" ]
                 }, {
@@ -271,6 +273,18 @@
                 }, {
                   "title": "Switch 4",
                   "enum": [ "POWER4" ]
+                }, {
+                  "title": "Light 1",
+                  "enum": [ "LIGHT1" ]
+                }, {
+                  "title": "Light 2",
+                  "enum": [ "LIGHT2" ]
+                }, {
+                  "title": "Light 3",
+                  "enum": [ "LIGHT3" ]
+                }, {
+                  "title": "Light 4",
+                  "enum": [ "LIGHT4" ]
                 }, {
                   "title": "RGB Lightbulb",
                   "enum": [ "HSBColor" ]
