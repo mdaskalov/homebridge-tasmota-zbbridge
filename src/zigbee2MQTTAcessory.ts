@@ -194,7 +194,7 @@ export class Zigbee2MQTTAcessory {
       characteristic.onSet = value => {
         if (path === 'state') {
           const updated = this.platform.powerManager.setState(this.device.ieee_address, value === 'ON');
-          if (updated !== undefined) {
+          if (updated === true) {
             return;
           }
         }
