@@ -265,14 +265,15 @@ export class Zigbee2MQTTCharacteristic {
 
   // homebridge -> Zigbee2MQTT
   mapNumericValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
+    const checkedValue = this.checkZ2MValue(value);
     if (this.props.minValue === undefined || this.props.maxValue === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.exposed.value_min === undefined || this.exposed.value_max === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.props.minValue === this.exposed.value_min && this.props.maxValue === this.exposed.value_max) {
-      return undefined;
+      return checkedValue;
     }
     const mappedValue = Zigbee2MQTTCharacteristic.mapValue(
       value as number,
@@ -284,14 +285,15 @@ export class Zigbee2MQTTCharacteristic {
 
   // Zigbee2MQTT -> homebridge
   mapNumericValueToHB(value: CharacteristicValue): CharacteristicValue | undefined {
+    const checkedValue = this.checkHBValue(value);
     if (this.exposed.value_min === undefined || this.exposed.value_max === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.props.minValue === undefined || this.props.maxValue === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.exposed.value_min === this.props.minValue && this.exposed.value_max === this.props.maxValue) {
-      return undefined;
+      return checkedValue;
     }
     const mappedValue = Zigbee2MQTTCharacteristic.mapValue(
       value as number,
