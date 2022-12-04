@@ -8,6 +8,7 @@ import {
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
+import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { Z2MExpose } from './zigbee2MQTTAcessory';
 import { ENUMS } from './zigbee2MQTTMapping';
 
@@ -16,10 +17,9 @@ const UPDATE_TIMEOUT = 2000;
 export class Zigbee2MQTTCharacteristic {
   public props: CharacteristicProps;
   public value: CharacteristicValue;
-  private getTs: number;
+  private setValue: CharacteristicValue;
   private setTs: number;
   private updateTs: number;
-  private awaitUpdate = false;
 
   public onGet?: () => CharacteristicValue | undefined;
   public onSet?: (value: CharacteristicValue) => void;
@@ -31,14 +31,14 @@ export class Zigbee2MQTTCharacteristic {
     readonly characteristicName: string,
     readonly exposed: Z2MExpose,
   ) {
-    this.getTs = 0;
-    this.setTs = 0;
-    this.updateTs = 0;
+    this.setTs = Date.now() - UPDATE_TIMEOUT;
+    this.updateTs = Date.now();
 
     const characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]);
     if (characteristic !== undefined) {
       this.props = characteristic.props;
       this.value = this.initValue();
+      this.setValue = this.initValue();
       //this.log('characteristic props: %s', JSON.stringify(this.props));
       if (this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ)) {
         characteristic.onGet(this.onGetValue.bind(this));
@@ -70,6 +70,53 @@ export class Zigbee2MQTTCharacteristic {
     return (Date.now() > (ts + UPDATE_TIMEOUT));
   }
 
+  private updateValue(value: CharacteristicValue): boolean {
+    const now = Date.now();
+    const oldValue = this.value;
+    const updateTs = ZbBridgeAccessory.formatTs(this.updateTs);
+    const setTs = ZbBridgeAccessory.formatTs(this.setTs);
+    let ignored = (value === oldValue) || ((this.setTs > this.updateTs) && !this.timeouted(this.setTs));
+    if (!ignored) {
+      this.value = value;
+      this.updateTs = now;
+    } else if (value === this.setValue) {
+      this.value = value;
+      this.updateTs = now;
+      ignored = true;
+    }
+    this.log('updateValue: %s, old: %s, set: %s, setTs: %s, updateTs: %s%s',
+      value,
+      oldValue,
+      this.setValue,
+      setTs,
+      updateTs,
+      (ignored ? ' (ignored)' : ''),
+    );
+    return ignored;
+  }
+
+  private async onGetValue(): Promise<CharacteristicValue> {
+    const updated = (this.updateTs >= this.setTs);
+    const timeouted = this.timeouted(this.setTs);
+
+    const notUpdated = !updated && !timeouted;
+    const needsUpdate = !updated && timeouted;
+
+    let value: CharacteristicValue | undefined = notUpdated ? this.setValue : this.value;
+
+    if (needsUpdate && this.onGet !== undefined) {
+      value = this.mapValueToHB(this.onGet());
+    }
+    if (value === undefined) {
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    }
+    if (value !== this.value) {
+      this.value = value;
+    }
+    return value;
+  }
+
+  /*
   private async onGetValue(): Promise<CharacteristicValue> {
     if (!this.timeouted(this.updateTs) || !this.timeouted(this.setTs)) {
       return this.value;
@@ -85,7 +132,20 @@ export class Zigbee2MQTTCharacteristic {
     }
     return this.value;
   }
+  */
 
+  private async onSetValue(value: CharacteristicValue) {
+    this.setValue = value;
+    this.setTs = Date.now();
+    if (this.onSet !== undefined) {
+      const mappedValue = this.mapValueToZ2M(value);
+      if (mappedValue !== undefined) {
+        this.onSet(mappedValue);
+      }
+    }
+  }
+
+  /*
   private async onSetValue(value: CharacteristicValue) {
     if (this.onSet !== undefined) {
       const mappedValue = this.mapValueToZ2M(value);
@@ -97,7 +157,19 @@ export class Zigbee2MQTTCharacteristic {
     }
     this.value = value;
   }
+  */
 
+  update(value: CharacteristicValue | undefined) {
+    const mappedValue = this.mapValueToHB(value);
+    if (mappedValue !== undefined) {
+      const updateIgnored = this.updateValue(mappedValue);
+      if (!updateIgnored) {
+        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
+      }
+    }
+  }
+
+  /*
   update(value: CharacteristicValue | undefined) {
     const mappedValue = this.mapValueToHB(value);
     if (mappedValue !== undefined) {
@@ -121,6 +193,7 @@ export class Zigbee2MQTTCharacteristic {
       }
     }
   }
+  */
 
   // homebridge -> Zigbee2MQTT
   mapValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
