@@ -139,7 +139,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
             const { restored, accessory } = this.restoreAccessory(uuid, device.homekit_name);
             accessory.context.device = device;
             new Zigbee2MQTTAcessory(this, accessory);
-            this.log.info('%s Zigbee2MQTTAcessory accessory: %s (%s)',
+            this.log.info('%s Zigbee2MQTT accessory: %s (%s)',
               restored ? 'Restoring' : 'Adding', device.homekit_name, configured.ieee_address);
           } else {
             this.log.warn('Zigbee2MQTT device %s (%s) not found!', configured.name || 'Unknown', configured.ieee_address);
