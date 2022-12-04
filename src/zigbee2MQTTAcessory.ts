@@ -162,6 +162,10 @@ export class Zigbee2MQTTAcessory {
         const ignore = (key === 'color_temp' && msg['color_mode'] !== 'color_temp');
         if (characteristic && !ignore) {
           characteristic.update(value);
+          const state = (value === 'ON');
+          if (fullPath === 'state' && state === false) {
+            this.platform.powerManager.setState(this.device.ieee_address, state);
+          }
         }
       }
     }
@@ -193,8 +197,9 @@ export class Zigbee2MQTTAcessory {
     if (hasWriteAccess) {
       characteristic.onSet = value => {
         if (path === 'state') {
-          const updated = this.platform.powerManager.setState(this.device.ieee_address, value === 'ON');
-          if (updated === true) {
+          const state = value === 'ON';
+          // power off on update
+          if (state === true && this.platform.powerManager.setState(this.device.ieee_address, state)) {
             return;
           }
         }
