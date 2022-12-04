@@ -132,7 +132,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 `tasmotaDevices` - Tasmota flashed devices
 
 * `topic` - Device topic as configured in the MQTT menu
-* `type` - Device type (`POWER`, `StatusSNS.AM2301.Temperature`, `StatusSNS.AM2301.Humidity`, etc.) see descriptions in `config.schema.json`
+* `type` - Device type (`POWER`, `LIGHT`, `StatusSNS.AM2301.Temperature`, `StatusSNS.AM2301.Humidity`, etc.) see descriptions in `config.schema.json`
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique.
 
 `mqttBroker` - MQTT Broker hostname if not localhost
