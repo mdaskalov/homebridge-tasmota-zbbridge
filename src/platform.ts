@@ -129,16 +129,16 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         if (configured.ieee_address) {
           const device = z2m_devices.find(d => d.ieee_address === configured.ieee_address);
           if (device !== undefined) {
-            let powerTopic = configured.powerTopic;
+            const usePowerManager = configured.powerTopic !== undefined;
+            const powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
             device.homekit_name = configured.name || device.friendly_name || configured.ieee_address;
-            if (configured.powerTopic !== undefined) {
-              powerTopic = configured.powerTopic + '/' + (configured.powerType || 'POWER');
+            if (usePowerManager) {
               this.powerManager.addAccessory(device.ieee_address, powerTopic, device.homekit_name);
             }
             const uuid = this.zigbee2MQTTDeviceUUID(device.ieee_address, powerTopic);
             const { restored, accessory } = this.restoreAccessory(uuid, device.homekit_name);
             accessory.context.device = device;
-            new Zigbee2MQTTAcessory(this, accessory);
+            new Zigbee2MQTTAcessory(this, accessory, usePowerManager);
             this.log.info('%s Zigbee2MQTT accessory: %s (%s)',
               restored ? 'Restoring' : 'Adding', device.homekit_name, configured.ieee_address);
           } else {
