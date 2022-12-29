@@ -186,6 +186,27 @@
               "title": "Sensor Value Path",
               "placeholder": "Value Path",
               "type": "string"
+            },
+            "sensorValueMapping": {
+              "title": "Sensor Value Mapping",
+              "expandable": true,
+              "expanded": false,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "title": "From",
+                    "type": "string",
+                    "required": true
+                  },
+                  "to": {
+                    "title": "To",
+                    "type": "string",
+                    "required": true
+                  }
+                }
+              }
             }
           }
         }
@@ -462,6 +483,29 @@
                               "nodescription": true,
                               "notitle": true,
                               "key": "zbBridgeDevices[].sensorValuePath"
+                            } ]
+                        } ]
+                    }, {
+                      "key": "zbBridgeDevices[].sensorValueMapping",
+                      "helpvalue": "ZbBridge values could be mapped to different homebridge characteristic values (enums)",
+                      "buttonText": "Add Mapping",
+                      "items": [ {
+                          "type": "div",
+                          "displayFlex": false,
+                          "items": [ {
+                              "type": "flex",
+                              "flex-flow": "row wrap",
+                              "items": [ {
+                                  "type": "flex",
+                                  "flex-flow": "column",
+                                  "items": [ "zbBridgeDevices[].sensorValueMapping[].from" ]
+                                },
+                                {
+                                  "type": "flex",
+                                  "flex-flow": "column",
+                                  "items": [ "zbBridgeDevices[].sensorValueMapping[].to" ]
+                                }
+                              ]
                             } ]
                         } ]
                     } ]
