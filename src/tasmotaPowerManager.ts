@@ -63,8 +63,13 @@ export class TasmotaPowerManager {
     return (other !== undefined);
   }
 
+  isOn(ieee_address: string): boolean {
+    const accessory = this.findAccessory(ieee_address);
+    return accessory?.state === true;
+  }
+
   getState(ieee_address: string): boolean | undefined {
-    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
+    const accessory = this.findAccessory(ieee_address);
     if (accessory !== undefined) {
       this.mqttClient.publish('cmnd/' + accessory.topic, '');
       return accessory.state;
