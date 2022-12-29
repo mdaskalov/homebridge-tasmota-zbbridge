@@ -31,7 +31,15 @@ export class TasmotaPowerManager {
     }
   }
 
+  findAccessory(ieee_address: string): PoweredAccessory | undefined {
+    return this.accessories.find(a => a.ieee_address === ieee_address);
+  }
+
   addAccessory(ieee_address: string, topic: string, name: string) {
+    const accessory = this.findAccessory(ieee_address);
+    if (accessory !== undefined) {
+      return;
+    }
     const subscribed = this.accessories.some(a => a.topic === topic);
     this.accessories.push({ ieee_address, topic, name, state: false });
     if (!subscribed) {
@@ -42,7 +50,7 @@ export class TasmotaPowerManager {
   }
 
   addStateCallback(ieee_address: string, stateCallback: PowerStateCallback): boolean {
-    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
+    const accessory = this.findAccessory(ieee_address);
     if (accessory !== undefined) {
       accessory.stateCallback = stateCallback;
     }
@@ -64,7 +72,7 @@ export class TasmotaPowerManager {
   }
 
   setState(ieee_address: string, state: boolean): boolean {
-    const accessory = this.accessories.find(a => a.ieee_address === ieee_address);
+    const accessory = this.findAccessory(ieee_address);
     if (accessory !== undefined) {
       accessory.state = state;
       if (!this.findOtherAcessory(accessory)) {
