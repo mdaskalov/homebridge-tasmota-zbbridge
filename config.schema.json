@@ -189,8 +189,6 @@
             },
             "sensorValueMapping": {
               "title": "Sensor Value Mapping",
-              "expandable": true,
-              "expanded": false,
               "type": "array",
               "items": {
                 "type": "object",
@@ -486,27 +484,53 @@
                             } ]
                         } ]
                     }, {
-                      "key": "zbBridgeDevices[].sensorValueMapping",
-                      "helpvalue": "ZbBridge values could be mapped to different homebridge characteristic values (enums)",
-                      "buttonText": "Add Mapping",
+                      "type": "fieldset",
+                      "title": "Sensor Value Mapping",
+                      "expandable": true,
+                      "expanded": false,
                       "items": [ {
+                          "type": "help",
+                          "helpvalue": "ZbBridge sensor values could be mapped to homebridge characteristic values here"
+                        }, {
                           "type": "div",
-                          "displayFlex": false,
-                          "items": [ {
-                              "type": "flex",
-                              "flex-flow": "row wrap",
+                          "displayFlex": true,
+                          "items": [
+                            {
+                              "key": "zbBridgeDevices[].sensorValueMapping",
+                              "notitle": true,
+                              "buttonText": "Add Mapping",
                               "items": [ {
-                                  "type": "flex",
-                                  "flex-flow": "column",
-                                  "items": [ "zbBridgeDevices[].sensorValueMapping[].from" ]
-                                },
-                                {
-                                  "type": "flex",
-                                  "flex-flow": "column",
-                                  "items": [ "zbBridgeDevices[].sensorValueMapping[].to" ]
-                                }
-                              ]
-                            } ]
+                                  "type": "div",
+                                  "displayFlex": false,
+                                  "items": [ {
+                                      "type": "flex",
+                                      "flex-flow": "row wrap",
+                                      "items": [ {
+                                          "type": "flex",
+                                          "flex-flow": "column",
+                                          "items": [ {
+                                              "nodescription": true,
+                                              "notitle": true,
+                                              "placeholder": "From Value",
+                                              "key": "zbBridgeDevices[].sensorValueMapping[].from"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "flex",
+                                          "flex-flow": "column",
+                                          "items": [ {
+                                              "nodescription": true,
+                                              "notitle": true,
+                                              "placeholder": "To Value",
+                                              "key": "zbBridgeDevices[].sensorValueMapping[].to"
+                                            } ]
+                                        }
+                                      ]
+                                    } ]
+                                } ]
+                            }
+                          ]
                         } ]
                     } ]
                 } ]
