@@ -66,6 +66,27 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
             "sensorService": "ContactSensor",
             "sensorCharacteristic": "ContactSensorState",
             "sensorValuePath": "Contact"
+        },
+        {
+            "addr": "0xD394",
+            "type": "sensor",
+            "name": "Sensor3",
+            "sensorService": "StatelessProgrammableSwitch",
+            "sensorValuePath": "Click",
+            "sensorValueMapping": [
+                {
+                    "from": "single",
+                    "to": "0"
+                },
+                {
+                    "from": "double",
+                    "to": "1"
+                },
+                {
+                    "from": "hold",
+                    "to": "2"
+                }
+            ]
         }
     ],
     "zigbee2mqttDevices": [
@@ -116,6 +137,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
   * `sensorService` - (optional) Sensor service name as defined [here](https://developers.homebridge.io/#/service) (default: `ContactSensor`)
   * `sensorCharacteristic` - (optional) Service characteristic name (default: `ContactSensorState`)
   * `sensorValuePath` - (optional) Path of the sensor value in the SENSOR message (default: `Contact`).
+  * `sensorValueMapping` - (optional) Map sensor `from` value to homebridge `to` value. All other values will be ignored.
 
     For example `CONTACT_DETECTED` will be reported when following message is received:
     ```

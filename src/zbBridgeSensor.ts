@@ -37,7 +37,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
   onStatusUpdate(msg) {
     let statusText = '';
     if (this.characteristic !== undefined && this.accessory.context.device.sensorValuePath !== undefined) {
-      const value = this.getObjectByPath(msg, this.accessory.context.device.sensorValuePath);
+      const value = this.mapSensorValue(this.getObjectByPath(msg, this.accessory.context.device.sensorValuePath));
       if ((value !== undefined) && (value !== this.value)) {
         this.value = value;
         this.characteristic.updateValue(value);
@@ -45,6 +45,18 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
       }
     }
     return statusText;
+  }
+
+  mapSensorValue(value: CharacteristicValue): CharacteristicValue | undefined {
+    const mapping = this.accessory.context.device.sensorValueMapping;
+    if (Array.isArray(mapping)) {
+      const mapEntry = mapping.find(m => m.from === value);
+      if (mapEntry !== undefined) {
+        return mapEntry.to;
+      }
+      return undefined;
+    }
+    return value;
   }
 
   //Motion      ZbSend { "Device": "0x01F3", "Cluster": "0x0006", "Read": "0x42" }

@@ -186,6 +186,25 @@
               "title": "Sensor Value Path",
               "placeholder": "Value Path",
               "type": "string"
+            },
+            "sensorValueMapping": {
+              "title": "Sensor Value Mapping",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "title": "From",
+                    "type": "string",
+                    "required": true
+                  },
+                  "to": {
+                    "title": "To",
+                    "type": "string",
+                    "required": true
+                  }
+                }
+              }
             }
           }
         }
@@ -463,6 +482,55 @@
                               "notitle": true,
                               "key": "zbBridgeDevices[].sensorValuePath"
                             } ]
+                        } ]
+                    }, {
+                      "type": "fieldset",
+                      "title": "Sensor Value Mapping",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [ {
+                          "type": "help",
+                          "helpvalue": "ZbBridge sensor values could be mapped to homebridge characteristic values here"
+                        }, {
+                          "type": "div",
+                          "displayFlex": true,
+                          "items": [
+                            {
+                              "key": "zbBridgeDevices[].sensorValueMapping",
+                              "notitle": true,
+                              "buttonText": "Add Mapping",
+                              "items": [ {
+                                  "type": "div",
+                                  "displayFlex": false,
+                                  "items": [ {
+                                      "type": "flex",
+                                      "flex-flow": "row wrap",
+                                      "items": [ {
+                                          "type": "flex",
+                                          "flex-flow": "column",
+                                          "items": [ {
+                                              "nodescription": true,
+                                              "notitle": true,
+                                              "placeholder": "From Value",
+                                              "key": "zbBridgeDevices[].sensorValueMapping[].from"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "flex",
+                                          "flex-flow": "column",
+                                          "items": [ {
+                                              "nodescription": true,
+                                              "notitle": true,
+                                              "placeholder": "To Value",
+                                              "key": "zbBridgeDevices[].sensorValueMapping[].to"
+                                            } ]
+                                        }
+                                      ]
+                                    } ]
+                                } ]
+                            }
+                          ]
                         } ]
                     } ]
                 } ]
