@@ -116,24 +116,6 @@ export class Zigbee2MQTTCharacteristic {
     return value;
   }
 
-  /*
-  private async onGetValue(): Promise<CharacteristicValue> {
-    if (!this.timeouted(this.updateTs) || !this.timeouted(this.setTs)) {
-      return this.value;
-    }
-    if (this.onGet !== undefined) {
-      const mappedValue = this.mapValueToHB(this.onGet());
-      if (mappedValue === undefined) {
-        this.getTs = Date.now();
-        this.awaitUpdate = true;
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
-      }
-      this.value = mappedValue;
-    }
-    return this.value;
-  }
-  */
-
   private async onSetValue(value: CharacteristicValue) {
     this.setValue = value;
     this.setTs = Date.now();
@@ -145,20 +127,6 @@ export class Zigbee2MQTTCharacteristic {
     }
   }
 
-  /*
-  private async onSetValue(value: CharacteristicValue) {
-    if (this.onSet !== undefined) {
-      const mappedValue = this.mapValueToZ2M(value);
-      if (mappedValue !== undefined) {
-        this.onSet(mappedValue);
-        this.setTs = Date.now();
-        return;
-      }
-    }
-    this.value = value;
-  }
-  */
-
   update(value: CharacteristicValue | undefined) {
     const mappedValue = this.mapValueToHB(value);
     if (mappedValue !== undefined) {
@@ -168,32 +136,6 @@ export class Zigbee2MQTTCharacteristic {
       }
     }
   }
-
-  /*
-  update(value: CharacteristicValue | undefined) {
-    const mappedValue = this.mapValueToHB(value);
-    if (mappedValue !== undefined) {
-      if (this.awaitUpdate) {
-        //this.log('awaited update: %s, currentValue: %s', mappedValue, this.value);
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
-        this.updateTs = Date.now();
-        this.value = mappedValue;
-        this.awaitUpdate = false;
-        return;
-      }
-      if (!this.timeouted(this.updateTs) || !this.timeouted(this.setTs) || !this.timeouted(this.getTs)) {
-        //this.log('ignored: %s, currentValue: %s', mappedValue, this.value);
-        return; // ignore
-      }
-      if (mappedValue !== this.value) {
-        //this.log('update: %s, currentValue: %s', mappedValue, this.value);
-        this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
-        this.updateTs = Date.now();
-        this.value = mappedValue;
-      }
-    }
-  }
-  */
 
   // homebridge -> Zigbee2MQTT
   mapValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
@@ -265,14 +207,15 @@ export class Zigbee2MQTTCharacteristic {
 
   // homebridge -> Zigbee2MQTT
   mapNumericValueToZ2M(value: CharacteristicValue): CharacteristicValue | undefined {
+    const checkedValue = this.checkZ2MValue(value);
     if (this.props.minValue === undefined || this.props.maxValue === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.exposed.value_min === undefined || this.exposed.value_max === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.props.minValue === this.exposed.value_min && this.props.maxValue === this.exposed.value_max) {
-      return undefined;
+      return checkedValue;
     }
     const mappedValue = Zigbee2MQTTCharacteristic.mapValue(
       value as number,
@@ -284,14 +227,15 @@ export class Zigbee2MQTTCharacteristic {
 
   // Zigbee2MQTT -> homebridge
   mapNumericValueToHB(value: CharacteristicValue): CharacteristicValue | undefined {
+    const checkedValue = this.checkHBValue(value);
     if (this.exposed.value_min === undefined || this.exposed.value_max === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.props.minValue === undefined || this.props.maxValue === undefined) {
-      return undefined;
+      return checkedValue;
     }
     if (this.exposed.value_min === this.props.minValue && this.exposed.value_max === this.props.maxValue) {
-      return undefined;
+      return checkedValue;
     }
     const mappedValue = Zigbee2MQTTCharacteristic.mapValue(
       value as number,

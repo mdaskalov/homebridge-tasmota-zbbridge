@@ -55,6 +55,7 @@ export class Zigbee2MQTTAcessory {
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
+    readonly usePowerManager: boolean,
   ) {
     this.device = this.accessory.context.device;
     //this.log('device: %s', JSON.stringify(device));
@@ -86,6 +87,10 @@ export class Zigbee2MQTTAcessory {
     // subscribe to device status updates
     this.platform.mqttClient.subscribeTopic(
       this.platform.config.zigbee2mqttTopic + '/' + this.device.friendly_name, message => {
+        if (this.usePowerManager && !this.platform.powerManager.isOn(this.device.ieee_address)) {
+          this.log('Ingored Zigbee2MQTT status update (device powered off)');
+          return;
+        }
         this.iterateStateMessage(JSON.parse(message));
       });
     // request initial state of all characteristics
@@ -161,10 +166,10 @@ export class Zigbee2MQTTAcessory {
         const characteristic = <Zigbee2MQTTCharacteristic>this.getObjectByPath(this.characteristics, fullPath);
         const ignore = (key === 'color_temp' && msg['color_mode'] !== 'color_temp');
         if (characteristic && !ignore) {
-          characteristic.update(value);
-          const state = (value === 'ON');
-          if (fullPath === 'state' && state === false) {
-            this.platform.powerManager.setState(this.device.ieee_address, state);
+          if (fullPath === 'state' && this.usePowerManager) {
+            this.platform.powerManager.setState(this.device.ieee_address, (value === 'ON'));
+          } else {
+            characteristic.update(value);
           }
         }
       }
@@ -186,9 +191,11 @@ export class Zigbee2MQTTAcessory {
     const hasWriteAccess = (exposed.access & 3) === 3;
     if (hasReadAccess) {
       characteristic.onGet = () => {
-        const state = this.platform.powerManager.getState(this.device.ieee_address);
-        if (state === false || (path === 'state' && state !== undefined)) {
-          return undefined;
+        if (path === 'state' && this.usePowerManager) {
+          const state = this.platform.powerManager.getState(this.device.ieee_address);
+          if (state === false || (path === 'state' && state !== undefined)) {
+            return undefined;
+          }
         }
         this.get(path);
         return undefined;
@@ -196,7 +203,7 @@ export class Zigbee2MQTTAcessory {
     }
     if (hasWriteAccess) {
       characteristic.onSet = value => {
-        if (path === 'state') {
+        if (path === 'state' && this.usePowerManager) {
           const state = value === 'ON';
           // power off on update
           if (state === true && this.platform.powerManager.setState(this.device.ieee_address, state)) {
@@ -209,7 +216,7 @@ export class Zigbee2MQTTAcessory {
     const permissions = (hasReadAccess ? 'R' : '') + (hasWriteAccess ? 'W' : '');
     this.log('Map: %s(%s) -> %s:%s(%s)', exposed.name, permissions, service.constructor.name, characteristicName, path);
     this.setObjectByPath(this.characteristics, path, characteristic);
-    if (path === 'state') {
+    if (path === 'state' && this.usePowerManager) {
       this.platform.powerManager.addStateCallback(this.device.ieee_address, state => {
         characteristic.update(state ? 'ON' : 'OFF');
       });
