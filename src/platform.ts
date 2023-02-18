@@ -3,10 +3,10 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { TasmotaDevice, TasmotaAccessory } from './tasmotaAccessory';
 import { MQTTClient } from './mqttClient';
-import { ZbBridgeDevice } from './zbBridgeAccessory';
-import { ZbBridgeLightbulb } from './zbBridgeLightbulb';
-import { ZbBridgeSwitch } from './zbBridgeSwitch';
-import { ZbBridgeSensor } from './zbBridgeSensor';
+import { Zigbee2TasmotaDevice } from './zigbee2TasmotaAccessory';
+import { Zigbee2TasmotaLightbulb } from './zigbee2TasmotaLightbulb';
+import { Zigbee2TasmotaSwitch } from './zigbee2TasmotaSwitch';
+import { Zigbee2TasmotaSensor } from './zigbee2TasmotaSensor';
 import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
 import { TasmotaPowerManager } from './tasmotaPowerManager';
 
@@ -31,8 +31,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       if (Array.isArray(this.config.zigbee2mqttDevices) && this.config.zigbee2mqttDevices.length > 0) {
         await this.discoverZigbee2MQTTDevices();
       }
-      if (Array.isArray(this.config.zbBridgeDevices) && this.config.zbBridgeDevices.length > 0) {
-        this.discoverZbBridgeDevices();
+      if (Array.isArray(this.config.zigbee2TasmotaDevices) && this.config.zigbee2TasmotaDevices.length > 0) {
+        this.discoverZigbee2TasmotaDevices();
       }
       if (Array.isArray(this.config.tasmotaDevices) && this.config.tasmotaDevices.length > 0) {
         this.discoverTasmotaDevices();
@@ -45,7 +45,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
-  zbBridgeDeviceUUID(device: ZbBridgeDevice): string {
+  zigbee2TasmotaDeviceUUID(device: Zigbee2TasmotaDevice): string {
     const identificator = device.addr + device.type +
       (device.powerTopic || '') +
       (device.powerType || '') +
@@ -65,7 +65,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     return this.api.hap.uuid.generate(device.topic + '-' + device.type);
   }
 
-  createZbBridgeAccessory(accessory: PlatformAccessory) {
+  createZigbee2TasmotaAccessory(accessory: PlatformAccessory) {
     const type = accessory.context.device.type;
     if (type === undefined) {
       return;
@@ -76,11 +76,11 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         this.log.warn('Warning: Unknown service: %s, using ContactSensor instead!', serviceName);
         serviceName = 'ContactSensor';
       }
-      new ZbBridgeSensor(this, accessory, serviceName);
+      new Zigbee2TasmotaSensor(this, accessory, serviceName);
     } else if (type.startsWith('light')) {
-      new ZbBridgeLightbulb(this, accessory, 'Lightbulb');
+      new Zigbee2TasmotaLightbulb(this, accessory, 'Lightbulb');
     } else if (type === 'switch') {
-      new ZbBridgeSwitch(this, accessory, 'Switch');
+      new Zigbee2TasmotaSwitch(this, accessory, 'Switch');
     }
   }
 
@@ -97,16 +97,16 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  discoverZbBridgeDevices() {
-    for (const device of this.config.zbBridgeDevices) {
-      if ((<ZbBridgeDevice>device)?.addr && (<ZbBridgeDevice>device)?.type && (<ZbBridgeDevice>device)?.name) {
-        const { restored, accessory } = this.restoreAccessory(this.zbBridgeDeviceUUID(device), device.name);
+  discoverZigbee2TasmotaDevices() {
+    for (const device of this.config.zigbee2TasmotaDevices) {
+      if ((<Zigbee2TasmotaDevice>device)?.addr && (<Zigbee2TasmotaDevice>device)?.type && (<Zigbee2TasmotaDevice>device)?.name) {
+        const { restored, accessory } = this.restoreAccessory(this.zigbee2TasmotaDeviceUUID(device), device.name);
         accessory.context.device = device;
-        this.createZbBridgeAccessory(accessory);
-        this.log.info('%s ZbBridge accessory: %s (%s) - %s',
+        this.createZigbee2TasmotaAccessory(accessory);
+        this.log.info('%s Zigbee2Tasmota accessory: %s (%s) - %s',
           restored ? 'Restoring' : 'Adding', device.name, device.addr, device.type);
       } else {
-        this.log.error('Ignored ZbBridge device configuration: ', JSON.stringify(device));
+        this.log.error('Ignored Zigbee2Tasmota device configuration: ', JSON.stringify(device));
         continue;
       }
     }
@@ -175,7 +175,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         const found = this.configuredUUIDs.find(uuid => uuid === accessory.UUID);
         if (!found) {
           const device = accessory.context.device;
-          if ((<ZbBridgeDevice>device)?.addr && (<ZbBridgeDevice>device)?.type) {
+          if ((<Zigbee2TasmotaDevice>device)?.addr && (<Zigbee2TasmotaDevice>device)?.type) {
             this.log.info('Removing ZbBridge accessory: %s (%s) - %s', device.name, device.addr, device.type);
           } else if ((<Zigbee2MQTTDevice>device)?.ieee_address) {
             this.log.info('Removing Zigbee2MQTT accessory: %s (%s)', device.homekit_name, device.ieee_address);

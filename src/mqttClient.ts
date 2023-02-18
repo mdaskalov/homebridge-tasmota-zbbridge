@@ -46,7 +46,7 @@ export class MQTTClient {
     };
 
     this.client = connect('mqtt://' + broker, options);
-    this.topic = this.config.mqttTopic || 'zbbridge';
+    this.topic = this.config.zigbee2TasmotaTopic || 'zbbridge';
 
     this.client.on('error', err => {
       this.log.error('MQTT: Error: %s', err.message);
@@ -117,14 +117,18 @@ export class MQTTClient {
   }
 
   onDeviceMessage(message) {
+
     const msg = this.findDevice(message);
     if (msg !== undefined) {
+      this.log.debug('onDeviceMessage: %s', JSON.stringify(msg));
+
       const handlers = this.deviceHandlers.filter(h => {
         const addrMatch = this.addrMatch(h, msg);
         const endpointMatch = (h.endpoint === undefined) || (msg.Endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
         return addrMatch && endpointMatch;
       });
       if (Array.isArray(handlers)) {
+        this.log.debug('Handlers: %s', JSON.stringify(handlers));
         for (const handler of handlers) {
           handler.callback(msg);
         }

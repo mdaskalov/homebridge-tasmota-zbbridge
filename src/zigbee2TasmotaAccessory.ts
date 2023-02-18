@@ -5,7 +5,7 @@ import {
 
 import { TasmotaZbBridgePlatform } from './platform';
 
-export type ZbBridgeDevice = {
+export type Zigbee2TasmotaDevice = {
   addr: string;
   type: string;
   name: string;
@@ -16,7 +16,7 @@ export type ZbBridgeDevice = {
   sensorValuePath?: string;
 };
 
-export abstract class ZbBridgeAccessory {
+export abstract class Zigbee2TasmotaAccessory {
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;

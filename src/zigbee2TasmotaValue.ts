@@ -3,13 +3,13 @@ import {
   CharacteristicValue,
 } from 'homebridge';
 
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Zigbee2TasmotaAccessory } from './zigbee2TasmotaAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
 
 
 const UPDATE_TIMEOUT = 2000;
 
-export class ZbBridgeValue {
+export class Zigbee2TasmotaValue {
   private value: CharacteristicValue;
   private setValue: CharacteristicValue;
   private setTs: number;
@@ -33,8 +33,8 @@ export class ZbBridgeValue {
   update(to: CharacteristicValue): boolean {
     const now = Date.now();
     const oldValue = this.value;
-    const updateTs = ZbBridgeAccessory.formatTs(this.updateTs);
-    const setTs = ZbBridgeAccessory.formatTs(this.setTs);
+    const updateTs = Zigbee2TasmotaAccessory.formatTs(this.updateTs);
+    const setTs = Zigbee2TasmotaAccessory.formatTs(this.setTs);
     let ignored = (to === oldValue) || ((this.setTs > this.updateTs) && !this.timeouted(this.setTs));
     if (!ignored) {
       this.value = to;

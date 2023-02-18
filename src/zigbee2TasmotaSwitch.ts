@@ -4,12 +4,12 @@ import {
   HAPStatus,
 } from 'homebridge';
 
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Zigbee2TasmotaAccessory } from './zigbee2TasmotaAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
-import { ZbBridgeValue } from './zbBridgeValue';
+import { Zigbee2TasmotaValue } from './zigbee2TasmotaValue';
 
-export class ZbBridgeSwitch extends ZbBridgeAccessory {
-  private power: ZbBridgeValue;
+export class Zigbee2TasmotaSwitch extends Zigbee2TasmotaAccessory {
+  private power: Zigbee2TasmotaValue;
   private reachable: boolean;
 
   constructor(
@@ -18,7 +18,7 @@ export class ZbBridgeSwitch extends ZbBridgeAccessory {
     readonly serviceName: string,
   ) {
     super(platform, accessory, serviceName);
-    this.power = new ZbBridgeValue(platform, accessory, 'power', false);
+    this.power = new Zigbee2TasmotaValue(platform, accessory, 'power', false);
 
     this.reachable = true;
 

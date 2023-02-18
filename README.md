@@ -31,7 +31,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 ```
 {
     "name": "ZbBridge",
-    "zbBridgeDevices": [
+    "zigbee2TasmotaDevices": [
         {
             "addr": "0x8E8E",
             "type": "light1",
@@ -124,7 +124,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 }
 ```
 
-`zbBridgeDevices` - Zigbee devices connected to the Zigbee2Tasmota gateway/bridge
+`zigbee2TasmotaDevices` - Zigbee devices connected to the Zigbee2Tasmota gateway/bridge
 
 * `addr` - Device hardware or short address and optional endpoint (for example Tuya 2ch switch). The hardware address (64 bits) is unique per device and factory assigned so once configured it will still work even if the device have to be paired again. Example: Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
 * `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.

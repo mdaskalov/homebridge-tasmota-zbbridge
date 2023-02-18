@@ -4,10 +4,10 @@ import {
   CharacteristicValue,
 } from 'homebridge';
 
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Zigbee2TasmotaAccessory } from './zigbee2TasmotaAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
 
-export class ZbBridgeSensor extends ZbBridgeAccessory {
+export class Zigbee2TasmotaSensor extends Zigbee2TasmotaAccessory {
   private value: CharacteristicValue;
   private characteristic?: Characteristic;
 
