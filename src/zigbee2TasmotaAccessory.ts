@@ -44,26 +44,23 @@ export abstract class Zigbee2TasmotaAccessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    // Skip for zigbee2mqtt accessory
-    if (this.type !== 'z2m') {
-      // Subscribe for device updates
-      this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
-        this.statusUpdate(msg);
-      });
+    // Subscribe for device updates
+    this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
+      this.statusUpdate(msg);
+    });
 
-      // udpate name only if no endpoint is defined
-      if (this.endpoint === undefined) {
-        this.platform.mqttClient.publish(
-          'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-          this.addr + ',' + accessory.context.device.name,
-        );
-      }
-
-      this.registerHandlers();
-
-      // // Query device info
-      this.zbInfo();
+    // udpate name only if no endpoint is defined
+    if (this.endpoint === undefined) {
+      this.platform.mqttClient.publish(
+        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+        this.addr + ',' + accessory.context.device.name,
+      );
     }
+
+    this.registerHandlers();
+
+    // // Query device info
+    this.zbInfo();
   }
 
   static formatTs(dt?: number): string {
