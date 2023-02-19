@@ -17,10 +17,12 @@ export type Zigbee2TasmotaDevice = {
 };
 
 export abstract class Zigbee2TasmotaAccessory {
+  private topic: string;
+  private shortAddr?: number;
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
-  protected endpoint: number | undefined;
+  protected endpoint?: number;
   protected type: string;
   protected updatedAccessoryInfo = false;
 
@@ -34,8 +36,10 @@ export abstract class Zigbee2TasmotaAccessory {
     }
     const addr = this.accessory.context.device.addr.split(':');
     this.addr = addr[0];
+    this.shortAddr = Number(this.addr);
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
+    this.topic = this.platform.config.zigbee2TasmotaTopic || 'zbbridge';
 
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
@@ -45,14 +49,15 @@ export abstract class Zigbee2TasmotaAccessory {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     // Subscribe for device updates
-    this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
-      this.statusUpdate(msg);
-    });
+    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/SENSOR', msg => this.onSensorMessage(msg));
 
-    // udpate name only if no endpoint is defined
+    // support unique device topic (ZbDeviceTopic / SetOption89)
+    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/+/SENSOR', msg => this.onSensorMessage(msg));
+
+    // call zbname (udpate name)
     if (this.endpoint === undefined) {
       this.platform.mqttClient.publish(
-        'cmnd/' + this.platform.mqttClient.topic + '/zbname',
+        'cmnd/' + this.topic + '/zbname',
         this.addr + ',' + accessory.context.device.name,
       );
     }
@@ -74,6 +79,55 @@ export abstract class Zigbee2TasmotaAccessory {
       d.getSeconds().toString().padStart(2, '0'),
     ].join(':') + '.' + d.getMilliseconds().toString();
     return dformat;
+  }
+
+  findDeviceChildObj(obj) {
+    if (obj) {
+      if (obj.Device) {
+        return obj;
+      }
+      for (const prop in obj) {
+        const childObj = obj[prop];
+        if (typeof childObj === 'object' && !Array.isArray(childObj) && childObj !== null) {
+          const foundDeviceChildObj = this.findDeviceChildObj(childObj);
+          if (foundDeviceChildObj !== undefined) {
+            return foundDeviceChildObj;
+          }
+        }
+      }
+    }
+  }
+
+  matchDeviceObjAddr(obj) {
+    const addr = Number(obj.IEEEAddr);
+    const shortAddr = Number(obj.Device);
+
+    if (Number(this.addr) === addr) {
+      if (shortAddr) {
+        this.shortAddr = shortAddr;
+      }
+      return true;
+    }
+    return (this.shortAddr === shortAddr);
+  }
+
+  onSensorMessage(message: string) {
+    try {
+      const parsedMsg = JSON.parse(message);
+      const devObj = this.findDeviceChildObj(parsedMsg); // Object containing 'Device' property
+      if (devObj !== undefined) {
+        const addrMatch = this.matchDeviceObjAddr(devObj); // Match Device (shortAddr) or IEEEAddr
+        const endpointMatch =
+          (this.endpoint === undefined) ||
+          (devObj.Endpoint === undefined) ||
+          (Number(this.endpoint) === Number(devObj.Endpoint));
+        if (addrMatch && endpointMatch) {
+          this.statusUpdate(devObj);
+        }
+      }
+    } catch (err) {
+      this.platform.log.error('SENSOR message parse error: %s', message);
+    }
   }
 
   getObjectByPath(obj, path: string) {
@@ -102,12 +156,12 @@ export abstract class Zigbee2TasmotaAccessory {
   }
 
   zbInfo(): void {
-    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbinfo';
+    const topic = 'cmnd/' + this.topic + '/zbinfo';
     this.platform.mqttClient.publish(topic, this.addr);
   }
 
   zbSend(command): void {
-    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbsend';
+    const topic = 'cmnd/' + this.topic + '/zbsend';
     const message = JSON.stringify(command);
     this.platform.mqttClient.publish(topic, message);
   }
