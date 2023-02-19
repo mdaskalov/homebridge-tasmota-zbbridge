@@ -2,6 +2,7 @@ import {
   PlatformAccessory,
   CharacteristicValue,
   Service,
+  AdaptiveLightingController,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -51,6 +52,7 @@ export type Zigbee2MQTTDevice = {
 export class Zigbee2MQTTAcessory {
   private characteristics = {};
   private device: Zigbee2MQTTDevice;
+  private adaptiveLightingController?: AdaptiveLightingController;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
@@ -99,6 +101,12 @@ export class Zigbee2MQTTAcessory {
       `${this.platform.config.zigbee2mqttTopic}/${this.device.friendly_name}/get`,
       JSON.stringify(obj),
     );
+  }
+
+  disableAdaptiveLighting() {
+    if (this.adaptiveLightingController) {
+      this.adaptiveLightingController.disableAdaptiveLighting();
+    }
   }
 
   mapExpose(expose: Z2MExpose, mapDefinition: object): boolean {
@@ -169,7 +177,11 @@ export class Zigbee2MQTTAcessory {
           if (fullPath === 'state' && this.usePowerManager) {
             this.platform.powerManager.setState(this.device.ieee_address, (value === 'ON'));
           } else {
-            characteristic.update(value);
+            const updated = characteristic.update(value);
+            if (updated && ['color_temp', 'color.hue', 'color.saturation'].indexOf(fullPath) >= 0) {
+              this.log('updated %s - disableAdaptiveLighting...', fullPath);
+              this.disableAdaptiveLighting();
+            }
           }
         }
       }
@@ -213,6 +225,16 @@ export class Zigbee2MQTTAcessory {
         this.set(path, value);
       };
     }
+
+    if (exposed.property === 'color_temp' && hasReadAccess && hasWriteAccess) {
+      this.adaptiveLightingController = new this.platform.api.hap.AdaptiveLightingController(service, {
+        controllerMode: this.platform.api.hap.AdaptiveLightingControllerMode.AUTOMATIC,
+      });
+      if (this.adaptiveLightingController) {
+        this.accessory.configureController(this.adaptiveLightingController);
+      }
+    }
+
     const permissions = (hasReadAccess ? 'R' : '') + (hasWriteAccess ? 'W' : '');
     this.log('Map: %s(%s) -> %s:%s(%s)', exposed.name, permissions, service.constructor.name, characteristicName, path);
     this.setObjectByPath(this.characteristics, path, characteristic);
