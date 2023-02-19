@@ -60,10 +60,15 @@ export class MQTTClient {
   }
 
   matchTopic(handler: TopicHandler, topic: string) {
-    if (handler.topic.includes('+')) {
-      return topic.includes(handler.topic.substr(0, handler.topic.indexOf('+')));
+    if (handler.topic.includes('#')) {
+      return topic.startsWith(handler.topic.substring(0, handler.topic.indexOf('#')));
     }
-    return handler.topic === topic;
+    const topicParts = topic.split('/');
+    const handlerTopicParts = handler.topic.split('/');
+    if (topicParts.length === handlerTopicParts.length) {
+      return topicParts.every((part, idx) => part === handlerTopicParts[idx] || handlerTopicParts[idx] === '+');
+    }
+    return false;
   }
 
   uniqueID() {
