@@ -2,6 +2,7 @@ import {
   PlatformAccessory,
   CharacteristicValue,
   HAPStatus,
+  AdaptiveLightingController,
 } from 'homebridge';
 
 import { Color } from './color';
@@ -22,6 +23,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
   private supportCT?: boolean;
   private supportHS?: boolean;
   private supportXY?: boolean;
+
+  private adaptiveLightingController?: AdaptiveLightingController;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
@@ -74,6 +77,13 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
         .onSet(this.setColorTemperature.bind(this))
         .onGet(this.getColorTemperature.bind(this));
+
+      this.adaptiveLightingController = new this.platform.api.hap.AdaptiveLightingController(this.service, {
+        controllerMode: this.platform.api.hap.AdaptiveLightingControllerMode.AUTOMATIC,
+      });
+      if (this.adaptiveLightingController) {
+        this.accessory.configureController(this.adaptiveLightingController);
+      }
     }
     if (this.supportHS || this.supportXY) {
       this.service.getCharacteristic(this.platform.Characteristic.Hue)
@@ -82,6 +92,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.service.getCharacteristic(this.platform.Characteristic.Saturation)
         .onSet(this.setSaturation.bind(this))
         .onGet(this.getSaturation.bind(this));
+    }
+  }
+
+  disableAdaptiveLighting() {
+    if (this.adaptiveLightingController) {
+      this.adaptiveLightingController.disableAdaptiveLighting();
     }
   }
 
@@ -132,6 +148,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       this.color.hue = hue;
       const ignoreHue = this.hue.update(hue);
       if (!ignoreHue) {
+        this.disableAdaptiveLighting();
         this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(hue);
         statusText += ` Hue: ${msg.Hue} (${hue})`;
       }
@@ -142,6 +159,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       const ignoreSat = this.saturation.update(sat);
       if (!ignoreSat) {
         statusText += ` Sat: ${msg.Sat} (${sat})`;
+        this.disableAdaptiveLighting();
         this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(sat);
       }
     }
@@ -171,6 +189,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     if (!ignoreX || !ignoreY) {
       this.hue.update(this.color.hue);
       this.saturation.update(this.color.saturation);
+      this.disableAdaptiveLighting();
       this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
       this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
       statusText += ` (Hue: ${this.color.hue}, Sat:${this.color.saturation})`;
@@ -187,6 +206,7 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
       if (!ignoreCT) {
         this.hue.update(this.color.hue);
         this.saturation.update(this.color.saturation);
+        this.disableAdaptiveLighting();
         this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(ct);
         this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
         this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
