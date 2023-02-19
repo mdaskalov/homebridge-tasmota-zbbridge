@@ -11,6 +11,7 @@ import { TasmotaZbBridgePlatform } from './platform';
 import { ZbBridgeAccessory } from './zbBridgeAccessory';
 import { Z2MExpose } from './zigbee2MQTTAcessory';
 import { ENUMS } from './zigbee2MQTTMapping';
+import { NOT_MAPPED_CHARACTERISTICS } from './zigbee2MQTTMapping';
 
 const UPDATE_TIMEOUT = 2000;
 
@@ -127,14 +128,16 @@ export class Zigbee2MQTTCharacteristic {
     }
   }
 
-  update(value: CharacteristicValue | undefined) {
+  update(value: CharacteristicValue | undefined): boolean {
     const mappedValue = this.mapValueToHB(value);
     if (mappedValue !== undefined) {
       const updateIgnored = this.updateValue(mappedValue);
       if (!updateIgnored) {
         this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
+        return true;
       }
     }
+    return false;
   }
 
   // homebridge -> Zigbee2MQTT
@@ -148,8 +151,12 @@ export class Zigbee2MQTTCharacteristic {
           return this.exposed.value_off;
         }
         break;
-      case 'numeric':
+      case 'numeric': {
+        if (NOT_MAPPED_CHARACTERISTICS.indexOf(this.characteristicName) >= 0) {
+          return this.checkZ2MValue(value);
+        }
         return isNaN(value as number) ? undefined : this.mapNumericValueToZ2M(value);
+      }
     }
   }
 
@@ -171,8 +178,12 @@ export class Zigbee2MQTTCharacteristic {
           //this.log('got %s as index of %s:%s', index, this.exposed.property, value);
           return (index === undefined ? 0 : index);
         }
-        case 'numeric':
+        case 'numeric': {
+          if (NOT_MAPPED_CHARACTERISTICS.indexOf(this.characteristicName) >= 0) {
+            return this.checkHBValue(value);
+          }
           return isNaN(value as number) ? undefined : this.mapNumericValueToHB(value);
+        }
       }
     }
   }
