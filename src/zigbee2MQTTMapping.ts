@@ -77,3 +77,7 @@ export const ENUMS = {
     brightness_up_release: 2,
   },
 };
+
+export const NOT_MAPPED_CHARACTERISTICS = [
+  'ColorTemperature',
+];
