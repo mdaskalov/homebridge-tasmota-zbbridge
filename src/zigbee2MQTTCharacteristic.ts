@@ -127,14 +127,16 @@ export class Zigbee2MQTTCharacteristic {
     }
   }
 
-  update(value: CharacteristicValue | undefined) {
+  update(value: CharacteristicValue | undefined): boolean {
     const mappedValue = this.mapValueToHB(value);
     if (mappedValue !== undefined) {
       const updateIgnored = this.updateValue(mappedValue);
       if (!updateIgnored) {
         this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(mappedValue);
+        return true;
       }
     }
+    return false;
   }
 
   // homebridge -> Zigbee2MQTT
