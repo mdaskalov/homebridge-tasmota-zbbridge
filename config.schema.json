@@ -359,14 +359,14 @@
         "type": "string",
         "format": "password"
       },
-      "zigbee2TasmotaTopic": {
+      "zigbee2tasmotaTopic": {
         "title": "Zigbee2Tasmota MQTT topic",
-        "placeholder": "Identifying topic of your Zigbee2Tasmota device (i.e. tasmota_ABCDEF)",
+        "placeholder": "Zigbee2Tasmota device identifying topic (default: zbbridge)",
         "type": "string"
       },
       "zigbee2mqttTopic": {
         "title": "Zigbee2MQTT MQTT topic",
-        "placeholder": "zigbee2mqtt",
+        "placeholder": "Zigbee2MQTT base topic (default: zigbee2mqtt)",
         "type": "string"
       }
     }
@@ -653,7 +653,7 @@
               "items": [ "mqttPassword" ]
             } ]
         },
-        "zigbee2TasmotaTopic",
+        "zigbee2tasmotaTopic",
         "zigbee2mqttTopic"
       ]
     }

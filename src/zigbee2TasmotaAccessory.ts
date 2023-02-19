@@ -39,7 +39,7 @@ export abstract class Zigbee2TasmotaAccessory {
     this.shortAddr = Number(this.addr);
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
-    this.topic = this.platform.config.zigbee2TasmotaTopic || 'zbbridge';
+    this.topic = this.platform.config.zigbee2tasmotaTopic || 'zbbridge';
 
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
