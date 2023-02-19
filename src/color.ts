@@ -1,4 +1,4 @@
-
+import { TasmotaZbBridgePlatform } from './platform';
 
 export class Color {
 
@@ -9,7 +9,7 @@ export class Color {
   private _colorY: number;
   private _ct: number;
 
-  constructor() {
+  constructor(readonly platform: TasmotaZbBridgePlatform) {
     this._brightness = 100;
     this._hue = 0;
     this._saturation = 0;
@@ -76,12 +76,12 @@ export class Color {
 
   set ct(c: number) {
     this._ct = c;
-    const xy = this.CTtoXY(this._ct);
-    this._colorX = xy.colorX;
-    this._colorY = xy.colorY;
-    const hs = this.XYtoHS(this._colorX, this._colorY, this._brightness);
+    const hs = this.platform.api.hap.ColorUtils.colorTemperatureToHueAndSaturation(this._ct);
     this._hue = hs.hue;
     this._saturation = hs.saturation;
+    const xy = this.HStoXY(this._hue, this._saturation);
+    this._colorX = xy.colorX;
+    this._colorY = xy.colorY;
   }
 
   // based on: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js

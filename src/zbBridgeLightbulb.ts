@@ -10,7 +10,7 @@ import { TasmotaZbBridgePlatform } from './platform';
 import { ZbBridgeValue } from './zbBridgeValue';
 
 export class ZbBridgeLightbulb extends ZbBridgeSwitch {
-  private color: Color = new Color();
+  private color: Color = new Color(this.platform);
   private dimmer: ZbBridgeValue;
   private ct: ZbBridgeValue;
   private hue: ZbBridgeValue;
@@ -188,6 +188,8 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
         this.hue.update(this.color.hue);
         this.saturation.update(this.color.saturation);
         this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature).updateValue(ct);
+        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.color.hue);
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.color.saturation);
         statusText += ` CT: ${ct}`;
       }
     }
