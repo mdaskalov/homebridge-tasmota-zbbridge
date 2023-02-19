@@ -8,7 +8,7 @@ import {
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Zigbee2TasmotaAccessory } from './zigbee2TasmotaAccessory';
 import { Z2MExpose } from './zigbee2MQTTAcessory';
 import { ENUMS } from './zigbee2MQTTMapping';
 import { NOT_MAPPED_CHARACTERISTICS } from './zigbee2MQTTMapping';
@@ -74,8 +74,8 @@ export class Zigbee2MQTTCharacteristic {
   private updateValue(value: CharacteristicValue): boolean {
     const now = Date.now();
     const oldValue = this.value;
-    const updateTs = ZbBridgeAccessory.formatTs(this.updateTs);
-    const setTs = ZbBridgeAccessory.formatTs(this.setTs);
+    const updateTs = Zigbee2TasmotaAccessory.formatTs(this.updateTs);
+    const setTs = Zigbee2TasmotaAccessory.formatTs(this.setTs);
     let ignored = (value === oldValue) || ((this.setTs > this.updateTs) && !this.timeouted(this.setTs));
     if (!ignored) {
       this.value = value;

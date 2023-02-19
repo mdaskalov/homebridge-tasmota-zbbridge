@@ -6,18 +6,18 @@ import {
 } from 'homebridge';
 
 import { Color } from './color';
-import { ZbBridgeSwitch } from './zbBridgeSwitch';
+import { Zigbee2TasmotaSwitch } from './zigbee2TasmotaSwitch';
 import { TasmotaZbBridgePlatform } from './platform';
-import { ZbBridgeValue } from './zbBridgeValue';
+import { Zigbee2TasmotaValue } from './zigbee2TasmotaValue';
 
-export class ZbBridgeLightbulb extends ZbBridgeSwitch {
+export class Zigbee2TasmotaLightbulb extends Zigbee2TasmotaSwitch {
   private color: Color = new Color(this.platform);
-  private dimmer: ZbBridgeValue;
-  private ct: ZbBridgeValue;
-  private hue: ZbBridgeValue;
-  private saturation: ZbBridgeValue;
-  private colorX: ZbBridgeValue;
-  private colorY: ZbBridgeValue;
+  private dimmer: Zigbee2TasmotaValue;
+  private ct: Zigbee2TasmotaValue;
+  private hue: Zigbee2TasmotaValue;
+  private saturation: Zigbee2TasmotaValue;
+  private colorX: Zigbee2TasmotaValue;
+  private colorY: Zigbee2TasmotaValue;
 
   private supportDimmer?: boolean;
   private supportCT?: boolean;
@@ -32,12 +32,12 @@ export class ZbBridgeLightbulb extends ZbBridgeSwitch {
     readonly serviceName: string,
   ) {
     super(platform, accessory, serviceName);
-    this.dimmer = new ZbBridgeValue(platform, accessory, 'dimmer', 100);
-    this.ct = new ZbBridgeValue(platform, accessory, 'ct', 370);
-    this.hue = new ZbBridgeValue(platform, accessory, 'hue', 20);
-    this.saturation = new ZbBridgeValue(platform, accessory, 'saturation', 100);
-    this.colorX = new ZbBridgeValue(platform, accessory, 'colorX', 30265);
-    this.colorY = new ZbBridgeValue(platform, accessory, 'colorY', 24947);
+    this.dimmer = new Zigbee2TasmotaValue(platform, accessory, 'dimmer', 100);
+    this.ct = new Zigbee2TasmotaValue(platform, accessory, 'ct', 370);
+    this.hue = new Zigbee2TasmotaValue(platform, accessory, 'hue', 20);
+    this.saturation = new Zigbee2TasmotaValue(platform, accessory, 'saturation', 100);
+    this.colorX = new Zigbee2TasmotaValue(platform, accessory, 'colorX', 30265);
+    this.colorY = new Zigbee2TasmotaValue(platform, accessory, 'colorY', 24947);
   }
 
   configureLightFeatures() {

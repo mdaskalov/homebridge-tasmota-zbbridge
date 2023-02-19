@@ -13,9 +13,9 @@
 
 # Homebridge Tasmota Zigbee Bridge
 
-This Homebridge plugin can controll [Tasmota](https://tasmota.github.io/docs) or Zigbee devices connected to a MQTT broker. 
+This Homebridge plugin can controll [Tasmota](https://tasmota.github.io/docs) or Zigbee devices connected to a MQTT broker.
 
-Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge. 
+Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge.
 
 By configuring a `powerTopic` it is possible to combine devices to a singe HomeKit appliance - Tasmota controlled switch can turn on a Zigbee lightbulb and then change the brightness or the collor over the Zigbee network (the lightbulb should be configured to turn on automatically when power is applied).
 
@@ -31,7 +31,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 ```
 {
     "name": "ZbBridge",
-    "zbBridgeDevices": [
+    "zigbee2TasmotaDevices": [
         {
             "addr": "0x8E8E",
             "type": "light1",
@@ -118,15 +118,13 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
         }
     ],
     "mqttBroker": "raspi2",
-    "mqttTopic": "zigbee-pro",
+    "zigbee2tasmotaTopic": "zbbridge",
     "zigbee2mqttTopic": "zigbee2mqtt",
     "platform": "TasmotaZbBridge"
 }
 ```
 
-`mqttTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge)
-
-`zbBridgeDevices` - Zigbee devices connected to the Zigbee2Tasmota gateway/bridge
+`zigbee2TasmotaDevices` - Zigbee devices connected to the Zigbee2Tasmota gateway/bridge
 
 * `addr` - Device hardware or short address and optional endpoint (for example Tuya 2ch switch). The hardware address (64 bits) is unique per device and factory assigned so once configured it will still work even if the device have to be paired again. Example: Use `0xAC3C:1` for address 0xAC3C, endpoint 1.
 * `type` - Device type (`light0`, `light1`, `light2`, `light3`, `light4`, `light5`, `switch`, `sensor`) see descriptions in `config.schema.json`. Alternatively use generic `light` adding supported features: `_B` for brigthness, `_CT` for color temperature, `_HS` for hue and saturation and `_XY` for XY color support (for example `light_B_CT_XY`). Configure desired `sensor` type using the specific fields below.
@@ -143,7 +141,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
     ```
     {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"ContactSensorExample","Contact":0,"Endpoint":1,"LinkQuality":66}}}
     ```
-    
+
 `zigbee2mqttDevices` - Zigbee devices connected to Zigbee2MQTT gateway/bridge
 
 * `ieee_address`
@@ -163,13 +161,15 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 
 `mqttPassword` - MQTT Broker passwort if password protected
 
+`zigbee2tasmotaTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge)
+
 `zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt)
 
 # Zigbee2MQTT
 
-It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`. 
+It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`.
 
-Almost all accessory-types are supported but currently some characteristics are not mapped correctly (work in progress). Supported features are queried directly from Zigbe2MQTT and configured automatically. 
+Almost all accessory-types are supported but currently some characteristics are not mapped correctly (work in progress). Supported features are queried directly from Zigbe2MQTT and configured automatically.
 
 # Binding with Zigbee2Tasmota
 

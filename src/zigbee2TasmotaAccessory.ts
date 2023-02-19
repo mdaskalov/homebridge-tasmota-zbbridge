@@ -5,7 +5,7 @@ import {
 
 import { TasmotaZbBridgePlatform } from './platform';
 
-export type ZbBridgeDevice = {
+export type Zigbee2TasmotaDevice = {
   addr: string;
   type: string;
   name: string;
@@ -16,11 +16,13 @@ export type ZbBridgeDevice = {
   sensorValuePath?: string;
 };
 
-export abstract class ZbBridgeAccessory {
+export abstract class Zigbee2TasmotaAccessory {
+  private topic: string;
+  private shortAddr?: number;
   protected service: Service;
   protected powerTopic?: string;
   protected addr: string;
-  protected endpoint: number | undefined;
+  protected endpoint?: number;
   protected type: string;
   protected updatedAccessoryInfo = false;
 
@@ -34,8 +36,10 @@ export abstract class ZbBridgeAccessory {
     }
     const addr = this.accessory.context.device.addr.split(':');
     this.addr = addr[0];
+    this.shortAddr = Number(this.addr);
     this.endpoint = addr[1]; // optional endpoint 1–240
     this.type = this.accessory.context.device.type;
+    this.topic = this.platform.config.zigbee2TasmotaTopic || 'zbbridge';
 
     const service = this.platform.Service[serviceName];
     if (service === undefined) {
@@ -44,26 +48,24 @@ export abstract class ZbBridgeAccessory {
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    // Skip for zigbee2mqtt accessory
-    if (this.type !== 'z2m') {
-      // Subscribe for device updates
-      this.platform.mqttClient.subscribeDevice(Number(this.addr), this.endpoint, msg => {
-        this.statusUpdate(msg);
-      });
+    // Subscribe for device updates
+    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/SENSOR', msg => this.onSensorMessage(msg));
 
-      // udpate name only if no endpoint is defined
-      if (this.endpoint === undefined) {
-        this.platform.mqttClient.publish(
-          'cmnd/' + this.platform.mqttClient.topic + '/zbname',
-          this.addr + ',' + accessory.context.device.name,
-        );
-      }
+    // support unique device topic (ZbDeviceTopic / SetOption89)
+    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/+/SENSOR', msg => this.onSensorMessage(msg));
 
-      this.registerHandlers();
-
-      // // Query device info
-      this.zbInfo();
+    // call zbname (udpate name)
+    if (this.endpoint === undefined) {
+      this.platform.mqttClient.publish(
+        'cmnd/' + this.topic + '/zbname',
+        this.addr + ',' + accessory.context.device.name,
+      );
     }
+
+    this.registerHandlers();
+
+    // // Query device info
+    this.zbInfo();
   }
 
   static formatTs(dt?: number): string {
@@ -77,6 +79,55 @@ export abstract class ZbBridgeAccessory {
       d.getSeconds().toString().padStart(2, '0'),
     ].join(':') + '.' + d.getMilliseconds().toString();
     return dformat;
+  }
+
+  findDeviceChildObj(obj) {
+    if (obj) {
+      if (obj.Device) {
+        return obj;
+      }
+      for (const prop in obj) {
+        const childObj = obj[prop];
+        if (typeof childObj === 'object' && !Array.isArray(childObj) && childObj !== null) {
+          const foundDeviceChildObj = this.findDeviceChildObj(childObj);
+          if (foundDeviceChildObj !== undefined) {
+            return foundDeviceChildObj;
+          }
+        }
+      }
+    }
+  }
+
+  matchDeviceObjAddr(obj) {
+    const addr = Number(obj.IEEEAddr);
+    const shortAddr = Number(obj.Device);
+
+    if (Number(this.addr) === addr) {
+      if (shortAddr) {
+        this.shortAddr = shortAddr;
+      }
+      return true;
+    }
+    return (this.shortAddr === shortAddr);
+  }
+
+  onSensorMessage(message: string) {
+    try {
+      const parsedMsg = JSON.parse(message);
+      const devObj = this.findDeviceChildObj(parsedMsg); // Object containing 'Device' property
+      if (devObj !== undefined) {
+        const addrMatch = this.matchDeviceObjAddr(devObj); // Match Device (shortAddr) or IEEEAddr
+        const endpointMatch =
+          (this.endpoint === undefined) ||
+          (devObj.Endpoint === undefined) ||
+          (Number(this.endpoint) === Number(devObj.Endpoint));
+        if (addrMatch && endpointMatch) {
+          this.statusUpdate(devObj);
+        }
+      }
+    } catch (err) {
+      this.platform.log.error('SENSOR message parse error: %s', message);
+    }
   }
 
   getObjectByPath(obj, path: string) {
@@ -105,12 +156,12 @@ export abstract class ZbBridgeAccessory {
   }
 
   zbInfo(): void {
-    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbinfo';
+    const topic = 'cmnd/' + this.topic + '/zbinfo';
     this.platform.mqttClient.publish(topic, this.addr);
   }
 
   zbSend(command): void {
-    const topic = 'cmnd/' + this.platform.mqttClient.topic + '/zbsend';
+    const topic = 'cmnd/' + this.topic + '/zbsend';
     const message = JSON.stringify(command);
     this.platform.mqttClient.publish(topic, message);
   }

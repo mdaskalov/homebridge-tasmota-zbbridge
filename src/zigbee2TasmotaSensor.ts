@@ -4,10 +4,10 @@ import {
   CharacteristicValue,
 } from 'homebridge';
 
-import { ZbBridgeAccessory } from './zbBridgeAccessory';
+import { Zigbee2TasmotaAccessory } from './zigbee2TasmotaAccessory';
 import { TasmotaZbBridgePlatform } from './platform';
 
-export class ZbBridgeSensor extends ZbBridgeAccessory {
+export class Zigbee2TasmotaSensor extends Zigbee2TasmotaAccessory {
   private value: CharacteristicValue;
   private characteristic?: Characteristic;
 
@@ -38,7 +38,7 @@ export class ZbBridgeSensor extends ZbBridgeAccessory {
     let statusText = '';
     if (this.characteristic !== undefined && this.accessory.context.device.sensorValuePath !== undefined) {
       const value = this.mapSensorValue(this.getObjectByPath(msg, this.accessory.context.device.sensorValuePath));
-      if ((value !== undefined) && (value !== this.value)) {
+      if (value !== undefined) {
         this.value = value;
         this.characteristic.updateValue(value);
         statusText += ` Value: ${value}`;

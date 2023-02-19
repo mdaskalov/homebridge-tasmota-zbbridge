@@ -12,13 +12,8 @@
         "required": true,
         "default": "ZbBridge"
       },
-      "mqttTopic": {
-        "title": "Zigbee2Tasmota MQTT Topic",
-        "type": "string",
-        "placeholder": "Identifying topic of your ZbBridge device (i.e. tasmota_ABCDEF)"
-      },
-      "zbBridgeDevices": {
-        "title": "ZbBridge Devices",
+      "zigbee2TasmotaDevices": {
+        "title": "Zigbee2Tasmota Devices",
         "expandable": true,
         "expanded": false,
         "type": "array",
@@ -349,23 +344,28 @@
       "mqttBroker": {
         "title": "Hostname",
         "type": "string",
-        "placeholder": "Broker hostname if not localhost",
+        "placeholder": "MQTT Broker hostname if not localhost",
         "format": "hostname"
       },
       "mqttUsername": {
         "title": "Username",
         "type": "string",
-        "placeholder": "Broker username if passwort protected",
+        "placeholder": "MMQTT Broker username if passwort protected",
         "format": "password"
       },
       "mqttPassword": {
         "title": "Password",
-        "placeholder": "Broker passwort if passwort protected",
+        "placeholder": "MQTT Broker passwort if passwort protected",
         "type": "string",
         "format": "password"
       },
+      "zigbee2TasmotaTopic": {
+        "title": "Zigbee2Tasmota MQTT topic",
+        "placeholder": "Identifying topic of your Zigbee2Tasmota device (i.e. tasmota_ABCDEF)",
+        "type": "string"
+      },
       "zigbee2mqttTopic": {
-        "title": "Zigbee2MQTT topic",
+        "title": "Zigbee2MQTT MQTT topic",
         "placeholder": "zigbee2mqtt",
         "type": "string"
       }
@@ -375,10 +375,7 @@
       "key": "name"
     },
     {
-      "key": "mqttTopic"
-    },
-    {
-      "key": "zbBridgeDevices",
+      "key": "zigbee2TasmotaDevices",
       "buttonText": "Add Device",
       "default": [ ],
       "items": [ {
@@ -394,7 +391,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "zbBridgeDevices[].addr"
+                      "key": "zigbee2TasmotaDevices[].addr"
                     } ]
                 },
                 {
@@ -404,7 +401,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "zbBridgeDevices[].type"
+                      "key": "zigbee2TasmotaDevices[].type"
                     } ]
                 },
                 {
@@ -413,7 +410,7 @@
                   "items": [ {
                       "nodescription": true,
                       "notitle": true,
-                      "key": "zbBridgeDevices[].name"
+                      "key": "zigbee2TasmotaDevices[].name"
                     } ]
                 }
               ]
@@ -437,7 +434,7 @@
                           "items": [ {
                               "nodescription": true,
                               "notitle": true,
-                              "key": "zbBridgeDevices[].powerTopic"
+                              "key": "zigbee2TasmotaDevices[].powerTopic"
                             } ]
                         }, {
                           "type": "flex",
@@ -445,7 +442,7 @@
                           "items": [ {
                               "nodescription": true,
                               "notitle": true,
-                              "key": "zbBridgeDevices[].powerType"
+                              "key": "zigbee2TasmotaDevices[].powerType"
                             } ]
                         } ]
                     } ]
@@ -464,7 +461,7 @@
                           "items": [ {
                               "nodescription": true,
                               "notitle": true,
-                              "key": "zbBridgeDevices[].sensorService"
+                              "key": "zigbee2TasmotaDevices[].sensorService"
                             } ]
                         }, {
                           "type": "flex",
@@ -472,7 +469,7 @@
                           "items": [ {
                               "nodescription": true,
                               "notitle": true,
-                              "key": "zbBridgeDevices[].sensorCharacteristic"
+                              "key": "zigbee2TasmotaDevices[].sensorCharacteristic"
                             } ]
                         }, {
                           "type": "flex",
@@ -480,7 +477,7 @@
                           "items": [ {
                               "nodescription": true,
                               "notitle": true,
-                              "key": "zbBridgeDevices[].sensorValuePath"
+                              "key": "zigbee2TasmotaDevices[].sensorValuePath"
                             } ]
                         } ]
                     }, {
@@ -496,7 +493,7 @@
                           "displayFlex": true,
                           "items": [
                             {
-                              "key": "zbBridgeDevices[].sensorValueMapping",
+                              "key": "zigbee2TasmotaDevices[].sensorValueMapping",
                               "notitle": true,
                               "buttonText": "Add Mapping",
                               "items": [ {
@@ -512,7 +509,7 @@
                                               "nodescription": true,
                                               "notitle": true,
                                               "placeholder": "From Value",
-                                              "key": "zbBridgeDevices[].sensorValueMapping[].from"
+                                              "key": "zigbee2TasmotaDevices[].sensorValueMapping[].from"
                                             }
                                           ]
                                         },
@@ -523,7 +520,7 @@
                                               "nodescription": true,
                                               "notitle": true,
                                               "placeholder": "To Value",
-                                              "key": "zbBridgeDevices[].sensorValueMapping[].to"
+                                              "key": "zigbee2TasmotaDevices[].sensorValueMapping[].to"
                                             } ]
                                         }
                                       ]
@@ -656,6 +653,7 @@
               "items": [ "mqttPassword" ]
             } ]
         },
+        "zigbee2TasmotaTopic",
         "zigbee2mqttTopic"
       ]
     }

@@ -12,24 +12,11 @@ type TopicHandler = {
   callback: TopicCallback;
 };
 
-type DeviceCallback =
-  (msg) => void;
-
-type DeviceHandler = {
-  addr: number;
-  shortAddr: number;
-  endpoint: number | undefined;
-  callback: DeviceCallback;
-};
-
 export const DEFALT_TIMEOUT = 5000;
 
 export class MQTTClient {
-
   private topicHandlers: Array<TopicHandler> = [];
-  private deviceHandlers: Array<DeviceHandler> = [];
   private client: MqttClient;
-  public topic: string;
   private last = 0;
 
   constructor(private log: Logger, private config: PlatformConfig) {
@@ -46,22 +33,12 @@ export class MQTTClient {
     };
 
     this.client = connect('mqtt://' + broker, options);
-    this.topic = this.config.mqttTopic || 'zbbridge';
 
     this.client.on('error', err => {
       this.log.error('MQTT: Error: %s', err.message);
     });
 
     this.client.on('message', (topic, message) => {
-      if (topic.startsWith('tele/' + this.topic)) {
-        try {
-          const msg = JSON.parse(message.toString());
-          this.onDeviceMessage(msg);
-        } catch (err) {
-          this.log.error('MQTT: message parse error: %s', message.toString());
-        }
-        return;
-      }
       const callOnceHandlers = this.topicHandlers.filter(h => h.callOnce === true && this.matchTopic(h, topic));
       if (callOnceHandlers.length !== 0) {
         const msg = callOnceHandlers.some(h => h.messageDump) ? topic + ' ' + message : topic;
@@ -80,67 +57,18 @@ export class MQTTClient {
         hadnlers.forEach(h => h.callback(message.toString(), topic));
       }
     });
-
-    // zbBridge device messages
-    this.client.subscribe('tele/' + this.topic + '/SENSOR');
-    this.client.subscribe('tele/' + this.topic + '/+/SENSOR');
-  }
-
-  findDevice(obj) {
-    if (obj) {
-      if (obj.Device) {
-        return obj;
-      }
-      for (const prop in obj) {
-        const child = obj[prop];
-        if (typeof child === 'object' && !Array.isArray(child) && child !== null) {
-          const found = this.findDevice(child);
-          if (found !== undefined) {
-            return found;
-          }
-        }
-      }
-    }
-  }
-
-  addrMatch(h: DeviceHandler, msg) {
-    const addr = Number(msg.IEEEAddr);
-    const shortAddr = Number(msg.Device);
-
-    if (h.addr === addr) {
-      if (shortAddr) {
-        h.shortAddr = shortAddr;
-      }
-      return true;
-    }
-    return (h.shortAddr === shortAddr);
-  }
-
-  onDeviceMessage(message) {
-    const msg = this.findDevice(message);
-    if (msg !== undefined) {
-      const handlers = this.deviceHandlers.filter(h => {
-        const addrMatch = this.addrMatch(h, msg);
-        const endpointMatch = (h.endpoint === undefined) || (msg.Endpoint === undefined) || (Number(h.endpoint) === Number(msg.Endpoint));
-        return addrMatch && endpointMatch;
-      });
-      if (Array.isArray(handlers)) {
-        for (const handler of handlers) {
-          handler.callback(msg);
-        }
-      }
-    }
-  }
-
-  subscribeDevice(addr: number, endpoint: number | undefined, callback: DeviceCallback) {
-    this.deviceHandlers.push({ addr, shortAddr: addr, endpoint, callback });
   }
 
   matchTopic(handler: TopicHandler, topic: string) {
-    if (handler.topic.includes('+')) {
-      return topic.includes(handler.topic.substr(0, handler.topic.indexOf('+')));
+    if (handler.topic.includes('#')) {
+      return topic.startsWith(handler.topic.substring(0, handler.topic.indexOf('#')));
     }
-    return handler.topic === topic;
+    const topicParts = topic.split('/');
+    const handlerTopicParts = handler.topic.split('/');
+    if (topicParts.length === handlerTopicParts.length) {
+      return topicParts.every((part, idx) => part === handlerTopicParts[idx] || handlerTopicParts[idx] === '+');
+    }
+    return false;
   }
 
   uniqueID() {
@@ -203,4 +131,3 @@ export class MQTTClient {
     return this.read(responseTopic, timeout, messageDump);
   }
 }
-
