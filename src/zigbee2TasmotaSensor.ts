@@ -38,7 +38,7 @@ export class Zigbee2TasmotaSensor extends Zigbee2TasmotaAccessory {
     let statusText = '';
     if (this.characteristic !== undefined && this.accessory.context.device.sensorValuePath !== undefined) {
       const value = this.mapSensorValue(this.getObjectByPath(msg, this.accessory.context.device.sensorValuePath));
-      if ((value !== undefined) && (value !== this.value)) {
+      if (value !== undefined) {
         this.value = value;
         this.characteristic.updateValue(value);
         statusText += ` Value: ${value}`;
