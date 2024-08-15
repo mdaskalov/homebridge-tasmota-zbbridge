@@ -1,5 +1,5 @@
 import { Logger, PlatformConfig } from 'homebridge';
-import { MqttClient, connect } from 'mqtt';
+import { IClientOptions, MqttClient, connect } from 'mqtt';
 
 type TopicCallback =
   (msg: string, topic: string) => void;
@@ -21,7 +21,7 @@ export class MQTTClient {
 
   constructor(private log: Logger, private config: PlatformConfig) {
     const broker = config.mqttBroker || 'localhost';
-    const options = {
+    const options: IClientOptions = {
       clientId: 'homebridge-zbbridge_' + Math.random().toString(16).substr(2, 8),
       protocolId: 'MQTT',
       protocolVersion: 4,
