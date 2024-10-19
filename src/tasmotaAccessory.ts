@@ -152,7 +152,7 @@ export class TasmotaAccessory {
     if (sensorValue !== undefined) {
       switch (this.type) {
         case DeviceType.HSBLight:
-          this.updateHSBColor(sensorValue);
+          this.updateHSBColor(sensorValue as string);
           break;
         case DeviceType.TemperatureSensor:
           this.value = sensorValue as number;
@@ -164,7 +164,7 @@ export class TasmotaAccessory {
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.value);
           break;
         default:
-          this.value = (sensorValue === 'ON');
+          this.value = (sensorValue as string === 'ON');
           this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
           break;
       }
