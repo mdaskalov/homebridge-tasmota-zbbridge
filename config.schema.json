@@ -288,6 +288,18 @@
                   "title": "Switch 4",
                   "enum": [ "POWER4" ]
                 }, {
+                  "title": "ContactSensor 1",
+                  "enum": [ "Switch1" ]
+                }, {
+                  "title": "ContactSensor 2",
+                  "enum": [ "Switch2" ]
+                }, {
+                  "title": "ContactSensor 3",
+                  "enum": [ "Switch3" ]
+                }, {
+                  "title": "ContactSensor 4",
+                  "enum": [ "Switch4" ]
+                }, {
                   "title": "Light 1",
                   "enum": [ "LIGHT1" ]
                 }, {
