@@ -67,30 +67,30 @@ export class TasmotaAccessory {
     switch (this.type) {
       case DeviceType.TemperatureSensor:
         this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
-          .on('get', this.getSensor.bind(this));
+          .onGet(this.getSensor.bind(this));
         break;
       case DeviceType.HumiditySensor:
         this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-          .on('get', this.getSensor.bind(this));
+          .onGet(this.getSensor.bind(this));
         break;
       case DeviceType.HSBLight:
         this.service.getCharacteristic(this.platform.Characteristic.On)
-          .on('set', this.setLightbulbOn.bind(this))
-          .on('get', this.getLightbulbOn.bind(this));
+          .onSet(this.setLightbulbOn.bind(this))
+          .onGet(this.getLightbulbOn.bind(this));
         this.service.getCharacteristic(this.platform.Characteristic.Hue)
-          .on('set', this.setHue.bind(this))
-          .on('get', this.getHue.bind(this));
+          .onSet(this.setHue.bind(this))
+          .onGet(this.getHue.bind(this));
         this.service.getCharacteristic(this.platform.Characteristic.Saturation)
-          .on('set', this.setSaturation.bind(this))
-          .on('get', this.getSaturation.bind(this));
+          .onSet(this.setSaturation.bind(this))
+          .onGet(this.getSaturation.bind(this));
         this.service.getCharacteristic(this.platform.Characteristic.Brightness)
-          .on('set', this.setBrightness.bind(this))
-          .on('get', this.getBrightness.bind(this));
+          .onSet(this.setBrightness.bind(this))
+          .onGet(this.getBrightness.bind(this));
         break;
       default:
         this.service.getCharacteristic(this.platform.Characteristic.On)
-          .on('set', this.setOn.bind(this))
-          .on('get', this.getOn.bind(this));
+          .onSet(this.setOn.bind(this))
+          .onGet(this.getOn.bind(this));
         break;
     }
 
@@ -189,73 +189,68 @@ export class TasmotaAccessory {
     }
   }
 
-  setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  setOn(value: CharacteristicValue) {
     if (this.value !== value) {
       this.value = value as boolean;
       this.platform.mqttClient.publish(this.cmndTopic + '/' + this.deviceType, value ? 'ON' : 'OFF');
     }
-    callback(null);
   }
 
-  getOn(callback: CharacteristicGetCallback) {
-    callback(null, this.value);
+  getOn(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/' + this.deviceType, '');
+    return this.value;
   }
 
-  setLightbulbOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  setLightbulbOn(value: CharacteristicValue) {
     if (this.value !== value) {
       this.value = value as boolean;
       this.platform.mqttClient.publish(this.cmndTopic + '/POWER', value ? 'ON' : 'OFF');
     }
-    callback(null);
   }
 
-  getLightbulbOn(callback: CharacteristicGetCallback) {
-    callback(null, this.value);
+  getLightbulbOn(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/POWER', '');
+    return this.value;
   }
 
-  setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  setHue(value: CharacteristicValue) {
     if (this.hue !== value) {
       this.hue = value as number;
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor1', String(value as number));
     }
-    callback(null);
   }
 
-  getHue(callback: CharacteristicGetCallback) {
-    callback(null, this.hue);
+  getHue(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
+    return this.hue;
   }
 
-  setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  setSaturation(value: CharacteristicValue) {
     if (this.saturation !== value) {
       this.saturation = value as number;
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor2', String(value as number));
     }
-    callback(null);
   }
 
-  getSaturation(callback: CharacteristicGetCallback) {
-    callback(null, this.saturation);
+  getSaturation(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
+    return this.saturation;
   }
 
-  setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  setBrightness(value: CharacteristicValue) {
     if (this.brightness !== value) {
       this.brightness = value as number;
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor3', String(value as number));
     }
-    callback(null);
   }
 
-  getBrightness(callback: CharacteristicGetCallback) {
-    callback(null, this.brightness);
+  getBrightness(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
+    return this.brightness;
   }
 
-  getSensor(callback: CharacteristicGetCallback) {
-    callback(null, this.value);
+  getSensor(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/STATUS', '10');
+    return this.value;
   }
 }
