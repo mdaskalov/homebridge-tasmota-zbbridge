@@ -1,16 +1,10 @@
-import {
-  Service,
-  PlatformAccessory,
-  CharacteristicValue,
-  CharacteristicSetCallback,
-  CharacteristicGetCallback,
-} from 'homebridge';
-
+import { Service, PlatformAccessory, CharacteristicValue} from 'homebridge';
 import { TasmotaZbBridgePlatform } from './platform';
 
 enum DeviceType {
   Switch,
   Light,
+  ContactSensor,
   HSBLight,
   TemperatureSensor,
   HumiditySensor
@@ -50,6 +44,9 @@ export class TasmotaAccessory {
     } else if (this.deviceType.includes('Humidity')) {
       service = this.platform.Service.HumiditySensor;
       this.type = DeviceType.HumiditySensor;
+    } else if (this.deviceType.includes('Switch')) {
+      service = this.platform.Service.ContactSensor;
+      this.type = DeviceType.ContactSensor;
     } else if (this.deviceType.includes('HSBColor')) {
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.HSBLight;
@@ -71,6 +68,10 @@ export class TasmotaAccessory {
         break;
       case DeviceType.HumiditySensor:
         this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+          .onGet(this.getSensor.bind(this));
+        break;
+      case DeviceType.ContactSensor:
+        this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
           .onGet(this.getSensor.bind(this));
         break;
       case DeviceType.HSBLight:
@@ -148,6 +149,11 @@ export class TasmotaAccessory {
       this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
     }
 
+    if (this.type === DeviceType.ContactSensor) {
+      this.updateContactSensor(response, 'StatusSNS.'+this.deviceType);
+      this.updateContactSensor(response, this.deviceType+'.Action');
+    }
+
     const sensorValue = this.getObjectByPath(response, this.deviceType);
     if (sensorValue !== undefined) {
       switch (this.type) {
@@ -174,6 +180,14 @@ export class TasmotaAccessory {
         this.deviceType,
         sensorValue,
       );
+    }
+  }
+
+  updateContactSensor(obj, path: string) {
+    const value = this.getObjectByPath(obj, path) as string;
+    if (value !== undefined) {
+      this.value = (value === 'ON') ? 0 : 1;
+      this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.value);
     }
   }
 
