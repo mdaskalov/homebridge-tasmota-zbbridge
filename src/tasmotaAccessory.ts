@@ -31,7 +31,6 @@ export class TasmotaAccessory {
   private hue: number;
   private saturation: number;
   private brightness: number;
-  private updated: number | undefined;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
@@ -43,7 +42,6 @@ export class TasmotaAccessory {
     this.hue = 0;
     this.saturation = 0;
     this.brightness = 0;
-    this.updated = undefined;
 
     let service;
     if (this.deviceType.includes('Temperature')) {
@@ -220,7 +218,6 @@ export class TasmotaAccessory {
   setHue(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.hue !== value) {
       this.hue = value as number;
-      this.updated = Date.now();
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor1', String(value as number));
     }
     callback(null);
@@ -228,14 +225,12 @@ export class TasmotaAccessory {
 
   getHue(callback: CharacteristicGetCallback) {
     callback(null, this.hue);
-    this.updated = undefined;
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
   }
 
   setSaturation(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.saturation !== value) {
       this.saturation = value as number;
-      this.updated = Date.now();
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor2', String(value as number));
     }
     callback(null);
@@ -243,14 +238,12 @@ export class TasmotaAccessory {
 
   getSaturation(callback: CharacteristicGetCallback) {
     callback(null, this.saturation);
-    this.updated = undefined;
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
   }
 
   setBrightness(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (this.brightness !== value) {
       this.brightness = value as number;
-      this.updated = Date.now();
       this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor3', String(value as number));
     }
     callback(null);
@@ -258,7 +251,6 @@ export class TasmotaAccessory {
 
   getBrightness(callback: CharacteristicGetCallback) {
     callback(null, this.brightness);
-    this.updated = undefined;
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
   }
 
