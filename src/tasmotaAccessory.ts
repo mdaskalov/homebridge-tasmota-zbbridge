@@ -3,11 +3,10 @@ import { TasmotaZbBridgePlatform } from './platform';
 
 enum DeviceType {
   Switch,
-  Light,
-  ContactSensor,
-  HSBLight,
+  Lightbulb,
   TemperatureSensor,
-  HumiditySensor
+  HumiditySensor,
+  ContactSensor
 }
 
 export class TasmotaAccessory {
@@ -16,9 +15,12 @@ export class TasmotaAccessory {
   private cmndTopic: string;
   private deviceType: string;
   private value: CharacteristicValue;
-  private hue: number;
-  private saturation: number;
-  private brightness: number;
+  private hue: CharacteristicValue;
+  private saturation: CharacteristicValue;
+  private brightness: CharacteristicValue;
+
+  private supportBrightness?: boolean;
+  private supportHS?: boolean;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
@@ -27,9 +29,9 @@ export class TasmotaAccessory {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic;
     this.deviceType = this.accessory.context.device.type;
     this.value = 0;
-    this.hue = 0;
-    this.saturation = 0;
-    this.brightness = 0;
+    this.hue = 20;
+    this.saturation = 100;
+    this.brightness = 100;
 
     let service;
     if (this.deviceType.includes('Temperature')) {
@@ -43,11 +45,17 @@ export class TasmotaAccessory {
       this.type = DeviceType.ContactSensor;
     } else if (this.deviceType.includes('HSBColor')) {
       service = this.platform.Service.Lightbulb;
-      this.type = DeviceType.HSBLight;
+      this.type = DeviceType.Lightbulb;
+      this.supportHS = true;
+      this.supportBrightness = true;
+    } else if (this.deviceType.includes('Dimmer')) {
+      service = this.platform.Service.Lightbulb;
+      this.type = DeviceType.Lightbulb;
+      this.supportBrightness = true;
     } else if (this.deviceType.includes('LIGHT')) {
       this.deviceType = this.deviceType.replace('LIGHT', 'POWER');
       service = this.platform.Service.Lightbulb;
-      this.type = DeviceType.Light;
+      this.type = DeviceType.Lightbulb;
     } else {
       service = this.platform.Service.Switch;
       this.type = DeviceType.Switch;
@@ -56,6 +64,24 @@ export class TasmotaAccessory {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     switch (this.type) {
+      case DeviceType.Switch, DeviceType.Lightbulb:
+        if (this.supportHS) {
+          this.service.getCharacteristic(this.platform.Characteristic.Hue)
+            .onSet(this.setHue.bind(this))
+            .onGet(this.getHue.bind(this));
+          this.service.getCharacteristic(this.platform.Characteristic.Saturation)
+            .onSet(this.setSaturation.bind(this))
+            .onGet(this.getSaturation.bind(this));
+        }
+        if (this.supportBrightness) {
+          this.service.getCharacteristic(this.platform.Characteristic.Brightness)
+            .onSet(this.setBrightness.bind(this))
+            .onGet(this.getBrightness.bind(this));
+        }
+        this.service.getCharacteristic(this.platform.Characteristic.On)
+          .onSet(this.setOn.bind(this))
+          .onGet(this.getOn.bind(this));
+        break;
       case DeviceType.TemperatureSensor:
         this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
           .onGet(this.getSensor.bind(this));
@@ -67,25 +93,6 @@ export class TasmotaAccessory {
       case DeviceType.ContactSensor:
         this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
           .onGet(this.getSensor.bind(this));
-        break;
-      case DeviceType.HSBLight:
-        this.service.getCharacteristic(this.platform.Characteristic.On)
-          .onSet(this.setLightbulbOn.bind(this))
-          .onGet(this.getLightbulbOn.bind(this));
-        this.service.getCharacteristic(this.platform.Characteristic.Hue)
-          .onSet(this.setHue.bind(this))
-          .onGet(this.getHue.bind(this));
-        this.service.getCharacteristic(this.platform.Characteristic.Saturation)
-          .onSet(this.setSaturation.bind(this))
-          .onGet(this.getSaturation.bind(this));
-        this.service.getCharacteristic(this.platform.Characteristic.Brightness)
-          .onSet(this.setBrightness.bind(this))
-          .onGet(this.getBrightness.bind(this));
-        break;
-      default:
-        this.service.getCharacteristic(this.platform.Characteristic.On)
-          .onSet(this.setOn.bind(this))
-          .onGet(this.getOn.bind(this));
         break;
     }
 
@@ -195,9 +202,13 @@ export class TasmotaAccessory {
       this.hue = Number(data[0]);
       this.saturation = Number(data[1]);
       this.brightness = Number(data[2]);
-      this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
-      this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);
-      this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
+      if (this.supportHS) {
+        this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
+        this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);  
+      }
+      if (this.supportBrightness) {
+        this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
+      }
     }
   }
 
@@ -210,18 +221,6 @@ export class TasmotaAccessory {
 
   getOn(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/' + this.deviceType, '');
-    return this.value;
-  }
-
-  setLightbulbOn(value: CharacteristicValue) {
-    if (this.value !== value) {
-      this.value = value as boolean;
-      this.platform.mqttClient.publish(this.cmndTopic + '/POWER', value ? 'ON' : 'OFF');
-    }
-  }
-
-  getLightbulbOn(): CharacteristicValue {
-    this.platform.mqttClient.publish(this.cmndTopic + '/POWER', '');
     return this.value;
   }
 
