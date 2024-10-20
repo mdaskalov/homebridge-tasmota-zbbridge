@@ -102,7 +102,7 @@ export class TasmotaAccessory {
       try {
         obj = JSON.parse(message);
         this.updateStatus(obj);
-      } catch (err) {
+      } catch {
         this.updateStatus({ message });
       }
     });

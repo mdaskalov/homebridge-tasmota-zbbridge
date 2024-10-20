@@ -125,7 +125,7 @@ export abstract class Zigbee2TasmotaAccessory {
           this.statusUpdate(devObj);
         }
       }
-    } catch (err) {
+    } catch {
       this.platform.log.error('SENSOR message parse error: %s', message);
     }
   }

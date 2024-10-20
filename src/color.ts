@@ -99,12 +99,12 @@ export class Color {
     const q = 1 - f * s;
     const t = 1 - (1 - f) * s;
     switch (i % 6) {
-      case 0: g = t, b = p; break;
-      case 1: r = q, b = p; break;
-      case 2: r = p, b = t; break;
-      case 3: r = p, g = q; break;
-      case 4: r = t, g = p; break;
-      case 5: g = p, b = q; break;
+      case 0: g = t; b = p; break;
+      case 1: r = q; b = p; break;
+      case 2: r = p; b = t; break;
+      case 3: r = p; g = q; break;
+      case 4: r = t; g = p; break;
+      case 5: g = p; b = q; break;
     }
 
     // apply gamma correction
@@ -262,12 +262,12 @@ export class Color {
     const q = v * (1 - f * s);
     const t = v * (1 - (1 - f) * s);
     switch (i % 6) {
-      case 0: r = v, g = t, b = p; break;
-      case 1: r = q, g = v, b = p; break;
-      case 2: r = p, g = v, b = t; break;
-      case 3: r = p, g = q, b = v; break;
-      case 4: r = t, g = p, b = v; break;
-      case 5: r = v, g = p, b = q; break;
+      case 0: r = v; g = t; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = t; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = t; g = p; b = v; break;
+      case 5: r = v; g = p; b = q; break;
     }
     return {
       r,
