@@ -112,31 +112,7 @@ export class TasmotaAccessory {
   }
 
   updateStatus(response) {
-    const service = this.accessory.getService(this.platform.Service.AccessoryInformation);
-    if (service !== undefined) {
-      const deviceName = this.getObjectByPath(response, 'Status.DeviceName');
-      if (deviceName) {
-        service
-          .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Tasmota')
-          .setCharacteristic(this.platform.Characteristic.Model, deviceName);
-        this.platform.log.debug('%s (%s) Manufacturer: Tasmota, Model: %s',
-          this.accessory.context.device.name,
-          this.accessory.context.device.topic,
-          deviceName,
-        );
-      }
-
-      const serialNumber = this.getObjectByPath(response, 'StatusNET.Mac');
-      if (serialNumber !== undefined) {
-        service
-          .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
-        this.platform.log.debug('%s (%s) Mac: %s',
-          this.accessory.context.device.name,
-          this.accessory.context.device.topic,
-          serialNumber,
-        );
-      }
-    }
+    this.updateAccessoryInformation(response);
 
     if (this.type === DeviceType.HSBLight && response.POWER) {
       this.value = (response.POWER === 'ON');
@@ -174,6 +150,34 @@ export class TasmotaAccessory {
         this.deviceType,
         sensorValue,
       );
+    }
+  }
+
+  updateAccessoryInformation(obj) {
+    const accessoryInformation = this.accessory.getService(this.platform.Service.AccessoryInformation);
+    if (accessoryInformation !== undefined) {
+      const deviceName = this.getObjectByPath(obj, 'Status.DeviceName');
+      if (deviceName) {
+        accessoryInformation
+          .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Tasmota')
+          .setCharacteristic(this.platform.Characteristic.Model, deviceName);
+        this.platform.log.debug('%s (%s) Manufacturer: Tasmota, Model: %s',
+          this.accessory.context.device.name,
+          this.accessory.context.device.topic,
+          deviceName,
+        );
+      }
+
+      const serialNumber = this.getObjectByPath(obj, 'StatusNET.Mac');
+      if (serialNumber !== undefined) {
+        accessoryInformation
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, serialNumber);
+        this.platform.log.debug('%s (%s) Mac: %s',
+          this.accessory.context.device.name,
+          this.accessory.context.device.topic,
+          serialNumber,
+        );
+      }
     }
   }
 
