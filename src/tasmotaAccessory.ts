@@ -68,7 +68,7 @@ export class TasmotaAccessory {
       this.type = DeviceType.Switch;
     }
     this.service = this.accessory.getService(service) || this.accessory.addService(service);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+    this.service.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
 
     switch (this.type) {
       case DeviceType.Switch, DeviceType.Lightbulb:
