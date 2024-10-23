@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue} from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, HAPStatus} from 'homebridge';
 import { TasmotaZbBridgePlatform } from './platform';
 
 enum DeviceType {
@@ -6,7 +6,7 @@ enum DeviceType {
   Lightbulb,
   TemperatureSensor,
   HumiditySensor,
-  ContactSensor
+  ContactSensor,
 }
 
 export type TasmotaDevice = {
@@ -19,7 +19,7 @@ export class TasmotaAccessory {
   private type: DeviceType;
   private service: Service;
   private cmndTopic: string;
-  private valuePath: string;
+  private valueUpdatePath: string;
   private value: CharacteristicValue;
   private hue: CharacteristicValue;
   private saturation: CharacteristicValue;
@@ -33,34 +33,35 @@ export class TasmotaAccessory {
     private readonly accessory: PlatformAccessory,
   ) {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic;
-    this.valuePath = this.accessory.context.device.type;
+    this.valueUpdatePath = this.accessory.context.device.type;
     this.value = 0;
     this.hue = 20;
     this.saturation = 100;
     this.brightness = 100;
 
     let service;
-    if (this.valuePath.includes('Temperature')) {
+    if (this.valueUpdatePath.includes('Temperature')) {
       service = this.platform.Service.TemperatureSensor;
       this.type = DeviceType.TemperatureSensor;
-    } else if (this.valuePath.includes('Humidity')) {
+    } else if (this.valueUpdatePath.includes('Humidity')) {
       service = this.platform.Service.HumiditySensor;
       this.type = DeviceType.HumiditySensor;
-    } else if (this.valuePath.includes('Switch')) {
-      this.valuePath = this.valuePath + '.Action';
+    } else if (this.valueUpdatePath.includes('Switch')) {
       service = this.platform.Service.ContactSensor;
       this.type = DeviceType.ContactSensor;
-    } else if (this.valuePath.includes('HSBColor')) {
+    } else if (this.valueUpdatePath.includes('HSBColor')) {
+      this.valueUpdatePath = 'POWER';
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
       this.supportHS = true;
       this.supportBrightness = true;
-    } else if (this.valuePath.includes('Dimmer')) {
+    } else if (this.valueUpdatePath.includes('Dimmer')) {
+      this.valueUpdatePath = 'POWER';
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
       this.supportBrightness = true;
-    } else if (this.valuePath.includes('LIGHT')) {
-      this.valuePath = this.valuePath.replace('LIGHT', 'POWER');
+    } else if (this.valueUpdatePath.includes('LIGHT')) {
+      this.valueUpdatePath = this.valueUpdatePath.replace('LIGHT', 'POWER');
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
     } else {
@@ -125,44 +126,37 @@ export class TasmotaAccessory {
     return path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
   }
 
-  updateStatus(response) {
-    this.updateAccessoryInformation(response);
-
-    if (this.type === DeviceType.HSBLight && response.POWER) {
-      this.value = (response.POWER === 'ON');
-      this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
-    }
-
+  updateStatus(obj) {
+    this.updateAccessoryInformation(obj);
     if (this.type === DeviceType.ContactSensor) {
-      this.updateContactSensor(response, 'StatusSNS.'+this.deviceType);
-      this.updateContactSensor(response, this.deviceType+'.Action');
+      this.updateContactSensor(obj, 'StatusSNS.'+this.valueUpdatePath);
+      this.updateContactSensor(obj, this.valueUpdatePath+'.Action');
+      return;
     }
+    this.updateColor(obj);
 
-    const sensorValue = this.getObjectByPath(response, this.valuePath);
-    if (sensorValue !== undefined) {
+    const value = this.getObjectByPath(obj, this.valueUpdatePath);
+    if (value !== undefined) {
       switch (this.type) {
-        case DeviceType.HSBLight:
-          this.updateHSBColor(sensorValue as string);
-          break;
         case DeviceType.TemperatureSensor:
-          this.value = sensorValue as number;
+          this.value = value as number;
           this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature).updateValue(this.value);
           this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature).props.minValue = -50;
           break;
         case DeviceType.HumiditySensor:
-          this.value = sensorValue as number;
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.value);
+          this.value = value as number;
+          this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity).updateValue(this.value);
           break;
         default:
-          this.value = (sensorValue as string === 'ON');
+          this.value = (value as string === 'ON');
           this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.value);
           break;
       }
       this.platform.log.debug('%s (%s) %s: %s',
         this.accessory.context.device.name,
         this.accessory.context.device.topic,
-        this.valuePath,
-        sensorValue,
+        this.valueUpdatePath,
+        value,
       );
     }
   }
@@ -181,7 +175,6 @@ export class TasmotaAccessory {
           deviceName,
         );
       }
-
       const serialNumber = this.getObjectByPath(obj, 'StatusNET.Mac');
       if (serialNumber !== undefined) {
         accessoryInformation
@@ -203,31 +196,37 @@ export class TasmotaAccessory {
     }
   }
 
-  updateHSBColor(value: string) {
-    const data = value.split(',');
-    if (data.length === 3) {
-      this.hue = Number(data[0]);
-      this.saturation = Number(data[1]);
-      this.brightness = Number(data[2]);
-      if (this.supportHS) {
-        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
-        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
-      }
-      if (this.supportBrightness) {
-        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.brightness);
-      }
+  updateColor(obj) {
+    if (typeof(obj.HSBColor) === 'string' && (this.supportHS || this.supportBrightness) ) {
+      const data = obj.HSBColor.split(',');
+      if (data.length === 3) {
+        if (this.supportHS) {
+          this.hue = Number(data[0]);
+          this.saturation = Number(data[1]);
+          this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
+          this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
+        }
+        if (this.supportBrightness) {
+          this.brightness = Number(data[2]);
+          this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.brightness);
+        }
+      }  
+    }
+    if (typeof(obj.Dimmer) === 'number' && this.supportBrightness) {
+      this.brightness = obj.Dimmer as number;
+      this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.brightness);
     }
   }
 
   setOn(value: CharacteristicValue) {
     if (this.value !== value) {
       this.value = value as boolean;
-      this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valuePath, value ? 'ON' : 'OFF');
+      this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valueUpdatePath, value ? 'ON' : 'OFF');
     }
   }
 
   getOn(): CharacteristicValue {
-    this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valuePath, '');
+    this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valueUpdatePath, '');
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 

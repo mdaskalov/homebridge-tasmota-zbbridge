@@ -276,6 +276,12 @@
                   "title": "Light",
                   "enum": [ "LIGHT" ]
                 }, {
+                  "title": "Dimmable Light",
+                  "enum": [ "Dimmer" ]
+                }, {
+                  "title": "RGB Light",
+                  "enum": [ "HSBColor" ]
+                }, {
                   "title": "Switch 1",
                   "enum": [ "POWER1" ]
                 }, {
@@ -311,9 +317,6 @@
                 }, {
                   "title": "Light 4",
                   "enum": [ "LIGHT4" ]
-                }, {
-                  "title": "RGB Lightbulb",
-                  "enum": [ "HSBColor" ]
                 }, {
                   "title": "Analog Temperature",
                   "enum": [ "StatusSNS.ANALOG.Temperature" ]
