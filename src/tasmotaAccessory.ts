@@ -13,7 +13,7 @@ export class TasmotaAccessory {
   private type: DeviceType;
   private service: Service;
   private cmndTopic: string;
-  private deviceType: string;
+  private valuePath: string;
   private value: CharacteristicValue;
   private hue: CharacteristicValue;
   private saturation: CharacteristicValue;
@@ -34,26 +34,27 @@ export class TasmotaAccessory {
     this.brightness = 100;
 
     let service;
-    if (this.deviceType.includes('Temperature')) {
+    if (this.valuePath.includes('Temperature')) {
       service = this.platform.Service.TemperatureSensor;
       this.type = DeviceType.TemperatureSensor;
-    } else if (this.deviceType.includes('Humidity')) {
+    } else if (this.valuePath.includes('Humidity')) {
       service = this.platform.Service.HumiditySensor;
       this.type = DeviceType.HumiditySensor;
-    } else if (this.deviceType.includes('Switch')) {
+    } else if (this.valuePath.includes('Switch')) {
+      this.valuePath = this.valuePath + '.Action';
       service = this.platform.Service.ContactSensor;
       this.type = DeviceType.ContactSensor;
-    } else if (this.deviceType.includes('HSBColor')) {
+    } else if (this.valuePath.includes('HSBColor')) {
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
       this.supportHS = true;
       this.supportBrightness = true;
-    } else if (this.deviceType.includes('Dimmer')) {
+    } else if (this.valuePath.includes('Dimmer')) {
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
       this.supportBrightness = true;
-    } else if (this.deviceType.includes('LIGHT')) {
-      this.deviceType = this.deviceType.replace('LIGHT', 'POWER');
+    } else if (this.valuePath.includes('LIGHT')) {
+      this.valuePath = this.valuePath.replace('LIGHT', 'POWER');
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.Lightbulb;
     } else {
@@ -131,7 +132,7 @@ export class TasmotaAccessory {
       this.updateContactSensor(response, this.deviceType+'.Action');
     }
 
-    const sensorValue = this.getObjectByPath(response, this.deviceType);
+    const sensorValue = this.getObjectByPath(response, this.valuePath);
     if (sensorValue !== undefined) {
       switch (this.type) {
         case DeviceType.HSBLight:
@@ -154,7 +155,7 @@ export class TasmotaAccessory {
       this.platform.log.debug('%s (%s) %s: %s',
         this.accessory.context.device.name,
         this.accessory.context.device.topic,
-        this.deviceType,
+        this.valuePath,
         sensorValue,
       );
     }
@@ -215,7 +216,7 @@ export class TasmotaAccessory {
   setOn(value: CharacteristicValue) {
     if (this.value !== value) {
       this.value = value as boolean;
-      this.platform.mqttClient.publish(this.cmndTopic + '/' + this.deviceType, value ? 'ON' : 'OFF');
+      this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valuePath, value ? 'ON' : 'OFF');
     }
   }
 
