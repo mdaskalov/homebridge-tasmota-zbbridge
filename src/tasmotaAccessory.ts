@@ -27,7 +27,7 @@ export class TasmotaAccessory {
     private readonly accessory: PlatformAccessory,
   ) {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic;
-    this.deviceType = this.accessory.context.device.type;
+    this.valuePath = this.accessory.context.device.type;
     this.value = 0;
     this.hue = 20;
     this.saturation = 100;
