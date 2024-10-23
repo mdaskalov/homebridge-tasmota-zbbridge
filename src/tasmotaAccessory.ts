@@ -146,7 +146,7 @@ export class TasmotaAccessory {
           break;
         case DeviceType.TemperatureSensor:
           this.value = sensorValue as number;
-          this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.value);
+          this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature).updateValue(this.value);
           this.service.getCharacteristic(this.platform.Characteristic.CurrentTemperature).props.minValue = -50;
           break;
         case DeviceType.HumiditySensor:
@@ -155,7 +155,7 @@ export class TasmotaAccessory {
           break;
         default:
           this.value = (sensorValue as string === 'ON');
-          this.service.updateCharacteristic(this.platform.Characteristic.On, this.value);
+          this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.value);
           break;
       }
       this.platform.log.debug('%s (%s) %s: %s',
@@ -199,7 +199,7 @@ export class TasmotaAccessory {
     const value = this.getObjectByPath(obj, path) as string;
     if (value !== undefined) {
       this.value = (value === 'ON') ? 0 : 1;
-      this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.value);
+      this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState).updateValue(this.value);
     }
   }
 
@@ -210,11 +210,11 @@ export class TasmotaAccessory {
       this.saturation = Number(data[1]);
       this.brightness = Number(data[2]);
       if (this.supportHS) {
-        this.service.updateCharacteristic(this.platform.Characteristic.Hue, this.hue);
-        this.service.updateCharacteristic(this.platform.Characteristic.Saturation, this.saturation);  
+        this.service.getCharacteristic(this.platform.Characteristic.Hue).updateValue(this.hue);
+        this.service.getCharacteristic(this.platform.Characteristic.Saturation).updateValue(this.saturation);
       }
       if (this.supportBrightness) {
-        this.service.updateCharacteristic(this.platform.Characteristic.Brightness, this.brightness);
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness).updateValue(this.brightness);
       }
     }
   }
