@@ -220,8 +220,8 @@ export class TasmotaAccessory {
   }
 
   getOn(): CharacteristicValue {
-    this.platform.mqttClient.publish(this.cmndTopic + '/' + this.deviceType, '');
-    return this.value;
+    this.platform.mqttClient.publish(this.cmndTopic + '/' + this.valuePath, '');
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   setHue(value: CharacteristicValue) {
@@ -233,7 +233,7 @@ export class TasmotaAccessory {
 
   getHue(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
-    return this.hue;
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   setSaturation(value: CharacteristicValue) {
@@ -245,7 +245,7 @@ export class TasmotaAccessory {
 
   getSaturation(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
-    return this.saturation;
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   setBrightness(value: CharacteristicValue) {
@@ -257,11 +257,11 @@ export class TasmotaAccessory {
 
   getBrightness(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/HSBColor', '');
-    return this.brightness;
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   getSensor(): CharacteristicValue {
     this.platform.mqttClient.publish(this.cmndTopic + '/STATUS', '10');
-    return this.value;
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 }
