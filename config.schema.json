@@ -277,10 +277,10 @@
                   "enum": [ "LIGHT" ]
                 }, {
                   "title": "Dimmable Light",
-                  "enum": [ "Dimmer" ]
+                  "enum": [ "LIGHT_B" ]
                 }, {
                   "title": "RGB Light",
-                  "enum": [ "HSBColor" ]
+                  "enum": [ "LIGHT_HSB" ]
                 }, {
                   "title": "Switch 1",
                   "enum": [ "POWER1" ]
@@ -295,16 +295,16 @@
                   "enum": [ "POWER4" ]
                 }, {
                   "title": "ContactSensor 1",
-                  "enum": [ "Switch1" ]
+                  "enum": [ "CONTACT1" ]
                 }, {
                   "title": "ContactSensor 2",
-                  "enum": [ "Switch2" ]
+                  "enum": [ "CONTACT2" ]
                 }, {
                   "title": "ContactSensor 3",
-                  "enum": [ "Switch3" ]
+                  "enum": [ "CONTACT3" ]
                 }, {
                   "title": "ContactSensor 4",
-                  "enum": [ "Switch4" ]
+                  "enum": [ "CONTACT4" ]
                 }, {
                   "title": "Light 1",
                   "enum": [ "LIGHT1" ]
@@ -321,29 +321,20 @@
                   "title": "Analog Temperature",
                   "enum": [ "StatusSNS.ANALOG.Temperature" ]
                 }, {
-                  "title": "AM2301 Temperature",
-                  "enum": [ "StatusSNS.AM2301.Temperature" ]
-                }, {
-                  "title": "AM2301 Humidity",
-                  "enum": [ "StatusSNS.AM2301.Humidity" ]
+                  "title": "AM2301 Temperature & Humidity",
+                  "enum": [ "AM2301_TH" ]
                 }, {
                   "title": "BMP280 Temperature",
-                  "enum": [ "StatusSNS.BMP280.Temperature" ]
+                  "enum": [ "BMP280_T" ]
                 }, {
-                  "title": "DHT11 Temperature",
-                  "enum": [ "StatusSNS.DHT11.Temperature" ]
-                }, {
-                  "title": "DHT11 Humidity",
-                  "enum": [ "StatusSNS.DHT11.Humidity" ]
+                  "title": "DHT11 Temperature & Humidity",
+                  "enum": [ "DHT11_TH" ]
                 }, {
                   "title": "DS18B20 Temperature",
-                  "enum": [ "StatusSNS.DS18B20.Temperature" ]
+                  "enum": [ "DS18B20_T" ]
                 }, {
                   "title": "HTU21 Temperature",
-                  "enum": [ "StatusSNS.HTU21.Temperature" ]
-                }, {
-                  "title": "HTU21 Humidity",
-                  "enum": [ "StatusSNS.HTU21.Humidity" ]
+                  "enum": [ "HTU21_T" ]
                 } ],
               "required": true
             },
