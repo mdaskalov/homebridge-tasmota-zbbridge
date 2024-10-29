@@ -118,7 +118,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     }
     try {
       const bridgeDevicesTopic = this.config.zigbee2mqttTopic + '/bridge/devices';
-      const message = await this.mqttClient.read(bridgeDevicesTopic, undefined, false);
+      const message = await this.mqttClient.read(bridgeDevicesTopic);
       const z2m_devices: Zigbee2MQTTDevice[] = JSON.parse(message);
       if (!Array.isArray(z2m_devices)) {
         throw (`topic (${bridgeDevicesTopic}) parse error`);

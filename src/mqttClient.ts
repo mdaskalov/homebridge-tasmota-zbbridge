@@ -42,14 +42,16 @@ export class MQTTClient {
       const handlers = this.handlers.filter(h => this.matchTopic(h, topic));
       const prioHandlers = this.prioHandlers.filter(h => this.matchTopic(h, topic));
       const handlersCount = handlers.length + prioHandlers.length;
-      this.log.debug('MQTT: Message on %s, handler(s): %d/%d', topic, handlersCount, prioHandlers.length);
+      this.log.debug('MQTT: Message on %s, handler(s): %d (%d prio)', topic, handlersCount, prioHandlers.length);
       for (const prioHandler of prioHandlers) {
         if (prioHandler.callback(message.toString(), topic) === true) {
+          this.log.debug('MQTT: Message consumed by prioHandler %s', prioHandler.id);
           return;
         }
       }
       for (const handler of handlers) {
         if (handler.callback(message.toString(), topic) === true) {
+          this.log.debug('MQTT: Message consumed by Handler %s', handler.id);
           return;
         }
       }
@@ -82,17 +84,17 @@ export class MQTTClient {
     return { handlersCount, prioHandlersCount };
   }
 
-  subscribeTopic(topic: string, callback: TopicCallback, messageDump = true, priority = false): string | undefined {
+  subscribeTopic(topic: string, callback: TopicCallback, priority = false, messageDump = false): string | undefined {
     if (this.client) {
       const id = this.uniqueID();
-      const handler = { id, topic, messageDump, priority, callback };
+      const handler: TopicHandler = { id, topic, callback };
       if (priority) {
         this.prioHandlers.push(handler);
       } else {
         this.handlers.push(handler);
       }
       const {prioHandlersCount, handlersCount} = this.handersCount(topic);
-      this.log.debug('MQTT: Subscribed: %s :- %s%s - %d/%d handler(s)',
+      this.log.debug('MQTT: Subscribed: %s :- %s%s - %d (%d prio) handler(s)',
         id,
         topic,
         priority ? ' (priority)' : '',
@@ -124,7 +126,7 @@ export class MQTTClient {
       if (handlersCount === 0) {
         this.client.unsubscribe(handler.topic);
       }
-      this.log.debug('MQTT: Unsubscribed %s :- %s%s - %d/%d handler(s)',
+      this.log.debug('MQTT: Unsubscribed %s :- %s%s - %d (%d prio) handler(s)',
         handler.id,
         handler.topic,
         priority ? ' (priority)' : '',
@@ -141,7 +143,7 @@ export class MQTTClient {
     this.log.debug('MQTT: Published: %s %s', topic, message);
   }
 
-  read(topic: string, timeout?: number, messageDump?: boolean): Promise<string> {
+  read(topic: string, timeout: number = DEFALT_TIMEOUT): Promise<string> {
     return new Promise((resolve, reject) => {
       const start = Date.now();
       let handlerId: string | undefined = undefined;
@@ -152,21 +154,21 @@ export class MQTTClient {
           this.unsubscribe(handlerId);
         }
         return true;
-      }, messageDump === undefined ? true : messageDump, true);
+      }, true);
       const timer = setTimeout(() => {
         if (handlerId !== undefined) {
           this.unsubscribe(handlerId);
         }
         const elapsed = Date.now() - start;
         reject(`MQTT: Read timeout after ${elapsed}ms`);
-      }, timeout === undefined ? DEFALT_TIMEOUT : timeout);
+      }, timeout);
     });
   }
 
-  async submit(topic: string, message: string, responseTopic = topic, timeout?: number, messageDump?: boolean): Promise<string> {
+  async submit(topic: string, message: string, responseTopic = topic, timeout?: number): Promise<string> {
     this.publish(topic, message);
     try {
-      return await this.read(responseTopic, timeout, messageDump);
+      return await this.read(responseTopic, timeout);
     } catch {
       this.log.error('Submit timeout on %s %s', topic, message);
       return '';
