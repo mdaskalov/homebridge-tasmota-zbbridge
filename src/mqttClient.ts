@@ -42,7 +42,7 @@ export class MQTTClient {
       const handlers = this.handlers.filter(h => this.matchTopic(h, topic));
       const prioHandlers = this.prioHandlers.filter(h => this.matchTopic(h, topic));
       const handlersCount = handlers.length + prioHandlers.length;
-      this.log.debug('MQTT: Message on %s, handler(s): %d (%d prio)', topic, handlersCount, prioHandlers.length);
+      this.log.debug('MQTT: Message on topic: %s, handler(s): %d (%d prio)', topic, handlersCount, prioHandlers.length);
       for (const prioHandler of prioHandlers) {
         if (prioHandler.callback(message.toString(), topic) === true) {
           this.log.debug('MQTT: Message consumed by prioHandler %s', prioHandler.id);
@@ -94,7 +94,7 @@ export class MQTTClient {
     return { handlersCount, prioHandlersCount };
   }
 
-  subscribeTopic(topic: string, callback: TopicCallback, priority = false, messageDump = false): string | undefined {
+  subscribeTopic(topic: string, callback: TopicCallback, priority = false): string | undefined {
     if (this.client) {
       const id = this.uniqueID();
       const handler: TopicHandler = { id, topic, callback };
@@ -104,15 +104,23 @@ export class MQTTClient {
         this.handlers.push(handler);
       }
       const {prioHandlersCount, handlersCount} = this.handersCount(topic);
-      this.log.debug('MQTT: Subscribed: %s :- %s%s - %d (%d prio) handler(s)',
-        id,
-        topic,
-        priority ? ' (priority)' : '',
-        handlersCount,
-        prioHandlersCount,
-      );
       if (handlersCount === 1) {
+        this.log.debug('MQTT: Subscribed topic: %s, %s: %s, handler(s): %d (%d prio)',
+          topic,
+          priority ? 'prioHandler' : 'Handler',
+          id,
+          handlersCount,
+          prioHandlersCount,
+        );
         this.client.subscribe(topic);
+      } else {
+        this.log.debug('MQTT: Added %s: %s, on: %s, handler(s): %d (%d prio)',
+          priority ? 'prioHandler' : 'Handler',
+          id,
+          topic,
+          handlersCount,
+          prioHandlersCount,
+        );
       }
       return id;
     }
@@ -135,14 +143,22 @@ export class MQTTClient {
       const {prioHandlersCount, handlersCount} = this.handersCount(handler.topic);
       if (handlersCount === 0) {
         this.client.unsubscribe(handler.topic);
+        this.log.debug('MQTT: Unubscribed topic: %s, %s: %s, handler(s): %d (%d prio)',
+          handler.topic,
+          priority ? 'prioHandler' : 'Handler',
+          handler.id,
+          handlersCount,
+          prioHandlersCount,
+        );
+      } else {
+        this.log.debug('MQTT: Removed %s: %s on %s, handler(s): %d (%d prio)',
+          priority ? 'prioHandler' : 'Handler',
+          handler.id,
+          handler.topic,
+          handlersCount,
+          prioHandlersCount,
+        );
       }
-      this.log.debug('MQTT: Unsubscribed %s :- %s%s - %d (%d prio) handler(s)',
-        handler.id,
-        handler.topic,
-        priority ? ' (priority)' : '',
-        handlersCount,
-        prioHandlersCount,
-      );
     } else {
       this.log.warn('MQTT: Cannot unsubscribe %s - not found', id);
     }
