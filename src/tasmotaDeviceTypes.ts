@@ -139,6 +139,19 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       },
     },
   },
+  LOCK: {
+    LockMechanism: {
+      LockTargetState: {
+        get: {cmd: 'POWER', shareResponseMessage: true},
+        set: {cmd: 'POWER', shareResponseMessage: true},
+        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+      },
+      LockCurrentState: {
+        statValuePath: 'POWER',
+        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+      },
+    },
+  },
   AM2301_TH: {
     TemperatureSensor: {
       CurrentTemperature: {

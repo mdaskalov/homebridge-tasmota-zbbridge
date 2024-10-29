@@ -309,6 +309,9 @@
                   "title": "Valve",
                   "enum": [ "VALVE" ]
                 }, {
+                  "title": "Lock Mechanism",
+                  "enum": [ "LOCK" ]
+                }, {
                   "title": "Button 1",
                   "enum": [ "BUTTON1" ]
                 }, {
