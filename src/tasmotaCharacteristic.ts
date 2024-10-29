@@ -21,6 +21,7 @@ export type TasmotaCommand = {
   cmd: string;
   topic?: string;
   valuePath?: string;
+  shareResponseMessage?: boolean;
 };
 
 export enum StatUpdate {
@@ -175,7 +176,9 @@ export class TasmotaCharacteristic {
             this.platform.mqttClient.unsubscribe(handlerId);
           }
           resolve(response);
-          return true; // consume message
+          if (command.shareResponseMessage !== true) {
+            return true; // consume message
+          }
         }
       }, true);
       timeout = setTimeout(() => {
