@@ -270,14 +270,8 @@
               "title": "Type",
               "type": "string",
               "oneOf": [ {
-                  "title": "Light",
-                  "enum": [ "LIGHT" ]
-                }, {
-                  "title": "Dimmable Light",
-                  "enum": [ "LIGHT_B" ]
-                }, {
-                  "title": "RGB Light",
-                  "enum": [ "LIGHT_HSB" ]
+                  "title": "Switch",
+                  "enum": [ "SWITCH" ]
                 }, {
                   "title": "Switch 1",
                   "enum": [ "SWITCH1" ]
@@ -291,6 +285,9 @@
                   "title": "Switch 4",
                   "enum": [ "SWITCH4" ]
                 }, {
+                  "title": "Light",
+                  "enum": [ "LIGHT" ]
+                }, {
                   "title": "Light 1",
                   "enum": [ "LIGHT1" ]
                 }, {
@@ -302,6 +299,15 @@
                 }, {
                   "title": "Light 4",
                   "enum": [ "LIGHT4" ]
+                }, {
+                  "title": "Dimmable Light",
+                  "enum": [ "LIGHT_B" ]
+                }, {
+                  "title": "RGB Light",
+                  "enum": [ "LIGHT_HSB" ]
+                }, {
+                  "title": "Valve",
+                  "enum": [ "VALVE" ]
                 }, {
                   "title": "Button 1",
                   "enum": [ "BUTTON1" ]
@@ -327,26 +333,26 @@
                   "title": "ContactSensor 4",
                   "enum": [ "CONTACT4" ]
                 }, {
-                  "title": "Analog Temperature",
-                  "enum": [ "StatusSNS.ANALOG.Temperature" ]
-                }, {
                   "title": "AM2301 Temperature & Humidity",
                   "enum": [ "AM2301_TH" ]
                 }, {
-                  "title": "BMP280 Temperature",
-                  "enum": [ "BMP280_T" ]
-                }, {
                   "title": "DHT11 Temperature & Humidity",
                   "enum": [ "DHT11_TH" ]
+                }, {
+                  "title": "Analog Temperature",
+                  "enum": [ "StatusSNS.ANALOG.Temperature" ]
+                }, {
+                  "title": "AXP192 Temperature",
+                  "enum": [ "AXP192_T" ]
+                }, {
+                  "title": "BMP280 Temperature",
+                  "enum": [ "BMP280_T" ]
                 }, {
                   "title": "DS18B20 Temperature",
                   "enum": [ "DS18B20_T" ]
                 }, {
                   "title": "HTU21 Temperature",
                   "enum": [ "HTU21_T" ]
-                }, {
-                  "title": "AXP192 Temperature",
-                  "enum": [ "AXP192_T" ]
                 } ],
               "required": true
             },
