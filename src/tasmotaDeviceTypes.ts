@@ -1,35 +1,33 @@
 
 import { TasmotaDeviceDefinition } from './tasmotaAccessory';
+import { StatUpdate } from './tasmotaCharacteristic';
 
 export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
   AccessoryInformation: {
     Manufacturer: {
       get: {cmd: 'MODULE0', valuePath: 'Module.0'},
       defaultValue: 'Tasmota',
-      statDisabled: true,
+      statUpdate: StatUpdate.Never,
     },
     Model: {
       get: {cmd: 'DeviceName'},
       defaultValue: 'Unknown',
-      statDisabled: true,
+      statUpdate: StatUpdate.Never,
     },
     SerialNumber: {
       get: {cmd: 'STATUS 5', topic: 'STATUS5', valuePath: 'StatusNET.Mac'},
       defaultValue: 'Unknown',
-      statDisabled: true,
+      statUpdate: StatUpdate.Never,
     },
     FirmwareRevision: {
       get: {cmd: 'STATUS 2', topic: 'STATUS2', valuePath: 'StatusFWR.Version'},
       defaultValue: 'Unknown',
-      statDisabled: true,
+      statUpdate: StatUpdate.Never,
     },
   },
 };
 
 export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
-  POWER: {
-    Switch: {On: {get: {cmd:'POWER'}}},
-  },
   LIGHT: {
     Lightbulb: {On: {get:{cmd: 'POWER'}}},
   },
@@ -37,6 +35,18 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
     Lightbulb: {
       On: {get: {cmd:'POWER'}},
       Brightness: {get: {cmd:'Dimmer'}},
+    },
+  },
+  SWITCH1: {
+    Switch: {On: {get: {cmd:'POWER'}}},
+  },
+  BUTTON1: {
+    StatelessProgrammableSwitch: {
+      ProgrammableSwitchEvent: {
+        statValuePath: 'Button1.Action',
+        statUpdate: StatUpdate.Always,
+        mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
+      },
     },
   },
   CONTACT1: {
@@ -54,14 +64,14 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       CurrentTemperature: {
         get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AM2301.Temperature'},
         teleValuePath: 'AM2301.Temperature',
-        statDisabled: true,
+        statUpdate: StatUpdate.Never,
       },
     },
     HumiditySensor: {
       CurrentRelativeHumidity: {
         get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AM2301.Humidity'},
         teleValuePath: 'AM2301.Humidity',
-        statDisabled: true,
+        statUpdate: StatUpdate.Never,
       },
     },
   },
@@ -70,7 +80,7 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       CurrentTemperature: {
         get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AXP192.Temperature'},
         teleValuePath: 'AXP192.Temperature',
-        statDisabled: true,
+        statUpdate: StatUpdate.Never,
       },
     },
   },

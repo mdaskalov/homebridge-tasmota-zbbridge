@@ -23,12 +23,18 @@ export type TasmotaCommand = {
   valuePath?: string;
 };
 
+export enum StatUpdate {
+  OnChange,
+  Always,
+  Never,
+}
+
 export type TasmotaCharacteristicDefinition = {
   get?: TasmotaCommand;
   set?: TasmotaCommand;
   statTopic?: string;
   statValuePath?: string;
-  statDisabled?: boolean;
+  statUpdate?: StatUpdate;
   teleTopic?: string;
   teleValuePath?: string;
   props?: object
@@ -85,7 +91,7 @@ export class TasmotaCharacteristic {
       }
       // statValuePath defaults to get.cmd if not set
       const onStatEnabled = (definition.statValuePath !== undefined || definition.get?.cmd !== undefined);
-      if (onStatEnabled && definition.statDisabled !== true) {
+      if (onStatEnabled && definition.statUpdate !== StatUpdate.Never) {
         const statTopic = this.statTopic + (definition.statTopic || 'RESULT');
         const valuePath = this.definition.statValuePath || this.definition?.get?.cmd;
         this.log('Configure statUpdate on topic: %s %s', statTopic, valuePath);
@@ -188,14 +194,14 @@ export class TasmotaCharacteristic {
       const hbValue = this.checkHBValue(this.mapToHB(value));
       if (hbValue !== undefined) {
         const prevValue = this.value;
-        const ignored = (hbValue === prevValue);
-        if (!ignored){
+        const update = (hbValue !== prevValue) || this.definition.statUpdate === StatUpdate.Always;
+        if (update) {
           this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
           this.value = hbValue;
         }
         this.log('%s valueSet%s: %s (hb: %s), prev: %s',
           origin,
-          ignored ? ' (unchanged)' : '',
+          update ? '' : ' (not updated)',
           value,
           hbValue,
           prevValue,
@@ -221,6 +227,7 @@ export class TasmotaCharacteristic {
       if (mapEntry !== undefined) {
         return mapEntry.from;
       }
+      return undefined;
     }
     switch (this.props.format) {
       case Formats.BOOL:
@@ -236,6 +243,7 @@ export class TasmotaCharacteristic {
       if (mapEntry !== undefined) {
         return mapEntry.to;
       }
+      return undefined;
     }
     switch (this.props.format) {
       case Formats.BOOL:

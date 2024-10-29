@@ -270,9 +270,6 @@
               "title": "Type",
               "type": "string",
               "oneOf": [ {
-                  "title": "Switch",
-                  "enum": [ "POWER" ]
-                }, {
                   "title": "Light",
                   "enum": [ "LIGHT" ]
                 }, {
@@ -283,28 +280,16 @@
                   "enum": [ "LIGHT_HSB" ]
                 }, {
                   "title": "Switch 1",
-                  "enum": [ "POWER1" ]
+                  "enum": [ "SWITCH1" ]
                 }, {
                   "title": "Switch 2",
-                  "enum": [ "POWER2" ]
+                  "enum": [ "SWITCH2" ]
                 }, {
                   "title": "Switch 3",
-                  "enum": [ "POWER3" ]
+                  "enum": [ "SWITCH3" ]
                 }, {
                   "title": "Switch 4",
-                  "enum": [ "POWER4" ]
-                }, {
-                  "title": "ContactSensor 1",
-                  "enum": [ "CONTACT1" ]
-                }, {
-                  "title": "ContactSensor 2",
-                  "enum": [ "CONTACT2" ]
-                }, {
-                  "title": "ContactSensor 3",
-                  "enum": [ "CONTACT3" ]
-                }, {
-                  "title": "ContactSensor 4",
-                  "enum": [ "CONTACT4" ]
+                  "enum": [ "SWITCH4" ]
                 }, {
                   "title": "Light 1",
                   "enum": [ "LIGHT1" ]
@@ -317,6 +302,30 @@
                 }, {
                   "title": "Light 4",
                   "enum": [ "LIGHT4" ]
+                }, {
+                  "title": "Button 1",
+                  "enum": [ "BUTTON1" ]
+                }, {
+                  "title": "Button 2",
+                  "enum": [ "BUTTON2" ]
+                }, {
+                  "title": "Button 3",
+                  "enum": [ "BUTTON3" ]
+                }, {
+                  "title": "Button 4",
+                  "enum": [ "BUTTON4" ]
+                }, {
+                  "title": "ContactSensor 1",
+                  "enum": [ "CONTACT1" ]
+                }, {
+                  "title": "ContactSensor 2",
+                  "enum": [ "CONTACT2" ]
+                }, {
+                  "title": "ContactSensor 3",
+                  "enum": [ "CONTACT3" ]
+                }, {
+                  "title": "ContactSensor 4",
+                  "enum": [ "CONTACT4" ]
                 }, {
                   "title": "Analog Temperature",
                   "enum": [ "StatusSNS.ANALOG.Temperature" ]
