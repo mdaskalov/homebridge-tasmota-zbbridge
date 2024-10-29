@@ -65,4 +65,13 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       },
     },
   },
+  AXP192_T: {
+    TemperatureSensor: {
+      CurrentTemperature: {
+        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AXP192.Temperature'},
+        teleValuePath: 'AXP192.Temperature',
+        statDisabled: true,
+      },
+    },
+  },
 };

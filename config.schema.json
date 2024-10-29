@@ -335,6 +335,9 @@
                 }, {
                   "title": "HTU21 Temperature",
                   "enum": [ "HTU21_T" ]
+                }, {
+                  "title": "AXP192 Temperature",
+                  "enum": [ "AXP192_T" ]
                 } ],
               "required": true
             },
