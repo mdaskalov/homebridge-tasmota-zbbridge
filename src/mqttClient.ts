@@ -58,6 +58,16 @@ export class MQTTClient {
     });
   }
 
+  shutdown() {
+    this.log.debug('MQTT: Shutdown. Remove all handlers');
+    for (const handler of this.handlers.concat(this.prioHandlers)) {
+      this.unsubscribe(handler.id);
+    }
+    if (this.client) {
+      this.client.end();
+    }
+  }
+
   matchTopic(handler: TopicHandler, topic: string) {
     if (handler.topic.includes('#')) {
       return topic.startsWith(handler.topic.substring(0, handler.topic.indexOf('#')));

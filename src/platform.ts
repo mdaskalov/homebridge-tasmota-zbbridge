@@ -27,7 +27,6 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     this.log.debug('Finished initializing platform:', this.config.name || 'ZbBridge');
 
     this.api.on('didFinishLaunching', async () => {
-      log.debug('Executed didFinishLaunching callback');
       if (Array.isArray(this.config.zigbee2mqttDevices) && this.config.zigbee2mqttDevices.length > 0) {
         await this.discoverZigbee2MQTTDevices();
       }
@@ -38,6 +37,10 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         this.discoverTasmotaDevices();
       }
       this.cleanupCachedDevices();
+    });
+
+    this.api.on('shutdown', () => {
+      this.mqttClient.shutdown();
     });
   }
 
