@@ -5,6 +5,7 @@ import {
   CharacteristicProps,
   Formats,
   Characteristic,
+  HAPStatus,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -115,6 +116,7 @@ export class TasmotaCharacteristic {
         this.setValue('onGet', value);
       } catch (err) {
         this.platform.log.error(err as string);
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
     return this.value;
