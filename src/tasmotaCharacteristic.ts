@@ -12,16 +12,24 @@ import { TasmotaZbBridgePlatform } from './platform';
 
 const EXEC_TIMEOUT = 1500;
 
-export type Mapping = {
+export type SplitMapping = {
+  separator?: string;
+  index: number;
+};
+
+export type SwapMapping = {
   from: string,
   to: CharacteristicValue
-}[];
+};
+
+export type Mapping = SplitMapping | SwapMapping[]
 
 export type TasmotaResponse = {
   topic?: string;
   path?: string;
   update?: boolean;
   shared?: boolean;
+  mapping?: Mapping;
 }
 
 export type TasmotaCommand = {
@@ -34,7 +42,6 @@ export type TasmotaCharacteristicDefinition = {
   set?: TasmotaCommand;
   stat?: TasmotaResponse;
   props?: object
-  mapping?: Mapping;
   default?: CharacteristicValue;
 };
 
@@ -95,7 +102,26 @@ export class TasmotaCharacteristic {
         if (path !== undefined) {
           this.log('Configure statUpdate on topic: %s %s', topic, path);
           this.platform.mqttClient.subscribeTopic(topic, message => {
-            this.setValue('statUpdate', this.getValueByPath(message, path));
+            const value = this.getValueByPath(message, path);
+            if (value !== undefined) {
+              const mapping = definition.stat?.mapping ? definition.stat?.mapping : definition.get?.res?.mapping;
+              const hbValue = this.mapToHB(value, mapping);
+              if (hbValue !== undefined) {
+                const prevValue = this.value;
+                const updateAlways = definition.stat?.update === true;
+                const update = (value !== prevValue) || updateAlways;
+                if (update) {
+                  this.value = hbValue;
+                  this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
+                }
+                this.log('statUpdate value%s: %s (homebridge: %s), prev: %s',
+                  update ? '' : ' (not updated)',
+                  value,
+                  hbValue,
+                  prevValue,
+                );
+              }
+            }
           });
         }
       }
@@ -108,38 +134,48 @@ export class TasmotaCharacteristic {
     if (this.definition.get !== undefined) {
       try {
         const value = await this.exec(this.definition.get);
-        this.setValue('onGet', value);
+        const hbValue = this.mapToHB(value, this.definition.get.res?.mapping);
+        if (hbValue !== undefined) {
+          this.log('onGet value: %s (homebridge: %s)', value, hbValue);
+          this.value = hbValue;
+          return this.value;
+        }
       } catch (err) {
         this.platform.log.error(err as string);
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
+      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return this.value;
   }
 
   private async onSet(value: CharacteristicValue) {
-    const command = this.definition.get ? this.definition.get : this.definition.set;
-    const payload = this.mapFromHB(value);
+    const command = this.definition.set ? this.definition.set : this.definition.get;
+    const payload = this.mapFromHB(value, command?.res?.mapping);
     if (command !== undefined && payload !== undefined) {
       try {
-        const valueToConfirm = await this.exec(command, payload);
-        if (valueToConfirm === payload) {
-          this.setValue('onSet', payload);
+        const confirmValue = await this.exec(command, payload);
+        const mapping = this.definition.get?.res?.mapping ? this.definition.get?.res?.mapping : this.definition.set?.res?.mapping;
+        const hbConfirmValue = this.mapToHB(confirmValue, mapping);
+        if (value === hbConfirmValue) {
+          this.log('onSet value: %s (tasmota: %s)', value, payload);
+          return;
         } else {
-          this.platform.log.warn('%s:%s Set value: %s (%s (%s)) confirmation differs: %s (%s)',
+          this.platform.log.warn('%s:%s Set value: %s: %s (tasmota: %s) not confirmed: %s: %s (tasmota: %s)',
             this.accessory.context.device.name,
             this.name,
             value,
+            typeof(value),
             payload,
-            typeof(payload),
-            valueToConfirm,
-            typeof(valueToConfirm),
+            hbConfirmValue,
+            typeof(hbConfirmValue),
+            confirmValue,
           );
         }
       } catch (err) {
         this.platform.log.error(err as string);
       }
     }
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   async exec(command: TasmotaCommand, payload?: string): Promise<string> {
@@ -180,29 +216,6 @@ export class TasmotaCharacteristic {
     });
   }
 
-  setValue(origin: string, value: string | undefined) {
-    if (value !== undefined) {
-      const hbValue = this.checkHBValue(this.mapToHB(value));
-      if (hbValue !== undefined) {
-        const prevValue = this.value;
-        const getUpdateAlways = this.definition.get?.res?.update === true;
-        const updateAlways = this.definition.stat?.update === true;
-        const update = (hbValue !== prevValue) || updateAlways || getUpdateAlways;
-        if (update) {
-          this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
-          this.value = hbValue;
-        }
-        this.log('%s value%s: %s (hb: %s), prev: %s',
-          origin,
-          update ? '' : ' (not updated)',
-          value,
-          hbValue,
-          prevValue,
-        );
-      }
-    }
-  }
-
   private getValueByPath(json: string, path: string): string | undefined {
     let obj = Object();
     try {
@@ -218,9 +231,9 @@ export class TasmotaCharacteristic {
     return template.replace(/\{(.*?)\}/g, (_, key) => this.variables[key] || '');
   }
 
-  private mapFromHB(value: CharacteristicValue): string | undefined {
-    if (Array.isArray(this.definition.mapping)) {
-      const mapEntry = this.definition.mapping.find(m => m.to === value);
+  private mapFromHB(value: CharacteristicValue, mapping?: Mapping): string | undefined {
+    if (Array.isArray(mapping)) {
+      const mapEntry = mapping.find(m => m.to === value);
       if (mapEntry !== undefined) {
         return mapEntry.from;
       }
@@ -234,12 +247,18 @@ export class TasmotaCharacteristic {
     }
   }
 
-  private mapToHB(value: string): CharacteristicValue | undefined {
-    if (Array.isArray(this.definition.mapping)) {
-      const mapEntry = this.definition.mapping.find(m => m.from === value);
-      if (mapEntry !== undefined) {
-        return mapEntry.to;
+  private mapToHB(value: string, mapping?: Mapping): CharacteristicValue | undefined {
+    let mappedValue: CharacteristicValue | undefined = value;
+    if (mapping !== undefined) {
+      if (Array.isArray(mapping)) {
+        const mapEntry = mapping.find(m => m.from === value);
+        mappedValue = mapEntry?.to;
+      } else {
+        const split = value.split(mapping.separator || ',');
+        mappedValue = split[mapping.index];
       }
+    }
+    if (mappedValue === undefined) {
       return undefined;
     }
     switch (this.props.format) {
@@ -248,13 +267,13 @@ export class TasmotaCharacteristic {
       case Formats.STRING:
       case Formats.DATA:
       case Formats.TLV8:
-        return value;
+        return mappedValue;
       default:
-        return this.checkHBValue(value);
+        return this.checkHBValue(Number(mappedValue));
     }
   }
 
-  private checkHBValue(value: CharacteristicValue | undefined): CharacteristicValue | undefined {
+  private checkHBValue(value?: CharacteristicValue): CharacteristicValue | undefined {
     if (value === undefined) {
       return value;
     }

@@ -19,7 +19,7 @@ export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
       default: 'Unknown',
     },
     FirmwareRevision: {
-      get: {cmd: 'STATUS 2', res: {topic: '{stat}/STATUS2', path: 'StatusFWR.Version'}},
+      get: {cmd: 'STATUS 2', res: {topic: '{stat}/STATUS2', path: 'StatusFWR.Version', mapping: {separator: '(', index: 0}}},
       stat: {update: false},
       default: 'Unknown',
     },
@@ -35,32 +35,52 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       Brightness: {get: {cmd: 'Dimmer'}},
     },
   },
+  LIGHT_HSB: {
+    Lightbulb: {
+      On: {get: {cmd: 'POWER{idx}'}},
+      Hue: {
+        get: {cmd: 'HSBColor', res: {mapping: {index: 0}}},
+        set: {cmd: 'HSBColor1', res: {path: 'HSBColor'}},
+      },
+      Saturation: {
+        get: {cmd: 'HSBColor', res: {mapping: {index: 1}}},
+        set: {cmd: 'HSBColor2', res: {path: 'HSBColor'}},
+      },
+      Brightness: {
+        get: {cmd: 'HSBColor', res: {mapping: {index: 2}}},
+        set: {cmd: 'HSBColor3', res: {path: 'HSBColor'}},
+      },
+    },
+  },
   BUTTON: {
     StatelessProgrammableSwitch: {
       ProgrammableSwitchEvent: {
-        stat: {path: 'Button{idx}.Action', update: true},
-        mapping: [{from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
+        stat: {
+          path: 'Button{idx}.Action',
+          update: true,
+          mapping: [{from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
+        },
       },
     },
   },
   CONTACT: {
     ContactSensor: {
       ContactSensorState: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.Switch{idx}'}},
+        get: {
+          cmd: 'STATUS 10',
+          res: {topic: '{stat}/STATUS10', path: 'StatusSNS.Switch{idx}', mapping: [{from: 'ON', to: 0}, {from: 'OFF', to: 1}]},
+        },
         stat: {path: 'Switch{idx}.Action'},
-        mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
       },
     },
   },
   VALVE: {
     Valve: {
       Active: {
-        get: {cmd: 'POWER{idx}', res: {shared: true}},
-        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+        get: {cmd: 'POWER{idx}', res: {shared: true, mapping: [{from: 'ON', to: 1}, {from: 'OFF', to: 0}]}},
       },
       InUse: {
-        stat: {path: 'POWER{idx}'},
-        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+        stat: {path: 'POWER{idx}', mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}]},
       },
       ValveType: {
         default: 3,
@@ -73,12 +93,10 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   LOCK: {
     LockMechanism: {
       LockTargetState: {
-        get: {cmd: 'POWER{idx}', res: {shared: true}},
-        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+        get: {cmd: 'POWER{idx}', res: {shared: true, mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}]}},
       },
       LockCurrentState: {
-        stat: {path: 'POWER{idx}'},
-        mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
+        stat: {path: 'POWER{idx}', mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}]},
       },
     },
   },
