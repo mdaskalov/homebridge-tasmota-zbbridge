@@ -17,16 +17,10 @@ export type Mapping = {
   to: CharacteristicValue
 }[];
 
-export enum ValueUpdate {
-  OnChange,
-  Always,
-  Never,
-}
-
 export type TasmotaResponse = {
   topic?: string;
   path?: string;
-  update?: ValueUpdate
+  update?: boolean;
   shared?: boolean;
 }
 
@@ -95,7 +89,7 @@ export class TasmotaCharacteristic {
         this.characteristic.onSet(this.onSet.bind(this));
       }
       // stat path defaults to get.res.path if not set
-      if (definition.stat?.update !== ValueUpdate.Never) {
+      if (definition.stat?.update !== false) {
         const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
         const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
         if (path !== undefined) {
@@ -191,8 +185,8 @@ export class TasmotaCharacteristic {
       const hbValue = this.checkHBValue(this.mapToHB(value));
       if (hbValue !== undefined) {
         const prevValue = this.value;
-        const getUpdateAlways = this.definition.get?.res?.update === ValueUpdate.Always;
-        const updateAlways = this.definition.stat?.update === ValueUpdate.Always;
+        const getUpdateAlways = this.definition.get?.res?.update === true;
+        const updateAlways = this.definition.stat?.update === true;
         const update = (hbValue !== prevValue) || updateAlways || getUpdateAlways;
         if (update) {
           this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);

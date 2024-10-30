@@ -1,27 +1,26 @@
 
 import { TasmotaDeviceDefinition } from './tasmotaAccessory';
-import { ValueUpdate } from './tasmotaCharacteristic';
 
 export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
   AccessoryInformation: {
     Manufacturer: {
       get: {cmd: 'MODULE0', res: {path: 'Module.0'}},
-      stat: {update: ValueUpdate.Never},
+      stat: {update: false},
       default: 'Tasmota',
     },
     Model: {
       get: {cmd: 'DeviceName'},
-      stat: {update: ValueUpdate.Never},
+      stat: {update: false},
       default: 'Unknown',
     },
     SerialNumber: {
       get: {cmd: 'STATUS 5', res: {topic: '{stat}/STATUS5', path: 'StatusNET.Mac'}},
-      stat: {update: ValueUpdate.Never},
+      stat: {update: false},
       default: 'Unknown',
     },
     FirmwareRevision: {
       get: {cmd: 'STATUS 2', res: {topic: '{stat}/STATUS2', path: 'StatusFWR.Version'}},
-      stat: {update: ValueUpdate.Never},
+      stat: {update: false},
       default: 'Unknown',
     },
   },
@@ -39,7 +38,7 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   BUTTON: {
     StatelessProgrammableSwitch: {
       ProgrammableSwitchEvent: {
-        stat: {path: 'Button{idx}.Action', update: ValueUpdate.Always},
+        stat: {path: 'Button{idx}.Action', update: true},
         mapping: [{from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
       },
     },
