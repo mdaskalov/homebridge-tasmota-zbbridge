@@ -43,10 +43,13 @@ export type TasmotaCharacteristicDefinition = {
   defaultValue?: CharacteristicValue;
 };
 
+type TemplateVariables = {[key: string]: string };
+
 export class TasmotaCharacteristic {
   private cmndTopic: string;
   private statTopic: string;
   private teleTopic: string;
+  private variables: TemplateVariables;
 
   private characteristic: Characteristic;
   private props: CharacteristicProps;
@@ -62,6 +65,7 @@ export class TasmotaCharacteristic {
     this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic + '/';
     this.statTopic = 'stat/' + this.accessory.context.device.topic + '/';
     this.teleTopic = 'tele/' + this.accessory.context.device.topic + '/';
+    this.variables = {idx: this.accessory.context.device.index || ''};
 
     this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.name]);
     if (this.characteristic !== undefined) {
@@ -93,18 +97,19 @@ export class TasmotaCharacteristic {
       // statValuePath defaults to get.cmd if not set
       const onStatEnabled = (definition.statValuePath !== undefined || definition.get?.cmd !== undefined);
       if (onStatEnabled && definition.statUpdate !== StatUpdate.Never) {
-        const statTopic = this.statTopic + (definition.statTopic || 'RESULT');
-        const valuePath = this.definition.statValuePath || this.definition?.get?.cmd;
-        this.log('Configure statUpdate on topic: %s %s', statTopic, valuePath);
-        this.platform.mqttClient.subscribeTopic(statTopic, message => {
-          if (valuePath !== undefined) {
+        const statTopic = this.statTopic + this.replaceTemplate(definition.statTopic || 'RESULT');
+        const valuePath = this.definition.statValuePath || this.definition.get?.cmd;
+        if (valuePath !== undefined) {
+          this.log('Configure statUpdate on topic: %s %s', statTopic, valuePath);
+          this.platform.mqttClient.subscribeTopic(statTopic, message => {
+            this.log('message: %s', message);
             this.setValue('statUpdate', this.getValueByPath(message, valuePath));
-          }
-        });
+          });
+        }
       }
       // teleValuePath must be set to enable
       if (definition.teleValuePath !== undefined) {
-        const teleTopic = this.teleTopic + (definition.teleTopic || 'SENSOR');
+        const teleTopic = this.teleTopic + this.replaceTemplate(definition.teleTopic || 'SENSOR');
         const valuePath = definition.teleValuePath;
         this.log('Configure teleUpdate on topic: %s %s', teleTopic, valuePath);
         this.platform.mqttClient.subscribeTopic(teleTopic, message => {
@@ -157,7 +162,7 @@ export class TasmotaCharacteristic {
   async exec(command: TasmotaCommand, payload?: string): Promise<string> {
     return new Promise((resolve: (value: string) => void, reject: (error: string) => void) => {
       const split = command.cmd.split(' ');
-      const cmd = split[0];
+      const cmd = this.replaceTemplate(split[0]);
       const message = payload || split[1] || '';
       const reqTopic = this.cmndTopic + cmd;
       const resTopic = this.statTopic + (command.topic || 'RESULT');
@@ -220,8 +225,12 @@ export class TasmotaCharacteristic {
     } catch {
       return undefined; // not parsed
     }
-    const result = path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
+    const result = this.replaceTemplate(path).split('.').reduce((a, v) => a ? a[v] : undefined, obj);
     return result !== undefined ? String(result) : undefined;
+  }
+
+  replaceTemplate(template: string): string {
+    return template.replace(/\{(.*?)\}/g, (_, key) => this.variables[key] || '');
   }
 
   private mapFromHB(value: CharacteristicValue): string | undefined {

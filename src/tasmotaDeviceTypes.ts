@@ -28,94 +28,29 @@ export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
 };
 
 export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
-  SWITCH: {Switch: {On: {get: {cmd:'POWER'}}}},
-  SWITCH1: {Switch: {On: {get: {cmd:'POWER1'}}}},
-  SWITCH2: {Switch: {On: {get: {cmd:'POWER2'}}}},
-  SWITCH3: {Switch: {On: {get: {cmd:'POWER3'}}}},
-  SWITCH4: {Switch: {On: {get: {cmd:'POWER4'}}}},
-  LIGHT: {Lightbulb: {On: {get:{cmd: 'POWER'}}}},
-  LIGHT1: {Lightbulb: {On: {get:{cmd: 'POWER1'}}}},
-  LIGHT2: {Lightbulb: {On: {get:{cmd: 'POWER2'}}}},
-  LIGHT3: {Lightbulb: {On: {get:{cmd: 'POWER3'}}}},
-  LIGHT4: {Lightbulb: {On: {get:{cmd: 'POWER4'}}}},
+  SWITCH: {Switch: {On: {get: {cmd:'POWER{idx}'}}}},
+  LIGHT: {Lightbulb: {On: {get:{cmd: 'POWER{idx}'}}}},
   LIGHT_B: {
     Lightbulb: {
-      On: {get: {cmd:'POWER'}},
+      On: {get: {cmd:'POWER{idx}'}},
       Brightness: {get: {cmd:'Dimmer'}},
     },
   },
-  BUTTON1: {
+  BUTTON: {
     StatelessProgrammableSwitch: {
       ProgrammableSwitchEvent: {
-        statValuePath: 'Button1.Action',
+        statValuePath: 'Button{idx}.Action',
         statUpdate: StatUpdate.Always,
         mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
       },
     },
   },
-  BUTTON2: {
-    StatelessProgrammableSwitch: {
-      ProgrammableSwitchEvent: {
-        statValuePath: 'Button2.Action',
-        statUpdate: StatUpdate.Always,
-        mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
-      },
-    },
-  },
-  BUTTON3: {
-    StatelessProgrammableSwitch: {
-      ProgrammableSwitchEvent: {
-        statValuePath: 'Button3.Action',
-        statUpdate: StatUpdate.Always,
-        mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
-      },
-    },
-  },
-  BUTTON4: {
-    StatelessProgrammableSwitch: {
-      ProgrammableSwitchEvent: {
-        statValuePath: 'Button4.Action',
-        statUpdate: StatUpdate.Always,
-        mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
-      },
-    },
-  },
-  CONTACT1: {
+  CONTACT: {
     ContactSensor: {
       ContactSensorState: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch1'},
-        statValuePath: 'Switch1.Action',
-        teleValuePath: 'Switch1',
-        mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
-      },
-    },
-  },
-  CONTACT2: {
-    ContactSensor: {
-      ContactSensorState: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch2'},
-        statValuePath: 'Switch2.Action',
-        teleValuePath: 'Switch2',
-        mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
-      },
-    },
-  },
-  CONTACT3: {
-    ContactSensor: {
-      ContactSensorState: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch3'},
-        statValuePath: 'Switch3.Action',
-        teleValuePath: 'Switch3',
-        mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
-      },
-    },
-  },
-  CONTACT4: {
-    ContactSensor: {
-      ContactSensorState: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch4'},
-        statValuePath: 'Switch4.Action',
-        teleValuePath: 'Switch4',
+        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch{idx}'},
+        statValuePath: 'Switch{idx}.Action',
+        teleValuePath: 'Switch{idx}',
         mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
       },
     },
@@ -123,12 +58,12 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   VALVE: {
     Valve: {
       Active: {
-        get: {cmd: 'POWER', shareResponseMessage: true},
-        set: {cmd: 'POWER', shareResponseMessage: true},
+        get: {cmd: 'POWER{idx}', shareResponseMessage: true},
+        set: {cmd: 'POWER{idx}', shareResponseMessage: true},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       InUse: {
-        statValuePath: 'POWER',
+        statValuePath: 'POWER{idx}',
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       ValveType: {
@@ -142,12 +77,12 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   LOCK: {
     LockMechanism: {
       LockTargetState: {
-        get: {cmd: 'POWER', shareResponseMessage: true},
-        set: {cmd: 'POWER', shareResponseMessage: true},
+        get: {cmd: 'POWER{idx}', shareResponseMessage: true},
+        set: {cmd: 'POWER{idx}', shareResponseMessage: true},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       LockCurrentState: {
-        statValuePath: 'POWER',
+        statValuePath: 'POWER{idx}',
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
     },

@@ -6,6 +6,7 @@ import { DEVICE_TYPES, ACCESSORY_INFORMATION } from './tasmotaDeviceTypes';
 export type TasmotaDevice = {
   topic: string;
   type: string | TasmotaDeviceDefinition;
+  index?: string;
   name: string;
 };
 

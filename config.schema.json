@@ -273,32 +273,8 @@
                   "title": "Switch",
                   "enum": [ "SWITCH" ]
                 }, {
-                  "title": "Switch 1",
-                  "enum": [ "SWITCH1" ]
-                }, {
-                  "title": "Switch 2",
-                  "enum": [ "SWITCH2" ]
-                }, {
-                  "title": "Switch 3",
-                  "enum": [ "SWITCH3" ]
-                }, {
-                  "title": "Switch 4",
-                  "enum": [ "SWITCH4" ]
-                }, {
                   "title": "Light",
                   "enum": [ "LIGHT" ]
-                }, {
-                  "title": "Light 1",
-                  "enum": [ "LIGHT1" ]
-                }, {
-                  "title": "Light 2",
-                  "enum": [ "LIGHT2" ]
-                }, {
-                  "title": "Light 3",
-                  "enum": [ "LIGHT3" ]
-                }, {
-                  "title": "Light 4",
-                  "enum": [ "LIGHT4" ]
                 }, {
                   "title": "Dimmable Light",
                   "enum": [ "LIGHT_B" ]
@@ -312,29 +288,11 @@
                   "title": "Lock Mechanism",
                   "enum": [ "LOCK" ]
                 }, {
-                  "title": "Button 1",
-                  "enum": [ "BUTTON1" ]
+                  "title": "Button",
+                  "enum": [ "BUTTON" ]
                 }, {
-                  "title": "Button 2",
-                  "enum": [ "BUTTON2" ]
-                }, {
-                  "title": "Button 3",
-                  "enum": [ "BUTTON3" ]
-                }, {
-                  "title": "Button 4",
-                  "enum": [ "BUTTON4" ]
-                }, {
-                  "title": "ContactSensor 1",
-                  "enum": [ "CONTACT1" ]
-                }, {
-                  "title": "ContactSensor 2",
-                  "enum": [ "CONTACT2" ]
-                }, {
-                  "title": "ContactSensor 3",
-                  "enum": [ "CONTACT3" ]
-                }, {
-                  "title": "ContactSensor 4",
-                  "enum": [ "CONTACT4" ]
+                  "title": "ContactSensor",
+                  "enum": [ "CONTACT" ]
                 }, {
                   "title": "AM2301 Temperature & Humidity",
                   "enum": [ "AM2301_TH" ]
@@ -358,6 +316,24 @@
                   "enum": [ "HTU21_T" ]
                 } ],
               "required": true
+            },
+            "index": {
+              "title": "Index",
+              "type": "string",
+              "oneOf": [ {
+                  "title": "1",
+                  "enum": [ "1" ]
+                }, {
+                  "title": "2",
+                  "enum": [ "2" ]
+                }, {
+                  "title": "3",
+                  "enum": [ "3" ]
+                }, {
+                  "title": "4",
+                  "enum": [ "4" ]
+                } ],
+                "required": false
             },
             "name": {
               "title": "Name",
@@ -645,6 +621,16 @@
                       "nodescription": true,
                       "notitle": true,
                       "key": "tasmotaDevices[].type"
+                    } ]
+                },
+                {
+                  "type": "flex",
+                  "flex": "1 1 30px",
+                  "flex-flow": "column",
+                  "items": [ {
+                      "nodescription": true,
+                      "notitle": true,
+                      "key": "tasmotaDevices[].index"
                     } ]
                 },
                 {
