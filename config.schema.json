@@ -279,6 +279,9 @@
                   "title": "Dimmable Light",
                   "enum": [ "LIGHT_B" ]
                 }, {
+                  "title": "CCT Light",
+                  "enum": [ "LIGHT_B_CT" ]
+                }, {
                   "title": "RGB Light",
                   "enum": [ "LIGHT_HSB" ]
                 }, {

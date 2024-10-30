@@ -35,6 +35,13 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       Brightness: {get: {cmd: 'Dimmer'}},
     },
   },
+  LIGHT_B_CT: {
+    Lightbulb: {
+      On: {get: {cmd: 'POWER{idx}'}},
+      Brightness: {get: {cmd: 'Dimmer'}},
+      ColorTemperature: {get: {cmd: 'CT'}, props: {minValue: 153}},
+    },
+  },
   LIGHT_HSB: {
     Lightbulb: {
       On: {get: {cmd: 'POWER{idx}'}},
