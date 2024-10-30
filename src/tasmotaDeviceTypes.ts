@@ -1,56 +1,54 @@
 
 import { TasmotaDeviceDefinition } from './tasmotaAccessory';
-import { StatUpdate } from './tasmotaCharacteristic';
+import { ValueUpdate } from './tasmotaCharacteristic';
 
 export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
   AccessoryInformation: {
     Manufacturer: {
-      get: {cmd: 'MODULE0', valuePath: 'Module.0'},
-      defaultValue: 'Tasmota',
-      statUpdate: StatUpdate.Never,
+      get: {cmd: 'MODULE0', res: {path: 'Module.0'}},
+      stat: {update: ValueUpdate.Never},
+      default: 'Tasmota',
     },
     Model: {
       get: {cmd: 'DeviceName'},
-      defaultValue: 'Unknown',
-      statUpdate: StatUpdate.Never,
+      stat: {update: ValueUpdate.Never},
+      default: 'Unknown',
     },
     SerialNumber: {
-      get: {cmd: 'STATUS 5', topic: 'STATUS5', valuePath: 'StatusNET.Mac'},
-      defaultValue: 'Unknown',
-      statUpdate: StatUpdate.Never,
+      get: {cmd: 'STATUS 5', res: {topic: '{stat}/STATUS5', path: 'StatusNET.Mac'}},
+      stat: {update: ValueUpdate.Never},
+      default: 'Unknown',
     },
     FirmwareRevision: {
-      get: {cmd: 'STATUS 2', topic: 'STATUS2', valuePath: 'StatusFWR.Version'},
-      defaultValue: 'Unknown',
-      statUpdate: StatUpdate.Never,
+      get: {cmd: 'STATUS 2', res: {topic: '{stat}/STATUS2', path: 'StatusFWR.Version'}},
+      stat: {update: ValueUpdate.Never},
+      default: 'Unknown',
     },
   },
 };
 
 export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
-  SWITCH: {Switch: {On: {get: {cmd:'POWER{idx}'}}}},
+  SWITCH: {Switch: {On: {get: {cmd: 'POWER{idx}'}}}},
   LIGHT: {Lightbulb: {On: {get:{cmd: 'POWER{idx}'}}}},
   LIGHT_B: {
     Lightbulb: {
-      On: {get: {cmd:'POWER{idx}'}},
-      Brightness: {get: {cmd:'Dimmer'}},
+      On: {get: {cmd: 'POWER{idx}'}},
+      Brightness: {get: {cmd: 'Dimmer'}},
     },
   },
   BUTTON: {
     StatelessProgrammableSwitch: {
       ProgrammableSwitchEvent: {
-        statValuePath: 'Button{idx}.Action',
-        statUpdate: StatUpdate.Always,
-        mapping: [ {from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
+        stat: {path: 'Button{idx}.Action', update: ValueUpdate.Always},
+        mapping: [{from: 'SINGLE', to: 0}, {from: 'DOUBLE', to: 1}, {from: 'HOLD', to: 3}],
       },
     },
   },
   CONTACT: {
     ContactSensor: {
       ContactSensorState: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.Switch{idx}'},
-        statValuePath: 'Switch{idx}.Action',
-        teleValuePath: 'Switch{idx}',
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.Switch{idx}'}},
+        stat: {path: 'Switch{idx}.Action'},
         mapping: [ {from: 'ON', to: 0}, {from: 'OFF', to: 1}],
       },
     },
@@ -58,31 +56,29 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   VALVE: {
     Valve: {
       Active: {
-        get: {cmd: 'POWER{idx}', shareResponseMessage: true},
-        set: {cmd: 'POWER{idx}', shareResponseMessage: true},
+        get: {cmd: 'POWER{idx}', res: {shared: true}},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       InUse: {
-        statValuePath: 'POWER{idx}',
+        stat: {path: 'POWER{idx}'},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       ValveType: {
-        defaultValue: 3,
+        default: 3,
       },
       RemainingDuration: {
-        defaultValue: 3600,
+        default: 3600,
       },
     },
   },
   LOCK: {
     LockMechanism: {
       LockTargetState: {
-        get: {cmd: 'POWER{idx}', shareResponseMessage: true},
-        set: {cmd: 'POWER{idx}', shareResponseMessage: true},
+        get: {cmd: 'POWER{idx}', res: {shared: true}},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
       LockCurrentState: {
-        statValuePath: 'POWER{idx}',
+        stat: {path: 'POWER{idx}'},
         mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}],
       },
     },
@@ -90,77 +86,68 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   AM2301_TH: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AM2301.Temperature'},
-        teleValuePath: 'AM2301.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AM2301.Temperature'}},
+        stat: {topic: '{sensor}', path: 'AM2301.Temperature'},
       },
     },
     HumiditySensor: {
       CurrentRelativeHumidity: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AM2301.Humidity'},
-        teleValuePath: 'AM2301.Humidity',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AM2301.Humidity'}},
+        stat: {topic: '{sensor}', path: 'AM2301.Humidity'},
       },
     },
   },
   DHT11_TH: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.DHT11.Temperature'},
-        teleValuePath: 'DHT11.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DHT11.Temperature'}},
+        stat: {topic: '{sensor}', path: 'DHT11.Temperature'},
       },
     },
     HumiditySensor: {
       CurrentRelativeHumidity: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.DHT11.Humidity'},
-        teleValuePath: 'DHT11.Humidity',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DHT11.Humidity'}},
+        stat: {topic: '{sensor}', path: 'DHT11.Humidity'},
       },
     },
   },
   ANALOG_T: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.ANALOG.Temperature'},
-        teleValuePath: 'ANALOG.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.ANALOG.Temperature'}},
+        stat: {topic: '{sensor}', path: 'ANALOG.Temperature'},
       },
     },
   },
   AXP192_T: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.AXP192.Temperature'},
-        teleValuePath: 'AXP192.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AXP192.Temperature'}},
+        stat: {topic: '{sensor}', path: 'AXP192.Temperature'},
       },
     },
   },
   BMP280_T: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.BMP280.Temperature'},
-        teleValuePath: 'BMP280.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.BMP280.Temperature'}},
+        stat: {topic: '{sensor}', path: 'BMP280.Temperature'},
       },
     },
   },
   DS18B20_T: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.DS18B20.Temperature'},
-        teleValuePath: 'DS18B20.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DS18B20.Temperature'}},
+        stat: {topic: '{sensor}', path: 'DS18B20.Temperature'},
       },
     },
   },
   HTU21_T: {
     TemperatureSensor: {
       CurrentTemperature: {
-        get: {cmd: 'STATUS 10', topic: 'STATUS10', valuePath: 'StatusSNS.HTU21.Temperature'},
-        teleValuePath: 'HTU21.Temperature',
-        statUpdate: StatUpdate.Never,
+        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.HTU21.Temperature'}},
+        stat: {topic: '{sensor}', path: 'HTU21.Temperature'},
       },
     },
   },

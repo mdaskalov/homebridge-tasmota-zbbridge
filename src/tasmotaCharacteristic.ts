@@ -17,38 +17,36 @@ export type Mapping = {
   to: CharacteristicValue
 }[];
 
-export type TasmotaCommand = {
-  cmd: string;
-  topic?: string;
-  valuePath?: string;
-  shareResponseMessage?: boolean;
-};
-
-export enum StatUpdate {
+export enum ValueUpdate {
   OnChange,
   Always,
   Never,
 }
 
+export type TasmotaResponse = {
+  topic?: string;
+  path?: string;
+  update?: ValueUpdate
+  shared?: boolean;
+}
+
+export type TasmotaCommand = {
+  cmd: string;
+  res?: TasmotaResponse;
+};
+
 export type TasmotaCharacteristicDefinition = {
   get?: TasmotaCommand;
   set?: TasmotaCommand;
-  statTopic?: string;
-  statValuePath?: string;
-  statUpdate?: StatUpdate;
-  teleTopic?: string;
-  teleValuePath?: string;
+  stat?: TasmotaResponse;
   props?: object
   mapping?: Mapping;
-  defaultValue?: CharacteristicValue;
+  default?: CharacteristicValue;
 };
 
 type TemplateVariables = {[key: string]: string };
 
 export class TasmotaCharacteristic {
-  private cmndTopic: string;
-  private statTopic: string;
-  private teleTopic: string;
   private variables: TemplateVariables;
 
   private characteristic: Characteristic;
@@ -62,10 +60,12 @@ export class TasmotaCharacteristic {
     readonly name: string,
     readonly definition: TasmotaCharacteristicDefinition,
   ) {
-    this.cmndTopic = 'cmnd/' + this.accessory.context.device.topic + '/';
-    this.statTopic = 'stat/' + this.accessory.context.device.topic + '/';
-    this.teleTopic = 'tele/' + this.accessory.context.device.topic + '/';
-    this.variables = {idx: this.accessory.context.device.index || ''};
+    this.variables = {
+      topic: this.accessory.context.device.topic,
+      stat: 'stat/' + this.accessory.context.device.topic,
+      sensor: 'tele/' + this.accessory.context.device.topic + '/SENSOR',
+      idx: this.accessory.context.device.index || '',
+    };
 
     this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.name]);
     if (this.characteristic !== undefined) {
@@ -94,27 +94,16 @@ export class TasmotaCharacteristic {
       if (onSetEnabled) {
         this.characteristic.onSet(this.onSet.bind(this));
       }
-      // statValuePath defaults to get.cmd if not set
-      const onStatEnabled = (definition.statValuePath !== undefined || definition.get?.cmd !== undefined);
-      if (onStatEnabled && definition.statUpdate !== StatUpdate.Never) {
-        const statTopic = this.statTopic + this.replaceTemplate(definition.statTopic || 'RESULT');
-        const valuePath = this.definition.statValuePath || this.definition.get?.cmd;
-        if (valuePath !== undefined) {
-          this.log('Configure statUpdate on topic: %s %s', statTopic, valuePath);
-          this.platform.mqttClient.subscribeTopic(statTopic, message => {
-            this.log('message: %s', message);
-            this.setValue('statUpdate', this.getValueByPath(message, valuePath));
+      // stat path defaults to get.res.path if not set
+      if (definition.stat?.update !== ValueUpdate.Never) {
+        const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
+        const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
+        if (path !== undefined) {
+          this.log('Configure statUpdate on topic: %s %s', topic, path);
+          this.platform.mqttClient.subscribeTopic(topic, message => {
+            this.setValue('statUpdate', this.getValueByPath(message, path));
           });
         }
-      }
-      // teleValuePath must be set to enable
-      if (definition.teleValuePath !== undefined) {
-        const teleTopic = this.teleTopic + this.replaceTemplate(definition.teleTopic || 'SENSOR');
-        const valuePath = definition.teleValuePath;
-        this.log('Configure teleUpdate on topic: %s %s', teleTopic, valuePath);
-        this.platform.mqttClient.subscribeTopic(teleTopic, message => {
-          this.setValue('teleUpdate', this.getValueByPath(message, valuePath));
-        });
       }
     } else {
       throw new Error (`Unable to initialize characteristic: ${this.name}`);
@@ -164,24 +153,24 @@ export class TasmotaCharacteristic {
       const split = command.cmd.split(' ');
       const cmd = this.replaceTemplate(split[0]);
       const message = payload || split[1] || '';
-      const reqTopic = this.cmndTopic + cmd;
-      const resTopic = this.statTopic + (command.topic || 'RESULT');
-      const valuePath = command.valuePath || cmd;
+      const reqTopic = `cmnd/${this.accessory.context.device.topic}/${cmd}`;
+      const resTopic = this.replaceTemplate(command.res?.topic || '{stat}/RESULT');
+      const valuePath = command.res?.path || cmd;
 
       const start = Date.now();
       let timeout: NodeJS.Timeout | undefined = undefined;
       let handlerId: string | undefined = undefined;
       handlerId = this.platform.mqttClient.subscribeTopic(resTopic, responseMessage => {
-        if (timeout !== undefined) {
-          clearTimeout(timeout);
-        }
         const response = this.getValueByPath(responseMessage, valuePath);
         if (response !== undefined) {
+          if (timeout !== undefined) {
+            clearTimeout(timeout);
+          }
           if (handlerId !== undefined) {
             this.platform.mqttClient.unsubscribe(handlerId);
           }
           resolve(response);
-          if (command.shareResponseMessage !== true) {
+          if (command.res?.shared !== true) {
             return true; // consume message
           }
         }
@@ -202,12 +191,14 @@ export class TasmotaCharacteristic {
       const hbValue = this.checkHBValue(this.mapToHB(value));
       if (hbValue !== undefined) {
         const prevValue = this.value;
-        const update = (hbValue !== prevValue) || this.definition.statUpdate === StatUpdate.Always;
+        const getUpdateAlways = this.definition.get?.res?.update === ValueUpdate.Always;
+        const updateAlways = this.definition.stat?.update === ValueUpdate.Always;
+        const update = (hbValue !== prevValue) || updateAlways || getUpdateAlways;
         if (update) {
           this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
           this.value = hbValue;
         }
-        this.log('%s valueSet%s: %s (hb: %s), prev: %s',
+        this.log('%s value%s: %s (hb: %s), prev: %s',
           origin,
           update ? '' : ' (not updated)',
           value,
@@ -284,8 +275,8 @@ export class TasmotaCharacteristic {
   }
 
   private initValue(): CharacteristicValue {
-    if (this.definition.defaultValue !== undefined) {
-      const value = this.checkHBValue(this.definition.defaultValue);
+    if (this.definition.default !== undefined) {
+      const value = this.checkHBValue(this.definition.default);
       if (value !== undefined) {
         return value;
       }
