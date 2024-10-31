@@ -6,6 +6,7 @@ import {
   Formats,
   Characteristic,
   HAPStatus,
+  AdaptiveLightingController,
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
@@ -50,6 +51,7 @@ type TemplateVariables = {[key: string]: string };
 export class TasmotaCharacteristic {
   private variables: TemplateVariables;
 
+  private adaptiveLightingController?: AdaptiveLightingController;
   private characteristic: Characteristic;
   private props: CharacteristicProps;
   private value: CharacteristicValue;
@@ -68,7 +70,7 @@ export class TasmotaCharacteristic {
       idx: this.accessory.context.device.index || '',
     };
 
-    this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[this.name]);
+    this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[name]);
     if (this.characteristic !== undefined) {
       if (definition.props !== undefined) {
         for (const [name, value] of Object.entries(definition.props as object)) {
@@ -87,6 +89,9 @@ export class TasmotaCharacteristic {
       this.props = this.characteristic.props;
       //this.log('characteristic props: %s', JSON.stringify(this.props));
       this.value = this.initValue();
+      if (name === 'ColorTemperature') {
+        this.enableAdaptiveLighting();
+      }
       const onGetEnabled = this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ);
       const onSetEnabled = this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_WRITE);
       if (onGetEnabled) {
@@ -111,6 +116,9 @@ export class TasmotaCharacteristic {
                 const updateAlways = definition.stat?.update === true;
                 const update = (value !== prevValue) || updateAlways;
                 if (update) {
+                  if (this.name === 'ColorTemperature' || this.name === 'Hue' || this.name === 'Saturation') {
+                    this.disableAdaptiveLighting();
+                  }
                   this.value = hbValue;
                   this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
                 }
@@ -158,6 +166,7 @@ export class TasmotaCharacteristic {
         const hbConfirmValue = this.mapToHB(confirmValue, mapping);
         if (value === hbConfirmValue) {
           this.log('onSet value: %s (tasmota: %s)', value, payload);
+          this.value = value;
           return;
         } else {
           this.platform.log.warn('%s:%s Set value: %s: %s (tasmota: %s) not confirmed: %s: %s (tasmota: %s)',
@@ -178,7 +187,24 @@ export class TasmotaCharacteristic {
     throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
-  async exec(command: TasmotaCommand, payload?: string): Promise<string> {
+  private enableAdaptiveLighting() {
+    this.log('Enabled AdaptiveLighting');
+    this.adaptiveLightingController = new this.platform.api.hap.AdaptiveLightingController(this.service, {
+      controllerMode: this.platform.api.hap.AdaptiveLightingControllerMode.AUTOMATIC,
+    });
+    if (this.adaptiveLightingController) {
+      this.accessory.configureController(this.adaptiveLightingController);
+    }
+  }
+
+  private disableAdaptiveLighting() {
+    this.log('Disabled AdaptiveLighting');
+    if (this.adaptiveLightingController) {
+      this.adaptiveLightingController.disableAdaptiveLighting();
+    }
+  }
+
+  private async exec(command: TasmotaCommand, payload?: string): Promise<string> {
     return new Promise((resolve: (value: string) => void, reject: (error: string) => void) => {
       const split = command.cmd.split(' ');
       const cmd = this.replaceTemplate(split[0]);
