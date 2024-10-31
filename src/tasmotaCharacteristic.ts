@@ -2,7 +2,6 @@ import {
   Service,
   PlatformAccessory,
   CharacteristicValue,
-  CharacteristicProps,
   Formats,
   Characteristic,
   HAPStatus,
@@ -10,6 +9,7 @@ import {
 } from 'homebridge';
 
 import { TasmotaZbBridgePlatform } from './platform';
+import { TasmotaDevice } from './tasmotaAccessory';
 
 const EXEC_TIMEOUT = 1500;
 
@@ -49,10 +49,8 @@ export type TasmotaCharacteristicDefinition = {
 type TemplateVariables = {[key: string]: string };
 
 export class TasmotaCharacteristic {
-  private variables: TemplateVariables;
-
   private adaptiveLightingController?: AdaptiveLightingController;
-  private characteristic: Characteristic;
+  private device: TasmotaDevice;
   private variables: TemplateVariables;
   private value: CharacteristicValue;
 
@@ -60,81 +58,79 @@ export class TasmotaCharacteristic {
     readonly platform: TasmotaZbBridgePlatform,
     readonly accessory: PlatformAccessory,
     readonly service: Service,
-    readonly name: string,
+    readonly characteristic: Characteristic,
+    readonly characteristicName: string,
     readonly definition: TasmotaCharacteristicDefinition,
   ) {
+    this.device = this.accessory.context.device;
     this.variables = {
-      topic: this.accessory.context.device.topic,
-      stat: 'stat/' + this.accessory.context.device.topic,
-      sensor: 'tele/' + this.accessory.context.device.topic + '/SENSOR',
-      idx: this.accessory.context.device.index || '',
+      deviceName: this.device.name,
+      topic: this.device.topic,
+      stat: 'stat/' + this.device.topic,
+      sensor: 'tele/' + this.device.topic + '/SENSOR',
+      idx: this.device.index || '',
     };
 
-    this.characteristic = this.service.getCharacteristic(this.platform.Characteristic[name]);
-    if (this.characteristic !== undefined) {
-      if (definition.props !== undefined) {
-        for (const [name, value] of Object.entries(definition.props as object)) {
-          if (this.characteristic.props[name] !== undefined) {
-            this.log('props.%s set to %s', name, value);
-            this.characteristic.props[name] = value;
-          } else {
-            this.platform.log.error('%s: %s Invalid property: props.%s - ignored',
-              this.accessory.context.device.name,
-              this.name,
-              name,
-            );
-          }
+    if (definition.props !== undefined) {
+      for (const [name, value] of Object.entries(definition.props as object)) {
+        if (this.characteristic.props[name] !== undefined) {
+          this.log('props.%s set to %s', name, value);
+          this.characteristic.props[name] = value;
+        } else {
+          this.platform.log.error('%s: %s Invalid property: props.%s - ignored',
+            this.device.name,
+            this.characteristicName,
+            name,
+          );
         }
       }
-      this.props = this.characteristic.props;
-      //this.log('characteristic props: %s', JSON.stringify(this.props));
-      this.value = this.initValue();
-      if (name === 'ColorTemperature') {
-        this.enableAdaptiveLighting();
-      }
-      const onGetEnabled = this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ);
-      const onSetEnabled = this.props.perms.includes(this.platform.api.hap.Perms.PAIRED_WRITE);
-      if (onGetEnabled) {
-        this.characteristic.onGet(this.onGet.bind(this));
-      }
-      if (onSetEnabled) {
-        this.characteristic.onSet(this.onSet.bind(this));
-      }
-      // stat path defaults to get.res.path if not set
-      if (definition.stat?.update !== false) {
-        const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
-        const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
-        if (path !== undefined) {
-          this.log('Configure statUpdate on topic: %s %s', topic, path);
-          this.platform.mqttClient.subscribeTopic(topic, message => {
-            const value = this.getValueByPath(message, path);
-            if (value !== undefined) {
-              const mapping = definition.stat?.mapping ? definition.stat?.mapping : definition.get?.res?.mapping;
-              const hbValue = this.mapToHB(value, mapping);
-              if (hbValue !== undefined) {
-                const prevValue = this.value;
-                const updateAlways = definition.stat?.update === true;
-                const update = (value !== prevValue) || updateAlways;
-                if (update) {
-                  if (this.name === 'ColorTemperature' || this.name === 'Hue' || this.name === 'Saturation') {
-                    this.disableAdaptiveLighting();
-                  }
-                  this.value = hbValue;
-                  this.service.getCharacteristic(this.platform.Characteristic[this.name]).updateValue(hbValue);
+    }
+    //this.log('characteristic props: %s', JSON.stringify(this.props));
+    this.value = this.initValue();
+    if (characteristicName === 'ColorTemperature') {
+      this.enableAdaptiveLighting();
+    }
+    const onGetEnabled = this.characteristic.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ);
+    const onSetEnabled = this.characteristic.props.perms.includes(this.platform.api.hap.Perms.PAIRED_WRITE);
+    if (onGetEnabled) {
+      this.characteristic.onGet(this.onGet.bind(this));
+    }
+    if (onSetEnabled) {
+      this.characteristic.onSet(this.onSet.bind(this));
+    }
+    // stat path defaults to get.res.path if not set
+    if (definition.stat?.update !== false) {
+      const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
+      const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
+      if (path !== undefined) {
+        this.log('Configure statUpdate on topic: %s %s', topic, path);
+        this.platform.mqttClient.subscribeTopic(topic, message => {
+          const value = this.getValueByPath(message, path);
+          if (value !== undefined) {
+            const mapping = definition.stat?.mapping ? definition.stat?.mapping : definition.get?.res?.mapping;
+            const hbValue = this.mapToHB(value, mapping);
+            if (hbValue !== undefined) {
+              const prevValue = this.value;
+              const updateAlways = definition.stat?.update === true;
+              const update = (value !== prevValue) || updateAlways;
+              if (update) {
+                if (['ColorTemperature', 'Hue', 'Saturation'].includes(this.characteristicName)) {
+                  this.disableAdaptiveLighting();
                 }
-                this.log('statUpdate value%s: %s (homebridge: %s), prev: %s',
-                  update ? '' : ' (not updated)',
-                  value,
-                  hbValue,
-                  prevValue,
-                );
+                this.value = hbValue;
+                //this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(hbValue);
+                this.characteristic.updateValue(hbValue);
               }
+              this.log('statUpdate value%s: %s (homebridge: %s), prev: %s',
+                update ? '' : ' (not updated)',
+                value,
+                hbValue,
+                prevValue,
+              );
             }
-          });
-        }
+          }
+        });
       }
-    } else {
-      throw new Error (`Unable to initialize characteristic: ${this.name}`);
     }
   }
 
@@ -170,8 +166,8 @@ export class TasmotaCharacteristic {
           return;
         } else {
           this.platform.log.warn('%s:%s Set value: %s: %s (tasmota: %s) not confirmed: %s: %s (tasmota: %s)',
-            this.accessory.context.device.name,
-            this.name,
+            this.device.name,
+            this.characteristicName,
             value,
             typeof(value),
             payload,
@@ -188,19 +184,19 @@ export class TasmotaCharacteristic {
   }
 
   private enableAdaptiveLighting() {
-    this.log('Enabled AdaptiveLighting');
     this.adaptiveLightingController = new this.platform.api.hap.AdaptiveLightingController(this.service, {
       controllerMode: this.platform.api.hap.AdaptiveLightingControllerMode.AUTOMATIC,
     });
     if (this.adaptiveLightingController) {
       this.accessory.configureController(this.adaptiveLightingController);
+      this.log('AdaptiveLighting enabled');
     }
   }
 
   private disableAdaptiveLighting() {
-    this.log('Disabled AdaptiveLighting');
     if (this.adaptiveLightingController) {
       this.adaptiveLightingController.disableAdaptiveLighting();
+      this.log('AdaptiveLighting disabled');
     }
   }
 
@@ -209,7 +205,7 @@ export class TasmotaCharacteristic {
       const split = command.cmd.split(' ');
       const cmd = this.replaceTemplate(split[0]);
       const message = payload || split[1] || '';
-      const reqTopic = `cmnd/${this.accessory.context.device.topic}/${cmd}`;
+      const reqTopic = `cmnd/${this.device.topic}/${cmd}`;
       const resTopic = this.replaceTemplate(command.res?.topic || '{stat}/RESULT');
       const valuePath = command.res?.path || cmd;
 
@@ -236,7 +232,7 @@ export class TasmotaCharacteristic {
           this.platform.mqttClient.unsubscribe(handlerId);
         }
         const elapsed = Date.now() - start;
-        reject(`${this.accessory.context.device.name}:${this.name} Command "${reqTopic} ${message}" timeouted after ${elapsed}ms`);
+        reject(`${this.device.name}:${this.characteristicName} Command "${reqTopic} ${message}" timeouted after ${elapsed}ms`);
       }, EXEC_TIMEOUT);
       this.platform.mqttClient.publish(reqTopic, message);
     });
@@ -315,6 +311,7 @@ export class TasmotaCharacteristic {
 
   private initValue(): CharacteristicValue {
     if (this.definition.default !== undefined) {
+      this.log('default: %s', this.replaceTemplate(this.definition.default as string));
       const value = this.checkHBValue(this.definition.default);
       if (value !== undefined) {
         return value;
@@ -335,7 +332,8 @@ export class TasmotaCharacteristic {
   }
 
   log(message: string, ...parameters: unknown[]): void {
-    this.platform.log.debug(this.accessory.context.device.name + ':' + this.name + ' ' + message,
+    this.platform.log.debug(
+      this.replaceTemplate(`${this.device.name}:${this.characteristicName} ${message}`),
       ...parameters,
     );
   }

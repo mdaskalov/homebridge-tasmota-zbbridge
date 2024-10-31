@@ -11,7 +11,7 @@ export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
     Model: {
       get: {cmd: 'DeviceName'},
       stat: {update: false},
-      default: 'Unknown',
+      default: '{deviceName}',
     },
     SerialNumber: {
       get: {cmd: 'STATUS 5', res: {topic: '{stat}/STATUS5', path: 'StatusNET.Mac'}},

@@ -21,11 +21,10 @@ export class TasmotaAccessory {
     private readonly platform: TasmotaZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    const refType = typeof(this.accessory.context.device.type) === 'string';
-    const deviceDefinition = refType ? DEVICE_TYPES[this.accessory.context.device.type] : this.accessory.context.device.type;
-    if (deviceDefinition !== undefined) {
-      this.configureDevice(ACCESSORY_INFORMATION);
-      this.configureDevice(deviceDefinition);
+    this.configureDevice(ACCESSORY_INFORMATION);
+    const deviceType = this.accessory.context.device.type;
+    if(DEVICE_TYPES[deviceType] !== undefined) {
+      this.configureDevice(DEVICE_TYPES[deviceType]);
     } else {
       this.platform.log.error('%s: Uknown device definition: %s',
         this.accessory.context.device.name,
@@ -40,14 +39,23 @@ export class TasmotaAccessory {
       const serviceByName = this.platform.Service[serviceName];
       if (serviceByName !== undefined) {
         const service = this.accessory.getService(serviceByName) || this.accessory.addService(serviceByName);
-        service.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
-        for (const [name, definition] of Object.entries(serviceDefinition as object)) {
-          const characteristic = new TasmotaCharacteristic(this.platform, this.accessory, service, name, definition);
-          this.characteristics.push(characteristic);
-          configureText += `${name} `;
+        if (serviceDefinition['Name'] === undefined) {
+          service.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
+        }
+        for (const [characteristicName, definition] of Object.entries(serviceDefinition as object)) {
+          const characteristic = service.getCharacteristic(this.platform.Characteristic[characteristicName]);
+          if (characteristic !== undefined) {
+            const tasmotaCharacteristic = new TasmotaCharacteristic(
+              this.platform, this.accessory, service, characteristic, characteristicName, definition,
+            );
+            this.characteristics.push(tasmotaCharacteristic);
+            configureText += `${characteristicName} `;
+          } else {
+            this.platform.log.warn('Invalid characteristic name: %s in %s', characteristicName, JSON.stringify(deviceDefinition));
+          }
         }
       } else {
-        this.platform.log.warn('invalid service name: %s', serviceName);
+        this.platform.log.warn('Invalid service name: %s in %s', serviceName, JSON.stringify(deviceDefinition));
       }
       this.platform.log.debug(configureText);
     }
