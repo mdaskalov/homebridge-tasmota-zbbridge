@@ -53,7 +53,7 @@ export class TasmotaCharacteristic {
 
   private adaptiveLightingController?: AdaptiveLightingController;
   private characteristic: Characteristic;
-  private props: CharacteristicProps;
+  private variables: TemplateVariables;
   private value: CharacteristicValue;
 
   constructor(
@@ -265,7 +265,7 @@ export class TasmotaCharacteristic {
       }
       return undefined;
     }
-    switch (this.props.format) {
+    switch (this.characteristic.props.format) {
       case Formats.BOOL:
         return value ? 'ON' : 'OFF';
       default:
@@ -287,7 +287,7 @@ export class TasmotaCharacteristic {
     if (mappedValue === undefined) {
       return undefined;
     }
-    switch (this.props.format) {
+    switch (this.characteristic.props.format) {
       case Formats.BOOL:
         return (value === 'ON' || value === '1' || value === 'True') ? true :false;
       case Formats.STRING:
@@ -303,12 +303,12 @@ export class TasmotaCharacteristic {
     if (value === undefined) {
       return value;
     }
-    //this.log('return: %s :- min: %s, max: %s', value, this.props.minValue, this.props.maxValue);
-    if (this.props.minValue !== undefined && value as number < this.props.minValue) {
-      return this.props.minValue;
+    //this.log('return: %s :- min: %s, max: %s', value, this.characteristic.props.minValue, this.characteristic.props.maxValue);
+    if (this.characteristic.props.minValue !== undefined && value as number < this.characteristic.props.minValue) {
+      return this.characteristic.props.minValue;
     }
-    if (this.props.maxValue !== undefined && value as number > this.props.maxValue) {
-      return this.props.maxValue;
+    if (this.characteristic.props.maxValue !== undefined && value as number > this.characteristic.props.maxValue) {
+      return this.characteristic.props.maxValue;
     }
     return value;
   }
@@ -320,7 +320,7 @@ export class TasmotaCharacteristic {
         return value;
       }
     }
-    switch (this.props.format) {
+    switch (this.characteristic.props.format) {
       case Formats.BOOL:
         return false;
       case Formats.STRING:
