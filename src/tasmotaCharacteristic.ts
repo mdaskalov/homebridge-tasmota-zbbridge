@@ -192,7 +192,7 @@ export class TasmotaCharacteristic {
     });
     if (this.adaptiveLightingController) {
       this.accessory.configureController(this.adaptiveLightingController);
-      this.log('AdaptiveLighting enabled');
+      this.platform.log.info('AdaptiveLighting enabled');
     }
   }
 
@@ -303,33 +303,27 @@ export class TasmotaCharacteristic {
       return value;
     }
     //this.log('return: %s :- min: %s, max: %s', value, this.characteristic.props.minValue, this.characteristic.props.maxValue);
-    if (this.characteristic.props.minValue !== undefined && value as number < this.characteristic.props.minValue) {
+    const numValue = Number(value);
+    if (this.characteristic.props.minValue !== undefined && numValue < this.characteristic.props.minValue) {
       return this.characteristic.props.minValue;
     }
-    if (this.characteristic.props.maxValue !== undefined && value as number > this.characteristic.props.maxValue) {
+    if (this.characteristic.props.maxValue !== undefined && numValue > this.characteristic.props.maxValue) {
       return this.characteristic.props.maxValue;
     }
     return value;
   }
 
   private initValue(): CharacteristicValue {
-    if (this.definition.default !== undefined) {
-      this.log('default: %s', this.replaceTemplate(this.definition.default as string));
-      const value = this.checkHBValue(this.definition.default);
-      if (value !== undefined) {
-        return value;
-      }
-    }
+    const value = this.checkHBValue(this.definition.default);
     switch (this.characteristic.props.format) {
       case Formats.BOOL:
-        return false;
+        return value !== undefined ? Boolean(value) : false;
       case Formats.STRING:
       case Formats.DATA:
       case Formats.TLV8:
-        return '';
+        return value !== undefined ? this.replaceTemplate(String(value)) : '';
       default: {
-        const value = this.checkHBValue(0);
-        return value !== undefined ? value : 0;
+        return value !== undefined ? Number(value) : 0;
       }
     }
   }
