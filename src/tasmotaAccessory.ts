@@ -46,7 +46,7 @@ export class TasmotaAccessory {
           const characteristic = service.getCharacteristic(this.platform.Characteristic[characteristicName]);
           if (characteristic !== undefined) {
             const tasmotaCharacteristic = new TasmotaCharacteristic(
-              this.platform, this.accessory, service, characteristic, characteristicName, definition,
+              this.platform, this.accessory, service, characteristic, definition,
             );
             this.characteristics.push(tasmotaCharacteristic);
             configureText += `${characteristicName} `;

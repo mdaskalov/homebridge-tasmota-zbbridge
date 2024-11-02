@@ -59,7 +59,6 @@ export class TasmotaCharacteristic {
     readonly accessory: PlatformAccessory,
     readonly service: Service,
     readonly characteristic: Characteristic,
-    readonly characteristicName: string,
     readonly definition: TasmotaCharacteristicDefinition,
   ) {
     this.device = this.accessory.context.device;
@@ -79,15 +78,15 @@ export class TasmotaCharacteristic {
         } else {
           this.platform.log.error('%s: %s Invalid property: props.%s - ignored',
             this.device.name,
-            this.characteristicName,
+            this.characteristic.displayName,
             name,
           );
         }
       }
     }
-    //this.log('characteristic props: %s', JSON.stringify(this.props));
+    //this.log('characteristic props: %s', JSON.stringify(characteristic.props));
     this.value = this.initValue();
-    if (characteristicName === 'ColorTemperature') {
+    if (characteristic.UUID === this.platform.Characteristic.ColorTemperature.UUID) {
       this.enableAdaptiveLighting();
     }
     const onGetEnabled = this.characteristic.props.perms.includes(this.platform.api.hap.Perms.PAIRED_READ);
@@ -103,6 +102,11 @@ export class TasmotaCharacteristic {
       const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
       const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
       if (path !== undefined) {
+        const disableALUUIDs = [
+          this.platform.Characteristic.ColorTemperature.UUID,
+          this.platform.Characteristic.Hue.UUID,
+          this.platform.Characteristic.Saturation.UUID,
+        ];
         this.log('Configure statUpdate on topic: %s %s', topic, path);
         this.platform.mqttClient.subscribeTopic(topic, message => {
           const value = this.getValueByPath(message, path);
@@ -114,11 +118,10 @@ export class TasmotaCharacteristic {
               const updateAlways = definition.stat?.update === true;
               const update = (value !== prevValue) || updateAlways;
               if (update) {
-                if (['ColorTemperature', 'Hue', 'Saturation'].includes(this.characteristicName)) {
+                if (disableALUUIDs.includes(this.characteristic.UUID)) {
                   this.disableAdaptiveLighting();
                 }
                 this.value = hbValue;
-                //this.service.getCharacteristic(this.platform.Characteristic[this.characteristicName]).updateValue(hbValue);
                 this.characteristic.updateValue(hbValue);
               }
               this.log('statUpdate value%s: %s (homebridge: %s), prev: %s',
@@ -167,7 +170,7 @@ export class TasmotaCharacteristic {
         } else {
           this.platform.log.warn('%s:%s Set value: %s: %s (tasmota: %s) not confirmed: %s: %s (tasmota: %s)',
             this.device.name,
-            this.characteristicName,
+            this.characteristic.displayName,
             value,
             typeof(value),
             payload,
@@ -232,7 +235,7 @@ export class TasmotaCharacteristic {
           this.platform.mqttClient.unsubscribe(handlerId);
         }
         const elapsed = Date.now() - start;
-        reject(`${this.device.name}:${this.characteristicName} Command "${reqTopic} ${message}" timeouted after ${elapsed}ms`);
+        reject(`${this.device.name}:${this.characteristic.displayName} Command "${reqTopic} ${message}" timeouted after ${elapsed}ms`);
       }, EXEC_TIMEOUT);
       this.platform.mqttClient.publish(reqTopic, message);
     });
@@ -333,7 +336,7 @@ export class TasmotaCharacteristic {
 
   log(message: string, ...parameters: unknown[]): void {
     this.platform.log.debug(
-      this.replaceTemplate(`${this.device.name}:${this.characteristicName} ${message}`),
+      this.replaceTemplate(`${this.device.name}:${this.characteristic.displayName} ${message}`),
       ...parameters,
     );
   }
