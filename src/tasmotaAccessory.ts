@@ -1,13 +1,19 @@
 import { PlatformAccessory, Service } from 'homebridge';
 import { TasmotaZbBridgePlatform } from './platform';
 import { TasmotaCharacteristic, TasmotaCharacteristicDefinition } from './tasmotaCharacteristic';
-import { DEVICE_TYPES, ACCESSORY_INFORMATION } from './tasmotaDeviceTypes';
+import { DEVICE_TYPES, SENSOR_TYPES, ACCESSORY_INFORMATION } from './tasmotaDeviceTypes';
 
 export type TasmotaDevice = {
   topic: string;
   type: string | TasmotaDeviceDefinition;
   index?: string;
   name: string;
+};
+
+export type TasmotaSensorDefinition = {
+  key: string;
+  service: string;
+  characteristic: string;
 };
 
 export type TasmotaDeviceDefinition = {
@@ -25,6 +31,8 @@ export class TasmotaAccessory {
     const deviceType = this.accessory.context.device.type;
     if (typeof deviceType === 'object') {
       this.configureDevice(deviceType);
+    } else if (deviceType === 'SENSOR') {
+      this.configureSensors();
     } else {
       if (DEVICE_TYPES[deviceType] !== undefined) {
         this.configureDevice(DEVICE_TYPES[deviceType]);
@@ -94,4 +102,48 @@ export class TasmotaAccessory {
     }
   }
 
+  private findPath(obj: object, targetKey: string, path: string = ''): string | undefined {
+    if (typeof obj !== 'object') {
+      return undefined;
+    }
+    for (const key in obj) {
+      const newPath = path ? `${path}.${key}` : key;
+      if (key === targetKey) {
+        return newPath;
+      }
+      const result = this.findPath(obj[key], targetKey, newPath);
+      if (result) {
+        return result;
+      }
+    }
+    return undefined;
+  }
+
+  private async configureSensors() {
+    const reqTopic = `cmnd/${this.accessory.context.device.topic}/STATUS`;
+    const reqPayload = '10';
+    const resTopic = `stat/${this.accessory.context.device.topic}/STATUS10`;
+    const sensorsJSON = await this.platform.mqttClient.submit(reqTopic, reqPayload, resTopic);
+    try {
+      const sensors = JSON.parse(sensorsJSON);
+      if (sensors.StatusSNS !== undefined) {
+        for (const sensorType of SENSOR_TYPES) {
+          const path = this.findPath(sensors.StatusSNS, sensorType.key);
+          const characteristic = {
+            get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: `StatusSNS.${path}`}},
+            stat: {topic: '{sensor}', path: `${path}`},
+          };
+          const service = Object();
+          service[sensorType.characteristic] = characteristic;
+          const definition = Object();
+          definition[sensorType.service] = service;
+          this.configureDevice(definition);
+        }
+      } else {
+        this.platform.log.warn('StatusSNS node missing on sensor reply: %s', sensorsJSON);
+      }
+    } catch (err) {
+      this.platform.log.warn('Unable to parse sensors JSON: %s :- %s', sensorsJSON, err);
+    }
+  }
 }

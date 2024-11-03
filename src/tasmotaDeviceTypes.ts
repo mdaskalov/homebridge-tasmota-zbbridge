@@ -1,5 +1,5 @@
 
-import { TasmotaDeviceDefinition } from './tasmotaAccessory';
+import { TasmotaDeviceDefinition, TasmotaSensorDefinition } from './tasmotaAccessory';
 
 export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
   AccessoryInformation: {
@@ -25,6 +25,11 @@ export const ACCESSORY_INFORMATION: TasmotaDeviceDefinition = {
     },
   },
 };
+
+export const SENSOR_TYPES: TasmotaSensorDefinition[] = [
+  {key: 'Temperature', service: 'TemperatureSensor', characteristic: 'CurrentTemperature'},
+  {key: 'Humidity', service: 'HumiditySensor', characteristic: 'CurrentRelativeHumidity'},
+];
 
 export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
   SWITCH: {Switch: {On: {get: {cmd: 'POWER{idx}'}}}},
@@ -116,74 +121,6 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       },
       LockCurrentState: {
         stat: {path: 'POWER{idx}', mapping: [ {from: 'ON', to: 1}, {from: 'OFF', to: 0}]},
-      },
-    },
-  },
-  AM2301_TH: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AM2301.Temperature'}},
-        stat: {topic: '{sensor}', path: 'AM2301.Temperature'},
-      },
-    },
-    HumiditySensor: {
-      CurrentRelativeHumidity: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AM2301.Humidity'}},
-        stat: {topic: '{sensor}', path: 'AM2301.Humidity'},
-      },
-    },
-  },
-  DHT11_TH: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DHT11.Temperature'}},
-        stat: {topic: '{sensor}', path: 'DHT11.Temperature'},
-      },
-    },
-    HumiditySensor: {
-      CurrentRelativeHumidity: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DHT11.Humidity'}},
-        stat: {topic: '{sensor}', path: 'DHT11.Humidity'},
-      },
-    },
-  },
-  ANALOG_T: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.ANALOG.Temperature'}},
-        stat: {topic: '{sensor}', path: 'ANALOG.Temperature'},
-      },
-    },
-  },
-  AXP192_T: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.AXP192.Temperature'}},
-        stat: {topic: '{sensor}', path: 'AXP192.Temperature'},
-      },
-    },
-  },
-  BMP280_T: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.BMP280.Temperature'}},
-        stat: {topic: '{sensor}', path: 'BMP280.Temperature'},
-      },
-    },
-  },
-  DS18B20_T: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.DS18B20.Temperature'}},
-        stat: {topic: '{sensor}', path: 'DS18B20.Temperature'},
-      },
-    },
-  },
-  HTU21_T: {
-    TemperatureSensor: {
-      CurrentTemperature: {
-        get: {cmd: 'STATUS 10', res: {topic: '{stat}/STATUS10', path: 'StatusSNS.HTU21.Temperature'}},
-        stat: {topic: '{sensor}', path: 'HTU21.Temperature'},
       },
     },
   },

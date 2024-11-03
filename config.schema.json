@@ -300,6 +300,9 @@
                   "title": "ContactSensor",
                   "enum": [ "CONTACT" ]
                 }, {
+                  "title": "Sensors Autodetect",
+                  "enum": [ "SENSOR" ]
+                }, {
                   "title": "AM2301 Temperature & Humidity",
                   "enum": [ "AM2301_TH" ]
                 }, {
