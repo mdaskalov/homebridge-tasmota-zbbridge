@@ -42,9 +42,10 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
       ColorTemperature: {get: {cmd: 'CT'}, props: {minValue: 153}},
     },
   },
-  LIGHT_HSB: {
+  LIGHT_B_HS: {
     Lightbulb: {
       On: {get: {cmd: 'POWER{idx}'}},
+      Brightness: {get: {cmd: 'Dimmer'}},
       Hue: {
         get: {cmd: 'HSBColor', res: {mapping: {index: 0}}},
         set: {cmd: 'HSBColor1', res: {path: 'HSBColor'}},
@@ -53,10 +54,21 @@ export const DEVICE_TYPES: { [key: string] : TasmotaDeviceDefinition } = {
         get: {cmd: 'HSBColor', res: {mapping: {index: 1}}},
         set: {cmd: 'HSBColor2', res: {path: 'HSBColor'}},
       },
-      Brightness: {
-        get: {cmd: 'HSBColor', res: {mapping: {index: 2}}},
-        set: {cmd: 'HSBColor3', res: {path: 'HSBColor'}},
+    },
+  },
+  LIGHT_B_HS_CT: {
+    Lightbulb: {
+      On: {get: {cmd: 'POWER{idx}'}},
+      Brightness: {get: {cmd: 'Dimmer'}},
+      Hue: {
+        get: {cmd: 'HSBColor', res: {mapping: {index: 0}}},
+        set: {cmd: 'HSBColor1', res: {path: 'HSBColor'}},
       },
+      Saturation: {
+        get: {cmd: 'HSBColor', res: {mapping: {index: 1}}},
+        set: {cmd: 'HSBColor2', res: {path: 'HSBColor'}},
+      },
+      ColorTemperature: {get: {cmd: 'CT'}, props: {minValue: 153}},
     },
   },
   BUTTON: {

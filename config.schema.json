@@ -283,7 +283,10 @@
                   "enum": [ "LIGHT_B_CT" ]
                 }, {
                   "title": "RGB Light",
-                  "enum": [ "LIGHT_HSB" ]
+                  "enum": [ "LIGHT_B_HS" ]
+                }, {
+                  "title": "RGBCCT Light",
+                  "enum": [ "LIGHT_B_HS_CT" ]
                 }, {
                   "title": "Valve",
                   "enum": [ "VALVE" ]
