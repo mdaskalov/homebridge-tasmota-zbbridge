@@ -163,7 +163,9 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         accessory.context.device = device;
         new TasmotaAccessory(this, accessory);
         this.log.info('%s Tasmota accessory: %s (%s) - %s',
-          restored ? 'Restoring' : 'Adding', device.name, device.topic, JSON.stringify(device.type));
+          restored ? 'Restoring' : 'Adding', device.name, device.topic,
+          typeof(device.type) === 'string' ? device.type : 'CUSTOM',
+        );
       } else {
         this.log.error('Ignored Tasmota device configuration: ', JSON.stringify(device));
         continue;
