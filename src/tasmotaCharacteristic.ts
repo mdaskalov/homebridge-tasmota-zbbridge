@@ -51,6 +51,8 @@ type TemplateVariables = {[key: string]: string };
 export class TasmotaCharacteristic {
   private adaptiveLightingController?: AdaptiveLightingController;
   private device: TasmotaDevice;
+  private ignoreTimeouts: boolean;
+  private ignoreUnexpected: boolean;
   private variables: TemplateVariables;
   private value: CharacteristicValue;
 
@@ -62,6 +64,8 @@ export class TasmotaCharacteristic {
     readonly definition: TasmotaCharacteristicDefinition,
   ) {
     this.device = this.accessory.context.device;
+    this.ignoreTimeouts = this.accessory.context.ignoreTimeouts;
+    this.ignoreUnexpected = this.accessory.context.ignoreUnexpected;
     this.variables = {
       deviceName: this.device.name,
       topic: this.device.topic,
@@ -148,9 +152,13 @@ export class TasmotaCharacteristic {
           return this.value;
         }
       } catch (err) {
-        this.platform.log.error(err as string);
+        if (this.ignoreTimeouts === false) {
+          this.platform.log.error(err as string);
+          throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+        } else {
+          this.platform.log.debug(err as string);
+        }
       }
-      throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
     }
     return this.value;
   }
@@ -180,10 +188,14 @@ export class TasmotaCharacteristic {
           );
         }
       } catch (err) {
-        this.platform.log.error(err as string);
+        if (this.ignoreTimeouts === false) {
+          this.platform.log.error(err as string);
+          throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+        } else {
+          this.platform.log.debug(err as string);
+        }
       }
     }
-    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   private enableAdaptiveLighting() {
