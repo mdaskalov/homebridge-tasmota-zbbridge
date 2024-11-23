@@ -1,7 +1,7 @@
 import { PlatformAccessory, Service } from 'homebridge';
 import { TasmotaZbBridgePlatform } from './platform';
 import { TasmotaCharacteristic, TasmotaCharacteristicDefinition } from './tasmotaCharacteristic';
-import { DEVICE_TYPES, SENSOR_TYPES, ACCESSORY_INFORMATION } from './tasmotaDeviceTypes';
+import { DEVICE_TYPES, SENSOR_TYPES } from './tasmotaDeviceTypes';
 
 export type TasmotaDevice = {
   topic: string;
@@ -27,7 +27,7 @@ export class TasmotaAccessory {
     private readonly platform: TasmotaZbBridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-    this.configureDevice(ACCESSORY_INFORMATION);
+    this.configureAccessoryInformation();
     const deviceType = this.accessory.context.device.type;
     if (typeof deviceType === 'object') {
       this.configureDevice(deviceType);
@@ -145,5 +145,30 @@ export class TasmotaAccessory {
     } catch (err) {
       this.platform.log.warn('Unable to parse sensors JSON: %s :- %s', sensorsJSON, err);
     }
+  }
+
+  private async getProperty(cmd: string, path: string = cmd, res: string = 'RESULT'): Promise<string | undefined> {
+    const split = cmd.split(' ');
+    const reqTopic = `cmnd/${this.accessory.context.device.topic}/${split[0]}`;
+    const resTopic = `stat/${this.accessory.context.device.topic}/${res || 'RESULT'}`;
+    const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic);
+    return this.platform.mqttClient.getValueByPath(response, path);
+  }
+
+  private async configureAccessoryInformation() {
+    const manufacturer = await this.getProperty('MODULE0', 'Module.0') || 'Tasmota';
+    const model = await this.getProperty('DeviceName') || 'Unknown';
+    const serialNumber = await this.getProperty('STATUS 5', 'StatusNET.Mac', 'STATUS5') || 'Unknown';
+    let firmwareRevision = await this.getProperty('STATUS 2', 'StatusFWR.Version', 'STATUS2') || 'Unknown';
+    firmwareRevision = firmwareRevision.split('(')[0];
+    const accessoryInformation: TasmotaDeviceDefinition = {
+      AccessoryInformation: {
+        Manufacturer: { default: `${manufacturer}` },
+        Model: { default: `${model}` },
+        SerialNumber: { default: `${serialNumber}` },
+        FirmwareRevision: { default: `${firmwareRevision}` },
+      },
+    };
+    this.configureDevice(accessoryInformation);
   }
 }
