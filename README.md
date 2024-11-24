@@ -107,6 +107,8 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
     "mqttBroker": "raspi2",
     "zigbee2tasmotaTopic": "zbbridge",
     "zigbee2mqttTopic": "zigbee2mqtt",
+    "ignoreTimeouts": true,
+    "ignoreUnexpected": true,
     "platform": "TasmotaZbBridge"
 }
 ```
@@ -153,6 +155,10 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 `zigbee2tasmotaTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge)
 
 `zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt)
+
+`ignoreTimeouts` - (optional) Ignore MQTT command response timeouts (default: true)
+
+`ignoreUnexpected` - (optional) Ignore unexpected response messages while waiting for a MQTT command response (default: true)
 
 # Zigbee2MQTT
 
