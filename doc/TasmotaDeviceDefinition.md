@@ -72,7 +72,6 @@ Once a command is sent to tasmota the command response is awaited until a timeou
 ## Value Paths
 
 Value paths are used to extract a value from the comand response json.<br>
-
 For example to extract temperature from following `SENSOR` response use `AM2301.Temperature`. To extract humidity use `AM2301.Humidity`.
 
 ```
@@ -88,6 +87,7 @@ Use split mapping if you want to select a single value from a list of values sep
     "separator": <Separator>,
     "index": <Index>
 }
+```
 
 | Property | Description |
 |----------|-------------|
@@ -116,7 +116,6 @@ Here are the defined variables:
 |`idx`|Configured device index.|
 |`stat`|Default status topic defined as `stat/{topic}`.|
 |`sensor`|Default sensor topic defined as `tele/{topic}/SENSOR`.|
-
 
 ## Examples
 
