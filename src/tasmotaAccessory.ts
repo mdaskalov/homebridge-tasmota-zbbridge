@@ -174,9 +174,9 @@ export class TasmotaAccessory {
             get: { cmd: 'STATUS 10', res: { topic: '{stat}/STATUS10', path: `StatusSNS.${path}` } },
             stat: { topic: '{sensor}', path: `${path}` },
           };
-          const service = Object();
+          const service = {};
           service[sensorType.characteristic] = characteristic;
-          const definition = Object();
+          const definition = {};
           definition[sensorType.service] = service;
           this.configureDevice(definition);
         }
