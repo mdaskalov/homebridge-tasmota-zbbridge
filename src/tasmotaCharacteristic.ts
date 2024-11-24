@@ -10,43 +10,11 @@ import {
 
 import { TasmotaZbBridgePlatform } from './platform';
 import { TasmotaDevice } from './tasmotaAccessory';
+import { TasmotaCommand, Mapping, TasmotaCharacteristicDefinition } from './tasmotaDeviceDefinition';
 
-const EXEC_TIMEOUT = 1500;
+const EXEC_TIMEOUT = 900;
 
-export type SplitMapping = {
-  separator?: string;
-  index: number;
-};
-
-export type SwapMapping = {
-  from: string,
-  to: CharacteristicValue
-};
-
-export type Mapping = SplitMapping | SwapMapping[]
-
-export type TasmotaResponse = {
-  topic?: string;
-  path?: string;
-  update?: boolean;
-  shared?: boolean;
-  mapping?: Mapping;
-}
-
-export type TasmotaCommand = {
-  cmd: string;
-  res?: TasmotaResponse;
-};
-
-export type TasmotaCharacteristicDefinition = {
-  get?: TasmotaCommand;
-  set?: TasmotaCommand;
-  stat?: TasmotaResponse;
-  props?: object
-  default?: CharacteristicValue;
-};
-
-type TemplateVariables = {[key: string]: string };
+type TemplateVariables = { [key: string]: string };
 
 export class TasmotaCharacteristic {
   private adaptiveLightingController?: AdaptiveLightingController;
@@ -104,16 +72,20 @@ export class TasmotaCharacteristic {
     // stat path defaults to get.res.path if not set
     if (definition.stat?.update !== false) {
       const topic = this.replaceTemplate(definition.stat?.topic || '{stat}/RESULT');
-      const path = definition.stat?.path || definition.get?.res?.path || definition.get?.cmd;
-      if (path !== undefined) {
+      const path = this.replaceTemplate(definition.stat?.path || definition.get?.res?.path || definition.get?.cmd || '');
+      if (path !== '') {
         const disableALUUIDs = [
           this.platform.Characteristic.ColorTemperature.UUID,
           this.platform.Characteristic.Hue.UUID,
           this.platform.Characteristic.Saturation.UUID,
         ];
-        this.log('Configure statUpdate on topic: %s %s', topic, path);
-        this.platform.mqttClient.subscribeTopic(topic, message => {
-          const value = this.getValueByPath(message, path);
+        this.log('Configure status-update on topic: %s, path: %s, update: %s',
+          topic,
+          path,
+          definition.stat?.update ? definition.stat?.update === true ? 'Always' : 'Never' : 'OnChange',
+        );
+        this.platform.mqttClient.subscribe(topic, message => {
+          const value = this.platform.mqttClient.getValueByPath(message, path);
           if (value !== undefined) {
             const mapping = definition.stat?.mapping ? definition.stat?.mapping : definition.get?.res?.mapping;
             const hbValue = this.mapToHB(value, mapping);
@@ -180,10 +152,10 @@ export class TasmotaCharacteristic {
             this.device.name,
             this.characteristic.displayName,
             value,
-            typeof(value),
+            typeof (value),
             payload,
             hbConfirmValue,
-            typeof(hbConfirmValue),
+            typeof (hbConfirmValue),
             confirmValue,
           );
         }
@@ -216,52 +188,35 @@ export class TasmotaCharacteristic {
   }
 
   private async exec(command: TasmotaCommand, payload?: string): Promise<string> {
-    return new Promise((resolve: (value: string) => void, reject: (error: string) => void) => {
-      const split = command.cmd.split(' ');
-      const cmd = this.replaceTemplate(split[0]);
-      const message = payload || split[1] || '';
-      const reqTopic = `cmnd/${this.device.topic}/${cmd}`;
-      const resTopic = this.replaceTemplate(command.res?.topic || '{stat}/RESULT');
-      const valuePath = command.res?.path || cmd;
+    const split = command.cmd.split(' ');
+    const cmd = this.replaceTemplate(split[0]);
+    const message = payload || split[1] || '';
+    const reqTopic = `cmnd/${this.device.topic}/${cmd}`;
+    const resTopic = this.replaceTemplate(command.res?.topic || '{stat}/RESULT');
+    const path = this.replaceTemplate(command.res?.path || cmd);
 
-      const start = Date.now();
-      let timeout: NodeJS.Timeout | undefined = undefined;
-      let handlerId: string | undefined = undefined;
-      handlerId = this.platform.mqttClient.subscribeTopic(resTopic, responseMessage => {
-        const response = this.getValueByPath(responseMessage, valuePath);
-        if (response !== undefined) {
-          if (timeout !== undefined) {
-            clearTimeout(timeout);
-          }
-          if (handlerId !== undefined) {
-            this.platform.mqttClient.unsubscribe(handlerId);
-          }
-          resolve(response);
-          if (command.res?.shared !== true) {
-            return true; // consume message
-          }
-        }
-      }, true);
-      timeout = setTimeout(() => {
-        if (handlerId !== undefined) {
-          this.platform.mqttClient.unsubscribe(handlerId);
-        }
-        const elapsed = Date.now() - start;
-        reject(`${this.device.name}:${this.characteristic.displayName} Command "${reqTopic} ${message}" timeouted after ${elapsed}ms`);
-      }, EXEC_TIMEOUT);
-      this.platform.mqttClient.publish(reqTopic, message);
-    });
-  }
-
-  private getValueByPath(json: string, path: string): string | undefined {
-    let obj = Object();
     try {
-      obj = JSON.parse(json);
-    } catch {
-      return undefined; // not parsed
+      let response = '';
+      await this.platform.mqttClient.read(reqTopic, message, resTopic, EXEC_TIMEOUT, (message) => {
+        const res = this.platform.mqttClient.getValueByPath(message, path);
+        if (res === undefined) {
+          const msg = `${this.device.name}:${this.characteristic.displayName} expecting ${path}, ignored: ${message}`;
+          if (this.ignoreUnexpected === false) {
+            this.platform.log.warn(msg);
+          } else {
+            this.platform.log.debug(msg);
+          }
+          return false; // ignore this message and wait
+        }
+        response = res;
+        if (command.res?.shared !== true) {
+          return true; // consume message
+        }
+      });
+      return response;
+    } catch (err) {
+      throw `${this.device.name}:${this.characteristic.displayName} Command "${reqTopic} ${message}: ${err}`;
     }
-    const result = this.replaceTemplate(path).split('.').reduce((a, v) => a ? a[v] : undefined, obj);
-    return result !== undefined ? String(result) : undefined;
   }
 
   replaceTemplate(template: string): string {
@@ -300,7 +255,7 @@ export class TasmotaCharacteristic {
     }
     switch (this.characteristic.props.format) {
       case Formats.BOOL:
-        return (value === 'ON' || value === '1' || value === 'True') ? true :false;
+        return (value === 'ON' || value === '1' || value === 'True') ? true : false;
       case Formats.STRING:
       case Formats.DATA:
       case Formats.TLV8:

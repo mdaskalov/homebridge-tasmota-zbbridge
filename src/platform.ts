@@ -65,7 +65,10 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   }
 
   tasmotaDeviceUUID(device: TasmotaDevice): string {
-    return this.api.hap.uuid.generate(device.topic + '-' + device.type);
+    const identificator = `${device.topic}-${device.type}` +
+      (device.index !== undefined ? `-${device.index}` : '') +
+      (device.custom !== undefined ? device.custom : '');
+    return this.api.hap.uuid.generate(identificator);
   }
 
   createZigbee2TasmotaAccessory(accessory: PlatformAccessory) {
@@ -166,7 +169,7 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
         new TasmotaAccessory(this, accessory);
         this.log.info('%s Tasmota accessory: %s (%s) - %s',
           restored ? 'Restoring' : 'Adding', device.name, device.topic,
-          typeof(device.type) === 'string' ? device.type : 'CUSTOM',
+          device.type + (device.index === undefined ? '' : `(${device.index})`),
         );
       } else {
         this.log.error('Ignored Tasmota device configuration: ', JSON.stringify(device));
@@ -187,7 +190,9 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
           } else if ((<Zigbee2MQTTDevice>device)?.ieee_address) {
             this.log.info('Removing Zigbee2MQTT accessory: %s (%s)', device.homekit_name, device.ieee_address);
           } else if ((<TasmotaDevice>device)?.topic) {
-            this.log.info('Removing Tasmota accessory: %s (%s) - %s', device.name, device.topic, device.type);
+            this.log.info('Removing Tasmota accessory: %s (%s) - %s', device.name, device.topic,
+              device.type + (device.index === undefined ? '' : `(${device.index})`),
+            );
           } else {
             this.log.info('Removing accessory: %s', accessory.displayName);
           }
