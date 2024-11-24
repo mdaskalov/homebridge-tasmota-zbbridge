@@ -13,6 +13,8 @@ export type TasmotaDevice = {
   name: string;
 };
 
+const READ_TIMEOUT = 900;
+
 export class TasmotaAccessory {
   private characteristics: TasmotaCharacteristic[] = [];
 
@@ -163,7 +165,7 @@ export class TasmotaAccessory {
     const reqPayload = '10';
     const resTopic = `stat/${this.accessory.context.device.topic}/STATUS10`;
     try {
-      const sensorsJSON = await this.platform.mqttClient.read(reqTopic, reqPayload, resTopic);
+      const sensorsJSON = await this.platform.mqttClient.read(reqTopic, reqPayload, resTopic, READ_TIMEOUT);
       const sensors = JSON.parse(sensorsJSON);
       if (sensors.StatusSNS !== undefined) {
         for (const sensorType of SENSOR_TYPES) {

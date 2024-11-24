@@ -15,7 +15,7 @@
 
 This Homebridge plugin can controll [Tasmota](https://tasmota.github.io/docs) or Zigbee devices connected to a MQTT broker.
 
-Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge.
+Devices flashed with Tasmota firmware (Outlet Switch, Lightbulb, RGB Stripe, Button, Contact Sensor, Valve, Lock Mechanism, Sensor, etc.) are suported directly. Zigbee devices can be controlled using [Zigbee2Tasmota](https://tasmota.github.io/docs/Zigbee) or [Zigbee2MQTT](https://www.zigbee2mqtt.io) gateway/bridge.
 
 By configuring a `powerTopic` it is possible to combine devices to a singe HomeKit appliance - Tasmota controlled switch can turn on a Zigbee lightbulb and then change the brightness or the collor over the Zigbee network (the lightbulb should be configured to turn on automatically when power is applied).
 
@@ -74,18 +74,9 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
             "sensorService": "StatelessProgrammableSwitch",
             "sensorValuePath": "Click",
             "sensorValueMapping": [
-                {
-                    "from": "single",
-                    "to": "0"
-                },
-                {
-                    "from": "double",
-                    "to": "1"
-                },
-                {
-                    "from": "hold",
-                    "to": "2"
-                }
+                { "from": "single", "to": "0" },
+                { "from": "double",  "to": "1" },
+                { "from": "hold", "to": "2" }
             ]
         }
     ],
@@ -98,22 +89,18 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
     "tasmotaDevices": [
         {
             "topic": "sonoff",
-            "type": "POWER",
-            "name": "Sonoff TM"
+            "type": "SWITCH",
+            "name": "SonoffTM"
         },
         {
             "topic": "sonoff",
-            "type": "StatusSNS.AM2301.Temperature",
-            "name": "Sonoff TM Temperature"
-        },
-        {
-            "topic": "sonoff",
-            "type": "StatusSNS.AM2301.Humidity",
-            "name": "Sonoff TM Humidity"
+            "type": "SENSOR",
+            "name": "SonoffTM TH Sensor"
         },
         {
             "topic": "sonoff-4ch",
-            "type": "POWER2",
+            "type": "SWITCH",
+            "index": 2,
             "name": "Sonoff 4CH Channel 2"
         }
     ],
@@ -151,8 +138,10 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 
 `tasmotaDevices` - Tasmota flashed devices
 
-* `topic` - Device topic as configured in the MQTT menu
-* `type` - Device type (`POWER`, `LIGHT`, `StatusSNS.AM2301.Temperature`, `StatusSNS.AM2301.Humidity`, etc.) see descriptions in `config.schema.json`
+* `topic` - Topic to control the device as configured in the "Configure MQTT" menu on the device web-interface.
+* `type` - Device type (`SIWTCH`, `LIGHTBULB`, `BUTTON`, `CONTACT`, `VALVE`, `LOCK`, `SENSOR`, `CUSTOM`, etc.)
+* `index` - (optiona) Optional index used to control the device. (`POWER1`, `POWER2`, `Switch1`, `Switch2`, etc.)
+* `custom` - (optional) Custom device definition (when `type='CUSTOM'`) as JSON string. See [here](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/blob/main/doc/TasmotaDeviceDefinition.md) for details.
 * `name` - Accessory name to be used in the Home applicaiton. Should be unique.
 
 `mqttBroker` - MQTT Broker hostname if not localhost
