@@ -80,6 +80,17 @@ export class MQTTClient {
     return false;
   }
 
+  getValueByPath(json: string, path: string): string | undefined {
+    let obj = Object();
+    try {
+      obj = JSON.parse(json);
+    } catch {
+      return undefined; // not parsed
+    }
+    const result = path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
+    return result !== undefined ? String(result) : undefined;
+  }
+
   uniqueID(): string {
     const timestamp = Date.now();
     if (this.idCounter >= MAX_COUNTER) {
