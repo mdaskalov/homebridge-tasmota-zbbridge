@@ -151,8 +151,20 @@ export class TasmotaAccessory {
     const split = cmd.split(' ');
     const reqTopic = `cmnd/${this.accessory.context.device.topic}/${split[0]}`;
     const resTopic = `stat/${this.accessory.context.device.topic}/${res || 'RESULT'}`;
-    const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic);
-    return this.platform.mqttClient.getValueByPath(response, path);
+    try {
+      const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic, 1000);
+      return this.platform.mqttClient.getValueByPath(response, path);
+    } catch (err) {
+      if (this.accessory.context.ignoreTimeouts === false) {
+        this.platform.log.error('%s: Got no response on %s command, reading %s topic (check MQTT topic): %s',
+          this.accessory.context.device.name,
+          reqTopic,
+          resTopic,
+          err as string,
+        );
+      }
+      return '';
+    }
   }
 
   private async configureAccessoryInformation() {
