@@ -87,7 +87,7 @@ export class Zigbee2MQTTAcessory {
     }
 
     // subscribe to device status updates
-    this.platform.mqttClient.subscribeTopic(
+    this.platform.mqttClient.subscribe(
       this.platform.config.zigbee2mqttTopic + '/' + this.device.friendly_name, message => {
         if (this.usePowerManager && !this.platform.powerManager.isOn(this.device.ieee_address)) {
           this.log('Ingored Zigbee2MQTT status update (device powered off)');

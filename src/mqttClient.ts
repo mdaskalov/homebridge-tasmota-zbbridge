@@ -4,6 +4,9 @@ import { IClientOptions, MqttClient, connect } from 'mqtt';
 type TopicCallback =
   (msg: string, topic: string) => boolean | void; // priority handler consumes message if not false
 
+type ReadCallback =
+  (msg: string) => boolean | void; // true: consume, false: ignore
+
 type TopicHandler = {
   id: string;
   topic: string;
@@ -105,7 +108,7 @@ export class MQTTClient {
     return { handlersCount, prioHandlersCount };
   }
 
-  subscribeTopic(topic: string, callback: TopicCallback, priority = false): string | undefined {
+  subscribe(topic: string, callback: TopicCallback, priority = false): string | undefined {
     if (this.client) {
       const id = this.uniqueID();
       const handler: TopicHandler = { id, topic, callback };
@@ -180,35 +183,35 @@ export class MQTTClient {
     this.log.debug('MQTT: Published: %s %s', topic, message);
   }
 
-  read(topic: string, timeout: number = DEFALT_TIMEOUT): Promise<string> {
-    return new Promise((resolve, reject) => {
+  read(reqTopic: string, message?: string, resTopic = reqTopic, timeout: number = DEFALT_TIMEOUT, callback?: ReadCallback) {
+    return new Promise((resolve: (msg: string) => void, reject: (err: string) => void) => {
       const start = Date.now();
+      let timeoutTimer: NodeJS.Timeout | undefined = undefined;
       let handlerId: string | undefined = undefined;
-      handlerId = this.subscribeTopic(topic, message => {
-        clearTimeout(timer);
-        resolve(message);
-        if (handlerId !== undefined) {
-          this.unsubscribe(handlerId);
+      handlerId = this.subscribe(resTopic, message => {
+        const cbResponse = callback !== undefined ? callback(message) : true; // consume
+        if (cbResponse !== false) { // ignore
+          if (timeoutTimer !== undefined) {
+            clearTimeout(timeoutTimer);
+          }
+          if (handlerId !== undefined) {
+            this.unsubscribe(handlerId);
+          }
+          resolve(message);
         }
-        return true;
+        return cbResponse;
       }, true);
-      const timer = setTimeout(() => {
+      timeoutTimer = setTimeout(() => {
         if (handlerId !== undefined) {
           this.unsubscribe(handlerId);
         }
         const elapsed = Date.now() - start;
         reject(`MQTT: Read timeout after ${elapsed}ms`);
       }, timeout);
+      if (message !== undefined) {
+        this.publish(reqTopic, message);
+      }
     });
   }
 
-  async submit(topic: string, message: string, responseTopic = topic, timeout?: number): Promise<string> {
-    this.publish(topic, message);
-    try {
-      return await this.read(responseTopic, timeout);
-    } catch {
-      this.log.error('Submit timeout on %s %s', topic, message);
-      return '';
-    }
-  }
 }

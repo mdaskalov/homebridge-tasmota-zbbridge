@@ -24,7 +24,7 @@ export class Zigbee2TasmotaSwitch extends Zigbee2TasmotaAccessory {
 
     // Subscribe for the power topic updates
     if (this.powerTopic !== undefined) {
-      this.platform.mqttClient.subscribeTopic('stat/' + this.powerTopic, message => {
+      this.platform.mqttClient.subscribe('stat/' + this.powerTopic, message => {
         const power = (message === 'ON');
         const ignored = this.power.update(power);
         if (!ignored) {

@@ -49,10 +49,10 @@ export abstract class Zigbee2TasmotaAccessory {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     // Subscribe for device updates
-    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/SENSOR', msg => this.onSensorMessage(msg));
+    this.platform.mqttClient.subscribe('tele/' + this.topic + '/SENSOR', msg => this.onSensorMessage(msg));
 
     // support unique device topic (ZbDeviceTopic / SetOption89)
-    this.platform.mqttClient.subscribeTopic('tele/' + this.topic + '/+/SENSOR', msg => this.onSensorMessage(msg));
+    this.platform.mqttClient.subscribe('tele/' + this.topic + '/+/SENSOR', msg => this.onSensorMessage(msg));
 
     // call zbname (udpate name)
     if (this.endpoint === undefined) {

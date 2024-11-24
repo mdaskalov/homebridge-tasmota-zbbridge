@@ -43,7 +43,7 @@ export class TasmotaPowerManager {
     const subscribed = this.accessories.some(a => a.topic === topic);
     this.accessories.push({ ieee_address, topic, name, state: false });
     if (!subscribed) {
-      this.mqttClient.subscribeTopic('stat/' + topic, (msg, topic) => this.powerStateChanged(msg, topic));
+      this.mqttClient.subscribe('stat/' + topic, (msg, topic) => this.powerStateChanged(msg, topic));
     }
     // request update
     this.mqttClient.publish('cmnd/' + topic, '');
