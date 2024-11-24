@@ -28,7 +28,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 
 # Configuration
 
-```
+``` json
 {
     "name": "ZbBridge",
     "zigbee2TasmotaDevices": [
@@ -127,7 +127,7 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
   * `sensorValueMapping` - (optional) Map sensor `from` value to homebridge `to` value. All other values will be ignored.
 
     For example `CONTACT_DETECTED` will be reported when following message is received:
-    ```
+    ```json
     {"ZbReceived":{"0x43D0":{"Device":"0x43D0","Name":"ContactSensorExample","Contact":0,"Endpoint":1,"LinkQuality":66}}}
     ```
 
