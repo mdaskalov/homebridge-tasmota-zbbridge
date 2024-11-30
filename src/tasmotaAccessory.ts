@@ -193,7 +193,7 @@ export class TasmotaAccessory {
     const reqTopic = `cmnd/${this.accessory.context.device.topic}/${split[0]}`;
     const resTopic = `stat/${this.accessory.context.device.topic}/${res || 'RESULT'}`;
     try {
-      const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic, 1000);
+      const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic, READ_TIMEOUT);
       return this.platform.mqttClient.getValueByPath(response, path);
     } catch (err) {
       if (this.accessory.context.ignoreTimeouts === false) {
