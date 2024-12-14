@@ -19,8 +19,8 @@ type TemplateVariables = { [key: string]: string };
 export class TasmotaCharacteristic {
   private adaptiveLightingController?: AdaptiveLightingController;
   private device: TasmotaDevice;
-  private ignoreTimeouts: boolean;
-  private ignoreUnexpected: boolean;
+  private logTimeouts: boolean;
+  private logUnexpected: boolean;
   private variables: TemplateVariables;
   private value: CharacteristicValue;
 
@@ -32,8 +32,8 @@ export class TasmotaCharacteristic {
     readonly definition: TasmotaCharacteristicDefinition,
   ) {
     this.device = this.accessory.context.device;
-    this.ignoreTimeouts = this.accessory.context.ignoreTimeouts;
-    this.ignoreUnexpected = this.accessory.context.ignoreUnexpected;
+    this.logTimeouts = this.accessory.context.logTimeouts;
+    this.logUnexpected = this.accessory.context.logUnexpected;
     this.variables = {
       deviceName: this.device.name,
       topic: this.device.topic,
@@ -124,12 +124,12 @@ export class TasmotaCharacteristic {
           return this.value;
         }
       } catch (err) {
-        if (this.ignoreTimeouts === false) {
+        if (this.logTimeouts === true) {
           this.platform.log.error(err as string);
-          throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
         } else {
           this.platform.log.debug(err as string);
         }
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
     return this.value;
@@ -160,12 +160,12 @@ export class TasmotaCharacteristic {
           );
         }
       } catch (err) {
-        if (this.ignoreTimeouts === false) {
+        if (this.logTimeouts === true) {
           this.platform.log.error(err as string);
-          throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
         } else {
           this.platform.log.debug(err as string);
         }
+        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
   }
@@ -201,7 +201,7 @@ export class TasmotaCharacteristic {
         const res = this.platform.mqttClient.getValueByPath(message, path);
         if (res === undefined) {
           const msg = `${this.device.name}:${this.characteristic.displayName} expecting ${path}, ignored: ${message}`;
-          if (this.ignoreUnexpected === false) {
+          if (this.logUnexpected === true) {
             this.platform.log.warn(msg);
           } else {
             this.platform.log.debug(msg);

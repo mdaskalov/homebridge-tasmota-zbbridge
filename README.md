@@ -1,5 +1,4 @@
-
-<p align="center">
+<p allign="center">
 
 <img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-color-round-stylized.png" width="150">
 
@@ -107,8 +106,8 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
     "mqttBroker": "raspi2",
     "zigbee2tasmotaTopic": "zbbridge",
     "zigbee2mqttTopic": "zigbee2mqtt",
-    "ignoreTimeouts": true,
-    "ignoreUnexpected": true,
+    "logTimeouts": false,
+    "logUnexpected": false,
     "platform": "TasmotaZbBridge"
 }
 ```
@@ -134,34 +133,34 @@ By configuring a `powerTopic` it is possible to combine devices to a singe HomeK
 `zigbee2mqttDevices` - Zigbee devices connected to Zigbee2MQTT gateway/bridge
 
 * `ieee_address`
-* `name` - Accessory name to be used in the Home applicaiton. Should be unique.
-* `powerTopic` - (optional) Use another tasmota device to controll the power (configure it's identifying topic)
-* `powerType` - (optional) Tasmota switch topic used to turn on/off the zigbee device, (default: `POWER`)
+* `name` - Accessory name to be used in the Home application. Should be unique.
+* `powerTopic` - (optional) Use another Tasmota device to control the power (configure its identifying topic).
+* `powerType` - (optional) Tasmota switch topic used to turn on/off the Zigbee device (default: `POWER`).
 
 `tasmotaDevices` - Tasmota flashed devices
 
-* `topic` - Topic to control the device as configured in the "Configure MQTT" menu on the device web-interface.
-* `type` - Device type (`SIWTCH`, `LIGHTBULB`, `BUTTON`, `CONTACT`, `VALVE`, `LOCK`, `SENSOR`, `CUSTOM`, etc.)
-* `index` - (optiona) Optional index used to control the device. (`POWER1`, `POWER2`, `Switch1`, `Switch2`, etc.)
-* `custom` - (optional) Custom device definition (when `type='CUSTOM'`) as JSON string. See [here](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/blob/main/doc/TasmotaDeviceDefinition.md) for details.
-* `name` - Accessory name to be used in the Home applicaiton. Should be unique.
+* `topic` - Topic to control the device as configured in the "Configure MQTT" menu on the device web interface.
+* `type` - Device type (`SWITCH`, `LIGHTBULB`, `BUTTON`, `CONTACT`, `VALVE`, `LOCK`, `SENSOR`, `CUSTOM`, etc.).
+* `index` - (optional) Optional index used to control the device (`POWER1`, `POWER2`, `Switch1`, `Switch2`, etc.).
+* `custom` - (optional) Custom device definition (when `type='CUSTOM'`) as a JSON string. See [here](https://github.com/mdaskalov/homebridge-tasmota-zbbridge/blob/main/doc/TasmotaDeviceDefinition.md) for details.
+* `name` - Accessory name to be used in the Home application. Should be unique.
 
-`mqttBroker` - MQTT Broker hostname if not localhost
+`mqttBroker` - MQTT Broker hostname if not localhost.
 
-`mqttUsername` - MQTT Broker username if password protected
+`mqttUsername` - MQTT Broker username if password protected.
 
-`mqttPassword` - MQTT Broker passwort if password protected
+`mqttPassword` - MQTT Broker password if password protected.
 
-`zigbee2tasmotaTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge)
+`zigbee2tasmotaTopic` - Zigbee2Tasmota gateway/bridge base topic (default: zbbridge).
 
-`zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt)
+`zigbee2mqttTopic` - Zigbee2MQTT gateway/bridge base topic (default: zigbee2mqtt).
 
-`ignoreTimeouts` - (optional) Ignore MQTT command response timeouts (default: true)
+`logTimeouts` - (optional) Log MQTT command response timeouts (default: false).
 
-`ignoreUnexpected` - (optional) Ignore unexpected response messages while waiting for a MQTT command response (default: true)
+`logUnexpected` - (optional) Log unexpected response messages while waiting for an MQTT command response (default: false).
 
 # Zigbee2MQTT
 
-It is also possible to controll devices using Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`.
+It is also possible to control devices using the Zigbee2MQTT gateway/bridge. This is useful if you want to combine Zigbee and Tasmota devices using the `powerTopic`.
 
-Almost all accessory-types are supported but currently some characteristics are not mapped correctly (work in progress). Supported features are queried directly from Zigbe2MQTT and configured automatically.
+Almost all accessory types are supported, but currently, some characteristics are not mapped correctly (work in progress). Supported features are queried directly from Zigbee2MQTT and configured automatically.

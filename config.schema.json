@@ -852,12 +852,12 @@
         "placeholder": "Zigbee2MQTT base topic (default: zigbee2mqtt)",
         "type": "string"
       },
-      "ignoreTimeouts": {
-        "title": "Ignore timeouts on read",
+      "logTimeouts": {
+        "title": "Write MQTT command response timeouts in log",
         "type": "boolean"
       },
-      "ignoreUnexpected": {
-        "title": "Ignore unexpected messages on read",
+      "logUnexpected": {
+        "title": "Write unexpected command responses in log",
         "type": "boolean"
       }
     }
@@ -1262,8 +1262,8 @@
         },
         "zigbee2tasmotaTopic",
         "zigbee2mqttTopic",
-        "ignoreTimeouts",
-        "ignoreUnexpected"
+        "logTimeouts",
+        "logUnexpected"
       ]
     }
   ]

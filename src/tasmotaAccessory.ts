@@ -196,7 +196,7 @@ export class TasmotaAccessory {
       const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic, READ_TIMEOUT);
       return this.platform.mqttClient.getValueByPath(response, path);
     } catch (err) {
-      if (this.accessory.context.ignoreTimeouts === false) {
+      if (this.accessory.context.logTimeouts === true) {
         this.platform.log.error('%s: Got no response on %s command, reading %s topic (check MQTT topic): %s',
           this.accessory.context.device.name,
           reqTopic,

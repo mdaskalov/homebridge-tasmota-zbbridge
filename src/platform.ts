@@ -164,8 +164,8 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
       if ((<TasmotaDevice>device)?.topic && (<TasmotaDevice>device)?.type && (<TasmotaDevice>device)?.name) {
         const { restored, accessory } = this.restoreAccessory(this.tasmotaDeviceUUID(device), device.name);
         accessory.context.device = device;
-        accessory.context.ignoreTimeouts = this.config.ignoreTimeouts;
-        accessory.context.ignoreUnexpected = this.config.ignoreUnexpected;
+        accessory.context.logTimeouts = this.config.logTimeouts;
+        accessory.context.logUnexpected= this.config.logUnexpected;
         new TasmotaAccessory(this, accessory);
         this.log.info('%s Tasmota accessory: %s (%s) - %s',
           restored ? 'Restoring' : 'Adding', device.name, device.topic,
