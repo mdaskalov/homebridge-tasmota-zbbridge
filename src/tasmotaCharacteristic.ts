@@ -12,7 +12,7 @@ import { TasmotaZbBridgePlatform } from './platform';
 import { TasmotaDevice } from './tasmotaAccessory';
 import { TasmotaCommand, Mapping, TasmotaCharacteristicDefinition } from './tasmotaDeviceDefinition';
 
-const EXEC_TIMEOUT = 1500;
+const EXEC_TIMEOUT = 1000;
 
 type TemplateVariables = { [key: string]: string };
 

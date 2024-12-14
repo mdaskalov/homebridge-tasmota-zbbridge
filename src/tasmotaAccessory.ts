@@ -13,7 +13,7 @@ export type TasmotaDevice = {
   name: string;
 };
 
-const READ_TIMEOUT = 1500;
+const READ_TIMEOUT = 1000;
 
 export class TasmotaAccessory {
   private characteristics: TasmotaCharacteristic[] = [];
