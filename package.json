@@ -12,7 +12,7 @@
     "url": "https://github.com/mdaskalov/homebridge-tasmota-zbbridge/issues"
   },
   "engines": {
-    "node": "^18.20.4 || ^20.15.1",
+    "node": "^20.15.1 || v22.12.0",
     "homebridge": "^1.6.0 || ^2.0.0-beta.0"
   },
   "main": "dist/index.js",
