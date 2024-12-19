@@ -13,10 +13,13 @@ export type TasmotaDevice = {
   name: string;
 };
 
-const READ_TIMEOUT = 1800;
+const READ_TIMEOUT = 1000;
+const RETRY_TIMEOUT = 30000;
 
 export class TasmotaAccessory {
   private characteristics: TasmotaCharacteristic[] = [];
+  private sensorRetries = 1;
+  private accessoryInformationRetries = 1;
 
   constructor(
     private readonly platform: TasmotaZbBridgePlatform,
@@ -184,11 +187,25 @@ export class TasmotaAccessory {
         this.platform.log.warn('StatusSNS node missing on sensor reply: %s', sensorsJSON);
       }
     } catch (err) {
-      this.platform.log.warn('Unable to read sensor data: %s', err);
+      if (this.accessory.context.logTimeouts) {
+        this.platform.log.debug('%s: Unable to read sensor data (%d): %s',
+          this.accessory.context.device.name,
+          this.sensorRetries,
+          err,
+        );
+      }
+      if (this.sensorRetries >= 3) {
+        this.platform.log.error('%s: Unable to configure sensor', this.accessory.context.device.name);
+        return;
+      }
+      this.sensorRetries++;
+      setTimeout(() => {
+        this.configureSensors();
+      }, RETRY_TIMEOUT);
     }
   }
 
-  private async getProperty(cmd: string, path: string = cmd, res: string = 'RESULT'): Promise<string | undefined> {
+  private async getProperty(label: string, cmd: string, path: string = cmd, res: string = 'RESULT'): Promise<string | undefined> {
     const split = cmd.split(' ');
     const reqTopic = `cmnd/${this.accessory.context.device.topic}/${split[0]}`;
     const resTopic = `stat/${this.accessory.context.device.topic}/${res || 'RESULT'}`;
@@ -196,32 +213,38 @@ export class TasmotaAccessory {
       const response = await this.platform.mqttClient.read(reqTopic, split[1] || '', resTopic, READ_TIMEOUT);
       return this.platform.mqttClient.getValueByPath(response, path);
     } catch (err) {
-      if (this.accessory.context.logTimeouts === true) {
-        this.platform.log.error('%s: Got no response on %s command, reading %s topic (check MQTT topic): %s',
-          this.accessory.context.device.name,
-          reqTopic,
-          resTopic,
-          err as string,
-        );
-      }
-      return '';
+      throw `Error configuiring ${label} accessory information (${this.accessoryInformationRetries}): ${err}`;
     }
   }
 
   private async configureAccessoryInformation() {
-    const manufacturer = await this.getProperty('MODULE0', 'Module.0') || 'Tasmota';
-    const model = await this.getProperty('DeviceName') || 'Unknown';
-    const serialNumber = await this.getProperty('STATUS 5', 'StatusNET.Mac', 'STATUS5') || 'Unknown';
-    let firmwareRevision = await this.getProperty('STATUS 2', 'StatusFWR.Version', 'STATUS2') || 'Unknown';
-    firmwareRevision = firmwareRevision.split('(')[0];
-    const accessoryInformation: TasmotaDeviceDefinition = {
-      AccessoryInformation: {
-        Manufacturer: { default: `${manufacturer}` },
-        Model: { default: `${model}` },
-        SerialNumber: { default: `${serialNumber}` },
-        FirmwareRevision: { default: `${firmwareRevision}` },
-      },
-    };
-    this.configureDevice(accessoryInformation);
+    try {
+      const manufacturer = await this.getProperty('Manufacturer', 'MODULE0', 'Module.0') || 'Tasmota';
+      const model = await this.getProperty('Model', 'DeviceName') || 'Unknown';
+      const serialNumber = await this.getProperty('SerialNumber', 'STATUS 5', 'StatusNET.Mac', 'STATUS5') || 'Unknown';
+      let firmwareRevision = await this.getProperty('FirmwareRevision', 'STATUS 2', 'StatusFWR.Version', 'STATUS2') || 'Unknown';
+      firmwareRevision = firmwareRevision.split('(')[0];
+      const accessoryInformation: TasmotaDeviceDefinition = {
+        AccessoryInformation: {
+          Manufacturer: { default: `${manufacturer}` },
+          Model: { default: `${model}` },
+          SerialNumber: { default: `${serialNumber}` },
+          FirmwareRevision: { default: `${firmwareRevision}` },
+        },
+      };
+      this.configureDevice(accessoryInformation);
+    } catch (err) {
+      if (this.accessory.context.logTimeouts) {
+        this.platform.log.debug('%s: %s', this.accessory.context.device.name, err);
+      }
+      if (this.accessoryInformationRetries >= 3) {
+        this.platform.log.error('%s: Unable to configure accessory information', this.accessory.context.device.name);
+        return;
+      }
+      this.accessoryInformationRetries++;
+      setTimeout(() => {
+        this.configureAccessoryInformation();
+      }, RETRY_TIMEOUT);
+    }
   }
 }
