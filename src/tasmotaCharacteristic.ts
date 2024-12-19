@@ -22,7 +22,7 @@ export class TasmotaCharacteristic {
   private logTimeouts: boolean;
   private logUnexpected: boolean;
   private variables: TemplateVariables;
-  private value: CharacteristicValue;
+  private value: CharacteristicValue | undefined;
 
   constructor(
     readonly platform: TasmotaZbBridgePlatform,
@@ -57,7 +57,7 @@ export class TasmotaCharacteristic {
       }
     }
     //this.log('characteristic props: %s', JSON.stringify(characteristic.props));
-    this.value = this.initValue();
+    this.value = undefined;
     if (characteristic.UUID === this.platform.Characteristic.ColorTemperature.UUID) {
       this.enableAdaptiveLighting();
     }
@@ -114,6 +114,9 @@ export class TasmotaCharacteristic {
   }
 
   private async onGet(): Promise<CharacteristicValue> {
+    if (this.value !== undefined) {
+      return this.value;
+    }
     if (this.definition.get !== undefined) {
       try {
         const value = await this.exec(this.definition.get);
@@ -124,15 +127,10 @@ export class TasmotaCharacteristic {
           return this.value;
         }
       } catch (err) {
-        if (this.logTimeouts === true) {
-          this.platform.log.error(err as string);
-        } else {
-          this.platform.log.debug(err as string);
-        }
-        throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+        this.logTimeout(err as string);
       }
     }
-    return this.value;
+    throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
   }
 
   private async onSet(value: CharacteristicValue) {
@@ -144,10 +142,11 @@ export class TasmotaCharacteristic {
         const mapping = this.definition.get?.res?.mapping ? this.definition.get?.res?.mapping : this.definition.set?.res?.mapping;
         const hbConfirmValue = this.mapToHB(confirmValue, mapping);
         if (value === hbConfirmValue) {
-          this.log('onSet value: %s (tasmota: %s)', value, payload);
           this.value = value;
+          this.log('onSet value: %s (tasmota: %s)', value, payload);
           return;
         } else {
+          this.value = undefined;
           this.platform.log.warn('%s:%s Set value: %s: %s (tasmota: %s) not confirmed: %s: %s (tasmota: %s)',
             this.device.name,
             this.characteristic.displayName,
@@ -160,11 +159,8 @@ export class TasmotaCharacteristic {
           );
         }
       } catch (err) {
-        if (this.logTimeouts === true) {
-          this.platform.log.error(err as string);
-        } else {
-          this.platform.log.debug(err as string);
-        }
+        this.value = undefined;
+        this.logTimeout(err as string);
         throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
       }
     }
@@ -280,18 +276,11 @@ export class TasmotaCharacteristic {
     return value;
   }
 
-  private initValue(): CharacteristicValue {
-    const value = this.checkHBValue(this.definition.default);
-    switch (this.characteristic.props.format) {
-      case Formats.BOOL:
-        return value !== undefined ? Boolean(value) : false;
-      case Formats.STRING:
-      case Formats.DATA:
-      case Formats.TLV8:
-        return value !== undefined ? this.replaceTemplate(String(value)) : '';
-      default: {
-        return value !== undefined ? Number(value) : 0;
-      }
+  logTimeout(message: string): void {
+    if (this.logTimeouts === true) {
+      this.platform.log.error(message);
+    } else {
+      this.platform.log.debug(message);
     }
   }
 
