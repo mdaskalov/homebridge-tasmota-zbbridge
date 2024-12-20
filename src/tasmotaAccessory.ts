@@ -220,7 +220,7 @@ export class TasmotaAccessory {
   private async configureAccessoryInformation() {
     try {
       const manufacturer = await this.getProperty('Manufacturer', 'MODULE0', 'Module.0') || 'Tasmota';
-      const model = await this.getProperty('Model', 'DeviceName') || 'Unknown';
+      const model = await this.getProperty('Model', 'Hostname') || 'Unknown';
       const serialNumber = await this.getProperty('SerialNumber', 'STATUS 5', 'StatusNET.Mac', 'STATUS5') || 'Unknown';
       let firmwareRevision = await this.getProperty('FirmwareRevision', 'STATUS 2', 'StatusFWR.Version', 'STATUS2') || 'Unknown';
       firmwareRevision = firmwareRevision.split('(')[0];
