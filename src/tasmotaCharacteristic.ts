@@ -57,7 +57,7 @@ export class TasmotaCharacteristic {
       }
     }
     //this.log('characteristic props: %s', JSON.stringify(characteristic.props));
-    this.value = undefined;
+    this.value = definition.default;
     if (characteristic.UUID === this.platform.Characteristic.ColorTemperature.UUID) {
       this.enableAdaptiveLighting();
     }
