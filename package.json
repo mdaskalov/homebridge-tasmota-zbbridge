@@ -35,9 +35,9 @@
     "mqtt": "^5.10.3"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.18.1",
-    "@typescript-eslint/parser": "^8.18.1",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
     "eslint": "^9.17.0",
     "homebridge": "^1.8.5",
     "nodemon": "^3.1.9",
