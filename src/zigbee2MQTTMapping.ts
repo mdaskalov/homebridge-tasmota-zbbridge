@@ -50,7 +50,7 @@ export const EXPOSES = {
   battery_low: { Battery: 'StatusLowBattery' },
   temperature: { TemperatureSensor: 'CurrentTemperature' },
   humidity: { HumiditySensor: 'CurrentRelativeHumidity' },
-  illuminance_lux: { LightSensor: 'CurrentAmbientLightLevel' },
+  illuminance: { LightSensor: 'CurrentAmbientLightLevel' },
   contact: { ContactSensor: 'ContactSensorState' },
   occupancy: { OccupancySensor: 'OccupancyDetected' },
   vibration: { MotionSensor: 'MotionDetected' },
