@@ -1,5 +1,6 @@
 import { Logger, PlatformConfig } from 'homebridge';
 import { IClientOptions, MqttClient, connect } from 'mqtt';
+import get from 'lodash.get';
 
 type TopicCallback =
   (msg: string, topic: string) => boolean | void; // priority handler consumes message if not false
@@ -84,14 +85,14 @@ export class MQTTClient {
   }
 
   getValueByPath(json: string, path: string): string | undefined {
-    let obj = Object();
     try {
-      obj = JSON.parse(json);
+      const obj = JSON.parse(json);
+      const val = get(obj, path);
+      const res = val !== undefined ? String(val) : undefined;
+      return res;
     } catch {
       return undefined; // not parsed
     }
-    const result = path.split('.').reduce((a, v) => a ? a[v] : undefined, obj);
-    return result !== undefined ? String(result) : undefined;
   }
 
   uniqueID(): string {
