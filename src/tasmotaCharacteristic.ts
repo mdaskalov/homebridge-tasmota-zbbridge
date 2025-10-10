@@ -34,12 +34,14 @@ export class TasmotaCharacteristic {
     this.device = this.accessory.context.device;
     this.logTimeouts = this.accessory.context.logTimeouts;
     this.logUnexpected = this.accessory.context.logUnexpected;
+    const idxNum = Number(this.device.index);
     this.variables = {
       deviceName: this.device.name,
       topic: this.device.topic,
       stat: 'stat/' + this.device.topic,
       sensor: 'tele/' + this.device.topic + '/SENSOR',
-      idx: this.device.index || '',
+      idx: String(idxNum),
+      zIdx: String(idxNum - 1),
     };
 
     if (definition.props !== undefined) {
