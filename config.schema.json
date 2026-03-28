@@ -783,31 +783,15 @@
             "index": {
               "title": "Index",
               "type": "string",
-              "oneOf": [
-                {
-                  "title": "1",
-                  "enum": [
-                    "1"
-                  ]
-                },
-                {
-                  "title": "2",
-                  "enum": [
-                    "2"
-                  ]
-                },
-                {
-                  "title": "3",
-                  "enum": [
-                    "3"
-                  ]
-                },
-                {
-                  "title": "4",
-                  "enum": [
-                    "4"
-                  ]
-                }
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
               ],
               "required": false
             },
