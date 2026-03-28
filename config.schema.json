@@ -742,6 +742,12 @@
                   ]
                 },
                 {
+                  "title": "PWM Channel",
+                  "enum": [
+                    "LIGHTBULB_B_CH"
+                  ]
+                },
+                {
                   "title": "Valve",
                   "enum": [
                     "VALVE"
