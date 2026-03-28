@@ -12,8 +12,8 @@
     "url": "https://github.com/mdaskalov/homebridge-tasmota-zbbridge/issues"
   },
   "engines": {
-    "node": "^20.15.1 || ^v22.12.0",
-    "homebridge": "^1.6.0 || ^2.0.0-beta.0"
+    "node": "^v22 || ^v24",
+    "homebridge": "^1.6.0 || ^2.0.0"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -31,19 +31,19 @@
     "zigbee2mqtt"
   ],
   "dependencies": {
-    "ajv": "^8.17.1",
-    "mqtt": "^5.10.3"
+    "ajv": "^8.18.0",
+    "mqtt": "^5.15.1"
   },
   "devDependencies": {
     "@types/lodash.get": "^4.4.9",
-    "@types/node": "^24.0.3",
+    "@types/node": "^25.5.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
-    "eslint": "^9.29.0",
+    "eslint": "^10.1.0",
     "homebridge": "^1.10.0",
     "lodash.get": "^4.4.2",
     "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.2"
   }
 }
