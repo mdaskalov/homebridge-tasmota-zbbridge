@@ -11,7 +11,7 @@ import { TasmotaZbBridgePlatform } from './platform';
 import { Zigbee2TasmotaValue } from './zigbee2TasmotaValue';
 
 export class Zigbee2TasmotaLightbulb extends Zigbee2TasmotaSwitch {
-  private color: Color = new Color(this.platform);
+  private color: Color;
   private dimmer: Zigbee2TasmotaValue;
   private ct: Zigbee2TasmotaValue;
   private hue: Zigbee2TasmotaValue;
@@ -32,6 +32,9 @@ export class Zigbee2TasmotaLightbulb extends Zigbee2TasmotaSwitch {
     readonly serviceName: string,
   ) {
     super(platform, accessory, serviceName);
+
+    this.color = new Color(this.platform);
+
     this.dimmer = new Zigbee2TasmotaValue(platform, accessory, 'dimmer', 100);
     this.ct = new Zigbee2TasmotaValue(platform, accessory, 'ct', 370);
     this.hue = new Zigbee2TasmotaValue(platform, accessory, 'hue', 20);

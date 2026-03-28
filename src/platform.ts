@@ -11,10 +11,10 @@ import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
 import { TasmotaPowerManager } from './tasmotaPowerManager';
 
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-  public readonly mqttClient = new MQTTClient(this.log, this.config);
-  public readonly powerManager = new TasmotaPowerManager(this.log, this.mqttClient);
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
+  public readonly mqttClient: MQTTClient;
+  public readonly powerManager: TasmotaPowerManager;
   // cached accessories
   public readonly accessories: PlatformAccessory[] = [];
   private configuredUUIDs: string[] = [];
@@ -24,6 +24,11 @@ export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
+    this.Service = this.api.hap.Service;
+    this.Characteristic = this.api.hap.Characteristic;
+    this.mqttClient = new MQTTClient(this.log, this.config);
+    this.powerManager = new TasmotaPowerManager(this.log, this.mqttClient);
+
     this.log.debug('Finished initializing platform:', this.config.name || 'ZbBridge');
 
     this.api.on('didFinishLaunching', async () => {
