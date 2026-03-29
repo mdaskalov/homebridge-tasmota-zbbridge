@@ -35,13 +35,14 @@ export class TasmotaCharacteristic {
     this.logTimeouts = this.accessory.context.logTimeouts;
     this.logUnexpected = this.accessory.context.logUnexpected;
     const idxNum = Number(this.device.index);
+    const idxValid = !isNaN(idxNum);
     this.variables = {
       deviceName: this.device.name,
       topic: this.device.topic,
       stat: 'stat/' + this.device.topic,
       sensor: 'tele/' + this.device.topic + '/SENSOR',
-      idx: String(idxNum),
-      zIdx: String(idxNum - 1),
+      idx: idxValid ? String(idxNum) : '',
+      zIdx: idxValid ? String(idxNum - 1) : '',
     };
 
     if (definition.props !== undefined) {
