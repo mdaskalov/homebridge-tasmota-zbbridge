@@ -1,5 +1,5 @@
 import { PlatformAccessory, Service } from 'homebridge';
-import { TasmotaZbBridgePlatform } from './platform';
+import { TasmotaZbBridgePlatform, sanitizeHapName } from './platform';
 import { TasmotaDeviceDefinition, tasmotaDeviceDefinitionSchema } from './tasmotaDeviceDefinition';
 import { TasmotaCharacteristic } from './tasmotaCharacteristic';
 import { DEVICE_TYPES, SENSOR_TYPES } from './tasmotaDeviceTypes';
@@ -94,17 +94,20 @@ export class TasmotaAccessory {
     const serviceName = nameSplit[0];
     const serviceSubType = nameSplit[1];
     let service: Service | undefined = undefined;
+
     if (serviceSubType === undefined) {
       const serviceByName = this.platform.Service[serviceName];
       if (serviceByName !== undefined) {
-        service = this.accessory.getService(serviceByName) || this.accessory.addService(serviceByName);
+        service = this.accessory.getService(serviceByName)
+          || this.accessory.addService(serviceByName, sanitizeHapName(serviceName));
       }
     } else {
       service = this.accessory.getServiceById(this.platform.Service[serviceName], serviceSubType);
       if (!service) {
-        service = this.accessory.addService(this.platform.Service, name, this.platform.Service[serviceName].UUID, serviceSubType);
+        service = this.accessory.addService(this.platform.Service[serviceName], sanitizeHapName(serviceName), serviceSubType);
       }
     }
+
     if (service === undefined) {
       this.platform.log.warn('Invalid service name: %s%s',
         serviceName,
