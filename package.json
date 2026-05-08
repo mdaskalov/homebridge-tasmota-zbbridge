@@ -31,16 +31,16 @@
     "zigbee2mqtt"
   ],
   "dependencies": {
-    "ajv": "^8.18.0",
+    "ajv": "^8.20.0",
     "mqtt": "^5.15.1"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "eslint": "^10.1.0",
-    "homebridge": "^1.10.0",
+    "@types/node": "^25.6.2",
+    "eslint": "^10.3.0",
+    "homebridge": "^2.0.1",
     "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2"
   }
 }

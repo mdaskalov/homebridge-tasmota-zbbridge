@@ -505,10 +505,6 @@
               },
               "items": [
                 {
-                  "type": "help",
-                  "helpvalue": "Custom device definition, see <a href='https://github.com/mdaskalov/homebridge-tasmota-zbbridge/blob/main/doc/TasmotaDeviceDefinition.md'>here</a> for detailed explanation"
-                },
-                {
                   "type": "textarea",
                   "key": "tasmotaDevices[].custom",
                   "title": "Custom Definition"
