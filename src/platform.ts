@@ -10,14 +10,6 @@ import { Zigbee2TasmotaSensor } from './zigbee2TasmotaSensor';
 import { Zigbee2MQTTAcessory, Zigbee2MQTTDevice } from './zigbee2MQTTAcessory';
 import { TasmotaPowerManager } from './tasmotaPowerManager';
 
-export function sanitizeHapName(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9 ']/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
-}
-
 export class TasmotaZbBridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;

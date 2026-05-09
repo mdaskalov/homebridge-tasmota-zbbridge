@@ -1,5 +1,5 @@
 import { PlatformAccessory, Service } from 'homebridge';
-import { TasmotaZbBridgePlatform, sanitizeHapName } from './platform';
+import { TasmotaZbBridgePlatform } from './platform';
 import { TasmotaDeviceDefinition, tasmotaDeviceDefinitionSchema } from './tasmotaDeviceDefinition';
 import { TasmotaCharacteristic } from './tasmotaCharacteristic';
 import { DEVICE_TYPES, SENSOR_TYPES } from './tasmotaDeviceTypes';
@@ -98,13 +98,12 @@ export class TasmotaAccessory {
     if (serviceSubType === undefined) {
       const serviceByName = this.platform.Service[serviceName];
       if (serviceByName !== undefined) {
-        service = this.accessory.getService(serviceByName)
-          || this.accessory.addService(serviceByName, sanitizeHapName(serviceName));
+        service = this.accessory.getService(serviceByName) || this.accessory.addService(serviceByName, serviceName);
       }
     } else {
       service = this.accessory.getServiceById(this.platform.Service[serviceName], serviceSubType);
       if (!service) {
-        service = this.accessory.addService(this.platform.Service[serviceName], sanitizeHapName(serviceName), serviceSubType);
+        service = this.accessory.addService(this.platform.Service[serviceName], serviceName, serviceSubType);
       }
     }
 
@@ -124,7 +123,8 @@ export class TasmotaAccessory {
       const service = this.getServiceByName(serviceName);
       if (service !== undefined) {
         if (serviceDefinition['Name'] === undefined) {
-          service.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
+          const configureName = serviceName.split('_')[1] || this.accessory.context.device.name;
+          service.setCharacteristic(this.platform.Characteristic.Name, configureName);
         }
         for (const [characteristicName, definition] of Object.entries(serviceDefinition as object)) {
           const characteristic = service.getCharacteristic(this.platform.Characteristic[characteristicName]);

@@ -134,14 +134,14 @@ The simplest definition of a relay on a device as a service `Switch` with a char
 ```
 
 ### Multiple Relays on a Single Device
-Define two relays on the same device as separate `Switch` services. Note that the same service can be used multiple times on a device by adding a unique SubType after the `_` character.
+Define two relays on the same device as separate `Switch` services. Note that the same service can be used multiple times on a device by adding a unique name (SubType) after the `_` character.
 
 ```json
 {
-    "Switch": {
+    "Switch_One": {
         "On": { "get": { "cmd": "POWER1" } }
     },
-    "Switch_2": {
+    "Switch_Two": {
         "On": { "get": { "cmd": "POWER2" } }
     }
 }
