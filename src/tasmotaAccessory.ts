@@ -124,7 +124,7 @@ export class TasmotaAccessory {
       if (service !== undefined) {
         if (serviceDefinition['Name'] === undefined) {
           const configureName = serviceName.split('_')[1] || this.accessory.context.device.name;
-          service.setCharacteristic(this.platform.Characteristic.Name, configureName);
+          service.setCharacteristic(this.platform.Characteristic.ConfiguredName, configureName);
         }
         for (const [characteristicName, definition] of Object.entries(serviceDefinition as object)) {
           const characteristic = service.getCharacteristic(this.platform.Characteristic[characteristicName]);
